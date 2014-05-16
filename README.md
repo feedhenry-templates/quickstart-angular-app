@@ -9,7 +9,7 @@ FeedHenry Studio.
 ### Package Contents
 + **app** - Contains all client side JS files .
     + **modules** - Directory containing reuseable Angular modules.
-        + **Act.js** - Reuseable Service module wrapping the `$fh.act` API call.
+        + **cloud.js** - Reuseable Service module wrapping the `$fh.cloud` API call.
     + **app.js** - Client-side app entry point.
     + **controllers.js** - Blank script ready to create all client-side controllers.
     + **directives.js** - Contains reuseable header and footer directives.
@@ -38,7 +38,7 @@ FeedHenry Studio.
         + **angular-resource.js** - Uncompressed AngularJS module for `ngResource` dependency.
         + **angular-resource.min.js** - Compressed AngularJS module for `ngResource` dependency.
     + **fh-modules** - Directory genaric AngularJs modules incorporating [FeedHenry](http://www.feedhenry.com) hybrid API functions .
-        + **angular-fhact.js** - AngularJS Service module wrapping `$fh.Act` API call.
+        + **angular-fhcloud.js** - AngularJS Service module wrapping `$fh.cloud` API call.
     + **jQuery-2.1.0.js** - jQuery framework script.
     + **snap.js** - Snap.js library script, Angular-snap directive is dependent on this. 
     + **fh-modules** - Directory genaric AngularJs modules incorporating [FeedHenry](http://www.feedhenry.com) hybrid API functions .

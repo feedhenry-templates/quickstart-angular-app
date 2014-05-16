@@ -1,7 +1,7 @@
 /*  
  *  Author: Colum Bennett < colum.bennett@feedhenry.com >
- *  Re-useable Angular service module using FeedHenry Hybird API "$fh.act"" call.
- *  See developers docs, http://docs.feedhenry.com/v2/api_js_client_api.html
+ *  Re-useable Angular service module using FeedHenry Hybird API "$fh.cloud"" call.
+ *  See developers docs, http://docs.feedhenry.com/
  */
 
 
@@ -13,12 +13,12 @@
  *  @errCb : if call fails, preform this operation.
  */
 
-angular.module('fhact', ['ngResource']).service("fhact", function() {
+angular.module('fhcloud', ['ngResource']).service("fhcloud", function() {
 
-    this.act = function(endpoint, params, successCb, errCb) {
-        $fh.act({
-                act: endpoint,
-                req: params
+    this.cloud = function(endpoint, params, successCb, errCb) {
+        $fh.cloud({
+                path: endpoint,
+                data: params
             },
             successCb,
             errCb
