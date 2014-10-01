@@ -64,3 +64,13 @@ footer > div > small {
 /*
  *  CUSTOM STYLING
  */
+
+#description {
+    text-align: justify;
+    position: relative;
+    padding-top: 20%;
+    padding-bottom: 10%;
+}
+.input-group {
+    display: block;
+}
