@@ -58,6 +58,10 @@ footer > div > small {
 .center {
     text-align: center;
 }
+.hello-result{
+    margin: 20px 0px 0px 0px;
+    font-size: 2em;
+}
 /*
  *  CUSTOM STYLING
  */

@@ -2,14 +2,15 @@
 
 <section id="example">
     <div id="formWrapper">
-        <p id="description">This is a basic app that will take a word or sentence entered by a user, send that data to the cloud and return the number of characters in that specific user entry.</p>
+        <p id="description">This is a basic AngularJS App that can take in your name, send it to a cloud app and display the response.</p>
         <br>
-        <div ng-show="noticeMessage" class="text-center {{textClassName}}">{{noticeMessage}}</div>
+
         <div class="input-group input-group">
-            <input type="text" class="form-control" ng-model="userInput" placeholder="Enter some text here">
+            <input type="text" class="form-control" ng-model="userInput" placeholder="Enter your name here.">
         </div>
         <br>
-        <button type="button" class="btn btn-primary btn-block" ng-click="getNumberOfCharacters()">Get No. of Characters</button>
+        <button type="button" class="btn btn-primary btn-block" ng-click="getNumberOfCharacters()">Say Hello From The Cloud</button>
+        <div ng-show="noticeMessage" class="text-center jumbotron hello-result {{textClassName}}">{{noticeMessage}}</div>
     </div>
 </section>
 

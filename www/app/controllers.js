@@ -18,13 +18,13 @@ myApp.controller('MainCtrl', function($scope, $q, fhcloud) {
       var promise = defer.promise;
 
       //When the promise has completed, then the notice message can be updated to include result of the $fh.cloud call.
-      promise.then(function(res){
+      promise.then(function(response){
         // If successfull, display the length  of the string.
-        if (res.strLength != null && typeof(res.strLength) !== 'undefined') {
-          $scope.noticeMessage = "You entered " + res.strLength + " characters!";
+        if (response.msg != null && typeof(response.msg) !== 'undefined') {
+          $scope.noticeMessage = response.msg;
           $scope.textClassName = "text-success";
         } else {
-          $scope.noticeMessage  = "Error: Expected a strLength parameter in the response from $fh.cloud.";
+          $scope.noticeMessage  = "Error: Expected a message from $fh.cloud.";
           $scope.textClassName = "text-danger";
         }
       }, function(err){
@@ -32,13 +32,8 @@ myApp.controller('MainCtrl', function($scope, $q, fhcloud) {
         $scope.noticeMessage = "$fh.cloud failed. Error: " + JSON.stringify(err);
       });
 
-      var reqJson = {
-        "payload": {
-          "userInput": userInput
-        }
-      };
       // check if userInput is defined
-      if (reqJson.payload.userInput) {
+      if (userInput) {
         /**
          * Pass the userInput to the module containing the $fh.cloud call.
          *
@@ -46,7 +41,7 @@ myApp.controller('MainCtrl', function($scope, $q, fhcloud) {
          * One of these functions will be called when the $fh.cloud function has completed successully or encountered
          * an error.
          */
-        fhcloud.cloud('count', reqJson, defer.resolve, defer.reject);
+        fhcloud.cloud('hello', userInput, defer.resolve, defer.reject);
       }
     };
 });
