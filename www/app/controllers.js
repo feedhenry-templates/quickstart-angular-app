@@ -19,7 +19,7 @@ myApp.controller('MainCtrl', function($scope, $q, fhcloud) {
 
       //When the promise has completed, then the notice message can be updated to include result of the $fh.cloud call.
       promise.then(function(response){
-        // If successfull, display the length  of the string.
+        // If successful, display the length  of the string.
         if (response.msg != null && typeof(response.msg) !== 'undefined') {
           $scope.noticeMessage = response.msg;
           $scope.textClassName = "text-success";
