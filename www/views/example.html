@@ -4,11 +4,12 @@
     <div id="formWrapper">
         <p id="description">This is a basic app that will take a word or sentence entered by a user, send that data to the cloud and return the number of characters in that specific user entry.</p>
         <br>
+        <div ng-show="noticeMessage" class="text-center {{textClassName}}">{{noticeMessage}}</div>
         <div class="input-group input-group">
             <input type="text" class="form-control" ng-model="userInput" placeholder="Enter some text here">
         </div>
         <br>
-        <button type="button" class="btn btn-primary btn-block" ng-click="getNumberOfCharacters(userInput)">Get No. of Characters</button>
+        <button type="button" class="btn btn-primary btn-block" ng-click="getNumberOfCharacters()">Get No. of Characters</button>
     </div>
 </section>
 

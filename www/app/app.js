@@ -13,12 +13,8 @@ var myApp = angular.module('myApp', ['ngRoute',
 myApp.config(function($routeProvider) {
 
     $routeProvider
-        .when('/example', {
+        .when('/', {
             templateUrl: 'views/example.html',
             controller: 'MainCtrl'
         })
-
-    .otherwise({
-        redirectTo: '/example'
-    });
 });
