@@ -57,9 +57,7 @@ footer > div > small {
     clear: both;
 }
 .center {
-    position: absolute;
-    top: 16%;
-    left: 14%;
+    text-align: center;
 }
 /*
  *  CUSTOM STYLING
