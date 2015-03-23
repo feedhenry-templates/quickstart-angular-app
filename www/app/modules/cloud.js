@@ -1,26 +1,23 @@
 /*  
  *  Author: Colum Bennett <colum.bennett@feedhenry.com>
- *  Re-useable Angular service module using FeedHenry Hybird API "$fh.cloud"" call.
+ *  Re-useable Angular service module using FeedHenry Hybrid API "$fh.cloud" call.
  *  See developers docs, http://docs.feedhenry.com/
  */
+angular.module('fhcloud', ['ngResource']).service("fhcloud", function($q) {
 
-/*
- *  @endpoint : name of required cloud endpoint.
- *  @params : request parameters for given endpoint.
- *  @succesCb : if cloud call is successful, perform this operation.
- *  @errCb : if call fails, perform this operation.
- */
+  return function(cloudEndpoint, data) {
+    var defer = $q.defer();
 
-angular.module('fhcloud', ['ngResource']).service("fhcloud", function() {
-    this.cloud = function(cloudEndpoint, userInput, successCb, errCb) {
-      var params = {
-        path: cloudEndpoint,
-        method: "GET",
-        contentType: "application/json",
-        data: {hello: userInput},
-        timeout: 15000
-      };
-
-      $fh.cloud(params, successCb, errCb);
+    var params = {
+      path: cloudEndpoint,
+      method: "GET",
+      contentType: "application/json",
+      data: data,
+      timeout: 15000
     };
+
+    $fh.cloud(params, defer.resolve, defer.reject);
+
+    return defer.promise;
+  };
 });
