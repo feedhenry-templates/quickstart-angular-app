@@ -21,7 +21,7 @@ module.exports = function (grunt) {
     // Project settings
     app: {
       // configurable paths
-      app: 'www',
+      app: '.',
       url: '',
       default_local_server_url: 'http://localhost:8001'
     },
@@ -81,7 +81,7 @@ module.exports = function (grunt) {
     },
 
     browserify: {
-      'www/main.js': ['www/lib/*.js', 'www/app/**/*.js']
+      'main.js': ['lib/*.js', 'app/**/*.js']
     }
   });
 
