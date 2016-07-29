@@ -22,4 +22,3 @@ build
 .grunt
 
 node_modules
-www/main.js
