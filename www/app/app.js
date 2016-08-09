@@ -1,7 +1,7 @@
-var angular = require("angular");
+window.angular = require("angular");
 require("angular-route");
 require("angular-sanitize");
-require("../lib/angular-snap/angular-snap");
+require("angular-resource");
 
 var myApp = angular.module('myApp', ['ngRoute',
     'ngSanitize',
@@ -9,9 +9,8 @@ var myApp = angular.module('myApp', ['ngRoute',
     'myApp.directives',
     'myApp.services',
     'myApp.filters',
-    'snap',
     'fhcloud'
-]);
+]).constant('$fh', require("fh-js-sdk"));
 
 myApp.config(function($routeProvider) {
 
