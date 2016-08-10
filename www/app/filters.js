@@ -1,3 +1,3 @@
-var angular = require("angular");
+'use strict';
 
 var myApp = angular.module('myApp.filters', []);

@@ -1,7 +1,4 @@
-var angular = require("angular");
-require("angular-route");
-require("angular-sanitize");
-require("../lib/angular-snap/angular-snap");
+'use strict';
 
 var myApp = angular.module('myApp', ['ngRoute',
     'ngSanitize',
@@ -19,5 +16,5 @@ myApp.config(function($routeProvider) {
         .when('/', {
             templateUrl: 'views/example.html',
             controller: 'MainCtrl'
-        });
+        })
 });
