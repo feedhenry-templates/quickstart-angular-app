@@ -1,8 +1,4 @@
-var angular = require('angular');
-var $fh = require('fh-js-sdk');
-require("angular-resource");
-
-/*
+/*  
  *  Author: Colum Bennett <colum.bennett@feedhenry.com>
  *  Re-useable Angular service module using FeedHenry Hybrid API "$fh.cloud" call.
  *  See developers docs, http://docs.feedhenry.com/
