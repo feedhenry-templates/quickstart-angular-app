@@ -1,5 +1,3 @@
-var angular = require("angular");
-
 var myApp = angular.module('myApp.controllers', ['fhcloud']);
 
 myApp.controller('MainCtrl', function($scope, $q, fhcloud) {

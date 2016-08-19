@@ -1,5 +1,3 @@
-var angular = require("angular");
-
 var myApp = angular.module('myApp.directives', []);
 
 myApp.directive('fhheader', function() {
