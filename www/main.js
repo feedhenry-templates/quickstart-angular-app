@@ -1,27 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-window.angular = require("angular");
-require("angular-route");
-require("angular-sanitize");
-require("angular-resource");
-
-var myApp = angular.module('myApp', ['ngRoute',
-    'ngSanitize',
-    'myApp.controllers',
-    'myApp.directives',
-    'myApp.services',
-    'myApp.filters',
-    'fhcloud'
-]).constant('$fh', require("fh-js-sdk"));
-
-myApp.config(function($routeProvider) {
-
-    $routeProvider
-        .when('/', {
-            templateUrl: 'views/example.html',
-            controller: 'MainCtrl'
-        });
-});
-},{"angular":9,"angular-resource":3,"angular-route":5,"angular-sanitize":7,"fh-js-sdk":10}],2:[function(require,module,exports){
 /**
  * @license AngularJS v1.5.8
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -886,11 +863,11 @@ angular.module('ngResource', ['ng']).
 
 })(window, window.angular);
 
-},{}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 require('./angular-resource');
 module.exports = 'ngResource';
 
-},{"./angular-resource":2}],4:[function(require,module,exports){
+},{"./angular-resource":1}],3:[function(require,module,exports){
 /**
  * @license AngularJS v1.5.8
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -1961,11 +1938,11 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 
 })(window, window.angular);
 
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 require('./angular-route');
 module.exports = 'ngRoute';
 
-},{"./angular-route":4}],6:[function(require,module,exports){
+},{"./angular-route":3}],5:[function(require,module,exports){
 /**
  * @license AngularJS v1.5.8
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -2705,11 +2682,11 @@ angular.module('ngSanitize').filter('linky', ['$sanitize', function($sanitize) {
 
 })(window, window.angular);
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 require('./angular-sanitize');
 module.exports = 'ngSanitize';
 
-},{"./angular-sanitize":6}],8:[function(require,module,exports){
+},{"./angular-sanitize":5}],7:[function(require,module,exports){
 /**
  * @license AngularJS v1.5.8
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -34478,11 +34455,11 @@ $provide.value("$locale", {
 })(window);
 
 !window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>');
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 require('./angular');
 module.exports = angular;
 
-},{"./angular":8}],10:[function(require,module,exports){
+},{"./angular":7}],9:[function(require,module,exports){
 (function (global){
 !function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.feedhenry=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 (function (global){
@@ -45105,7 +45082,7 @@ function doActCall(opts, success, fail){
   }
   return ajax({
     "url": url,
-    "tryJSONP": typeof Titanium === 'undefined',
+    "tryJSONP": true,
     "type": "POST",
     "dataType": "json",
     "data": JSON.stringify(params),
@@ -45163,7 +45140,7 @@ function callAuthEndpoint(endpoint, data, opts, success, fail){
   ajax({
     "url": path,
     "type": "POST",
-    "tryJSONP": typeof Titanium === 'undefined',
+    "tryJSONP": true,
     "data": JSON.stringify(data),
     "dataType": "json",
     "contentType": "application/json",
@@ -45369,7 +45346,7 @@ module.exports = function(opts, success, fail){
       params = fhparams.addFHParams(params);
       return ajax({
         "url": url,
-        "tryJSONP": typeof Titanium === 'undefined',
+        "tryJSONP": true,
         "type": "POST",
         "dataType": "json",
         "data": JSON.stringify(params),
@@ -45479,7 +45456,7 @@ var load = function(cb) {
   for(var key in url_params){
     if(url_params.hasOwnProperty(key) ){
       if(key.indexOf('fh_') === 0){
-        url_props[key.substr(3)] = url_params[key]; 
+        url_props[key.substr(3)] = decodeURI(url_params[key]); 
       }
     }
   }
@@ -45662,7 +45639,7 @@ module.exports = {
 },{"./data":33,"./fhparams":36,"./logger":42,"./queryMap":44}],31:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.14.4",
+  "sdk_version": "2.17.0",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -45706,7 +45683,7 @@ var data = {
   //dom adapter doens't work on windows phone, so don't specify the adapter if the dom one failed
   //we specify the order of lawnchair adapters to use, lawnchair will find the right one to use, to keep backward compatibility, keep the order
   //as dom, webkit-sqlite, localFileStorage, window-name
-  DEFAULT_ADAPTERS : ["dom", "webkit-sqlite", "window-name"],
+  DEFAULT_ADAPTERS : ["dom", "webkit-sqlite", "window-name", "titanium"],
   getStorage: function(name, adapters, fail){
     var adpts = data.DEFAULT_ADAPTERS;
     var errorHandler = fail || function(){};
@@ -45761,6 +45738,7 @@ var data = {
 };
 
 module.exports = data;
+
 },{"../../libs/generated/lawnchair":2,"./constants":31,"./lawnchair-ext":40,"./logger":42}],34:[function(_dereq_,module,exports){
 var cookies = _dereq_("./cookies");
 var uuidModule = _dereq_("./uuid");
@@ -46108,7 +46086,7 @@ var loadCloudProps = function(app_props, callback) {
     ajax({
       "url": path,
       "type": "POST",
-      "tryJSONP": typeof Titanium === 'undefined',
+      "tryJSONP": true,
       "dataType": "json",
       "contentType": "application/json",
       "data": JSON.stringify(data),
@@ -48054,4 +48032,27 @@ module.exports = {
 (19)
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}]},{},[1]);
+},{}],10:[function(require,module,exports){
+window.angular = require("angular");
+require("angular-route");
+require("angular-sanitize");
+require("angular-resource");
+
+var myApp = angular.module('myApp', ['ngRoute',
+    'ngSanitize',
+    'myApp.controllers',
+    'myApp.directives',
+    'myApp.services',
+    'myApp.filters',
+    'fhcloud'
+]).constant('$fh', require("fh-js-sdk"));
+
+myApp.config(function($routeProvider) {
+
+    $routeProvider
+        .when('/', {
+            templateUrl: 'views/example.html',
+            controller: 'MainCtrl'
+        });
+});
+},{"angular":8,"angular-resource":2,"angular-route":4,"angular-sanitize":6,"fh-js-sdk":9}]},{},[10]);
