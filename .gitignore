@@ -1,26 +1,21 @@
+
+#IDE
+.idea/
+.project
+.settings
+*~
+.sass-cache
+ 
+# Mac
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-lib-cov
-lcov.info
-*.seed
-*.log
-*.csv
-*.dat
-*.out
-*.pid
-*.gz
-
-pids
-logs
-results
-build
-.grunt
-
-node_modules
-platforms
-plugins
+ 
+# Node
+npm-debug.log
+/node_modules
+ 
+# Cordova
+/platforms
+/plugins
+ 
+# res
+resources/signing
