@@ -3,34 +3,32 @@
   "private": true,
   "version": "0.0.0",
   "dependencies": {
-    "angular": "^1.5.7",
-    "angular-resource": "^1.5.7",
-    "angular-route": "^1.5.7",
-    "angular-sanitize": "^1.5.7",
-    "bootstrap": "^3.3.6",
-    "fh-js-sdk": "^2.18.3",
-    "jquery": "^3.1.0",
-    "browserify": "^13.0.1",
-    "browserify-shim": "^3.8.12",
-    "grunt": "^0.4.4",
-    "grunt-browserify": "^5.0.0",
-    "grunt-cli": "^1.2.0",
+    "angular": "~1.6.2",
+    "angular-resource": "~1.6.2",
+    "angular-route": "~1.6.2",
+    "angular-sanitize": "~1.6.2",
+    "bootstrap": "~3.3.7",
+    "fh-js-sdk": "~2.18.4",
+    "jquery": "~3.1.1",
+    "browserify": "~13.3.0",
+    "browserify-shim": "~3.8.13",
+    "grunt": "~0.4.5",
+    "grunt-browserify": "~5.0.0",
+    "grunt-cli": "~1.2.0",
     "grunt-contrib-clean": "~0.5.0",
-    "grunt-contrib-connect": "^0.7.1",
-    "grunt-contrib-watch": "^0.6.1",
+    "grunt-contrib-connect": "~0.7.1",
+    "grunt-contrib-watch": "~0.6.1",
     "grunt-newer": "~0.5.4",
     "grunt-rev": "~0.1.0",
-    "load-grunt-tasks": "~0.2.0",
-    "time-grunt": "~0.2.1"
+    "load-grunt-tasks": "~0.2.1",
+    "time-grunt": "~0.2.10"
   },
-  "devDependencies": {
-
-  },
+  "devDependencies": {},
   "engines": {
     "node": ">=0.8.0"
   },
   "scripts": {
-    "install" : "./node_modules/grunt-cli/bin/grunt browserify"
+    "install": "./node_modules/grunt-cli/bin/grunt browserify"
   },
   "license": "mit"
 }
