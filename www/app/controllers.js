@@ -21,7 +21,7 @@ myApp.controller('MainCtrl', function($scope, $q, fhcloud) {
        */
       fhcloud('hello', { hello: userInput })
         .then(function(response){
-          // If successful, display the length  of the string.
+          // If successful, display the response.msg.
           if (response.msg !== null && typeof(response.msg) !== 'undefined') {
             $scope.noticeMessage = response.msg;
             $scope.textClassName = "text-success";
@@ -30,8 +30,8 @@ myApp.controller('MainCtrl', function($scope, $q, fhcloud) {
             $scope.textClassName = "text-danger";
           }
         })
-        .catch(function(msg, err){
-          //If the function
+        .catch(function(err){
+          // If the function encountered an error.
           $scope.noticeMessage = "$fh.cloud failed. Error: " + JSON.stringify(err);
           $scope.textClassName = "text-danger";
         });
