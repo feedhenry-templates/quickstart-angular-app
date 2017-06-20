@@ -16,7 +16,7 @@ angular.module('fhcloud', [])
       timeout: 15000
     };
 
-    $fh.cloud(params, defer.resolve, defer.reject);
+    $fh.cloud(params, defer.resolve, function(msg,err){defer.reject(err);});
 
     return defer.promise;
   };
