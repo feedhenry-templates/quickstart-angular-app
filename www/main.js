@@ -1,6 +1,6 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /**
- * @license AngularJS v1.6.2
+ * @license AngularJS v1.6.4
  * (c) 2010-2017 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -131,8 +131,8 @@ function shallowClearAndCopy(src, dst) {
  *   URL `/path/greet?salutation=Hello`.
  *
  *   If the parameter value is prefixed with `@`, then the value for that parameter will be
- *   extracted from the corresponding property on the `data` object (provided when calling a
- *   "non-GET" action method).
+ *   extracted from the corresponding property on the `data` object (provided when calling actions
+ *   with a request body).
  *   For example, if the `defaultParam` object is `{someParam: '@someProp'}` then the value of
  *   `someParam` will be `data.someProp`.
  *   Note that the parameter will be ignored, when calling a "GET" action method (i.e. an action
@@ -180,7 +180,7 @@ function shallowClearAndCopy(src, dst) {
  *     set `transformResponse` to an empty array: `transformResponse: []`
  *   - **`cache`** – `{boolean|Cache}` – If true, a default $http cache will be used to cache the
  *     GET request, otherwise if a cache instance built with
- *     {@link ng.$cacheFactory $cacheFactory}, this cache will be used for
+ *     {@link ng.$cacheFactory $cacheFactory} is supplied, this cache will be used for
  *     caching.
  *   - **`timeout`** – `{number}` – timeout in milliseconds.<br />
  *     **Note:** In contrast to {@link ng.$http#usage $http.config}, {@link ng.$q promises} are
@@ -199,6 +199,8 @@ function shallowClearAndCopy(src, dst) {
  *   - **`interceptor`** - `{Object=}` - The interceptor object has two optional methods -
  *     `response` and `responseError`. Both `response` and `responseError` interceptors get called
  *     with `http response` object. See {@link ng.$http $http interceptors}.
+ *   - **`hasBody`** - `{boolean}` - allows to specify if a request body should be included or not.
+ *     If not specified only POST, PUT and PATCH requests will have a body.
  *
  * @param {Object} options Hash with custom settings that should extend the
  *   default `$resourceProvider` behavior.  The supported options are:
@@ -243,9 +245,15 @@ function shallowClearAndCopy(src, dst) {
  *   The action methods on the class object or instance object can be invoked with the following
  *   parameters:
  *
- *   - HTTP GET "class" actions: `Resource.action([parameters], [success], [error])`
- *   - non-GET "class" actions: `Resource.action([parameters], postData, [success], [error])`
- *   - non-GET instance actions:  `instance.$action([parameters], [success], [error])`
+ *   - "class" actions without a body: `Resource.action([parameters], [success], [error])`
+ *   - "class" actions with a body: `Resource.action([parameters], postData, [success], [error])`
+ *   - instance actions: `instance.$action([parameters], [success], [error])`
+ *
+ *
+ *   When calling instance methods, the instance itself is used as the request body (if the action
+ *   should have a body). By default, only actions using `POST`, `PUT` or `PATCH` have request
+ *   bodies, but you can use the `hasBody` configuration option to specify whether an action
+ *   should have a body or not (regardless of its HTTP method).
  *
  *
  *   Success callback is called with (value (Object|Array), responseHeaders (Function),
@@ -286,7 +294,7 @@ function shallowClearAndCopy(src, dst) {
  *     the Resource API. This object can be serialized through {@link angular.toJson} safely
  *     without attaching Angular-specific fields. Notice that `JSON.stringify` (and
  *     `angular.toJson`) automatically use this method when serializing a Resource instance
- *     (see [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#toJSON()_behavior)).
+ *     (see [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#toJSON%28%29_behavior)).
  *
  * @example
  *
@@ -435,6 +443,7 @@ function shallowClearAndCopy(src, dst) {
  *
  */
 angular.module('ngResource', ['ng']).
+  info({ angularVersion: '1.6.4' }).
   provider('$resource', function ResourceProvider() {
     var PROTOCOL_AND_IPV6_REGEX = /^https?:\/\/\[[^\]]*][^/]*/;
 
@@ -648,7 +657,7 @@ angular.module('ngResource', ['ng']).
         };
 
         forEach(actions, function(action, name) {
-          var hasBody = /^(POST|PUT|PATCH)$/i.test(action.method);
+          var hasBody = action.hasBody === true || (action.hasBody !== false && /^(POST|PUT|PATCH)$/i.test(action.method));
           var numericTimeout = action.timeout;
           var cancellable = isDefined(action.cancellable) ?
               action.cancellable : route.defaults.cancellable;
@@ -855,7 +864,7 @@ module.exports = 'ngResource';
 
 },{"./angular-resource":1}],3:[function(require,module,exports){
 /**
- * @license AngularJS v1.6.2
+ * @license AngularJS v1.6.4
  * (c) 2010-2017 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -915,6 +924,7 @@ var noop;
 /* global -ngRouteModule */
 var ngRouteModule = angular.
   module('ngRoute', []).
+  info({ angularVersion: '1.6.4' }).
   provider('$route', $RouteProvider).
   // Ensure `$route` will be instantiated in time to capture the initial `$locationChangeSuccess`
   // event (unless explicitly disabled). This is necessary in case `ngView` is included in an
@@ -2089,7 +2099,7 @@ module.exports = 'ngRoute';
 
 },{"./angular-route":3}],5:[function(require,module,exports){
 /**
- * @license AngularJS v1.6.2
+ * @license AngularJS v1.6.4
  * (c) 2010-2017 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -2113,6 +2123,7 @@ var forEach;
 var isDefined;
 var lowercase;
 var noop;
+var nodeContains;
 var htmlParser;
 var htmlSanitizeWriter;
 
@@ -2313,6 +2324,11 @@ function $SanitizeProvider() {
   htmlParser = htmlParserImpl;
   htmlSanitizeWriter = htmlSanitizeWriterImpl;
 
+  nodeContains = window.Node.prototype.contains || /** @this */ function(arg) {
+    // eslint-disable-next-line no-bitwise
+    return !!(this.compareDocumentPosition(arg) & 16);
+  };
+
   // Regular Expressions for parsing tags and attributes
   var SURROGATE_PAIR_REGEXP = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
     // Match everything outside of normal chars and " (quote character)
@@ -2476,12 +2492,12 @@ function $SanitizeProvider() {
         if (node.nodeType === 1) {
           handler.end(node.nodeName.toLowerCase());
         }
-        nextNode = node.nextSibling;
+        nextNode = getNonDescendant('nextSibling', node);
         if (!nextNode) {
           while (nextNode == null) {
-            node = node.parentNode;
+            node = getNonDescendant('parentNode', node);
             if (node === inertBodyElement) break;
-            nextNode = node.nextSibling;
+            nextNode = getNonDescendant('nextSibling', node);
             if (node.nodeType === 1) {
               handler.end(node.nodeName.toLowerCase());
             }
@@ -2613,8 +2629,17 @@ function $SanitizeProvider() {
         stripCustomNsAttrs(nextNode);
       }
 
-      node = node.nextSibling;
+      node = getNonDescendant('nextSibling', node);
     }
+  }
+
+  function getNonDescendant(propName, node) {
+    // An element is clobbered if its `propName` property points to one of its descendants
+    var nextNode = node[propName];
+    if (nextNode && nodeContains.call(node, nextNode)) {
+      throw $sanitizeMinErr('elclob', 'Failed to sanitize html because the element is clobbered: {0}', node.outerHTML || node.outerText);
+    }
+    return nextNode;
   }
 }
 
@@ -2627,7 +2652,9 @@ function sanitizeText(chars) {
 
 
 // define ngSanitize module and register $sanitize service
-angular.module('ngSanitize', []).provider('$sanitize', $SanitizeProvider);
+angular.module('ngSanitize', [])
+  .provider('$sanitize', $SanitizeProvider)
+  .info({ angularVersion: '1.6.4' });
 
 /**
  * @ngdoc filter
@@ -2834,7 +2861,7 @@ module.exports = 'ngSanitize';
 
 },{"./angular-sanitize":5}],7:[function(require,module,exports){
 /**
- * @license AngularJS v1.6.2
+ * @license AngularJS v1.6.4
  * (c) 2010-2017 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -2873,31 +2900,29 @@ module.exports = 'ngSanitize';
 function minErr(module, ErrorConstructor) {
   ErrorConstructor = ErrorConstructor || Error;
   return function() {
-    var SKIP_INDEXES = 2;
-
-    var templateArgs = arguments,
-      code = templateArgs[0],
+    var code = arguments[0],
+      template = arguments[1],
       message = '[' + (module ? module + ':' : '') + code + '] ',
-      template = templateArgs[1],
+      templateArgs = sliceArgs(arguments, 2).map(function(arg) {
+        return toDebugString(arg, minErrConfig.objectMaxDepth);
+      }),
       paramPrefix, i;
 
     message += template.replace(/\{\d+\}/g, function(match) {
-      var index = +match.slice(1, -1),
-        shiftedIndex = index + SKIP_INDEXES;
+      var index = +match.slice(1, -1);
 
-      if (shiftedIndex < templateArgs.length) {
-        return toDebugString(templateArgs[shiftedIndex]);
+      if (index < templateArgs.length) {
+        return templateArgs[index];
       }
 
       return match;
     });
 
-    message += '\nhttp://errors.angularjs.org/1.6.2/' +
+    message += '\nhttp://errors.angularjs.org/1.6.4/' +
       (module ? module + '/' : '') + code;
 
-    for (i = SKIP_INDEXES, paramPrefix = '?'; i < templateArgs.length; i++, paramPrefix = '&') {
-      message += paramPrefix + 'p' + (i - SKIP_INDEXES) + '=' +
-        encodeURIComponent(toDebugString(templateArgs[i]));
+    for (i = 0, paramPrefix = '?'; i < templateArgs.length; i++, paramPrefix = '&') {
+      message += paramPrefix + 'p' + i + '=' + encodeURIComponent(templateArgs[i]);
     }
 
     return new ErrorConstructor(message);
@@ -2914,6 +2939,9 @@ function minErr(module, ErrorConstructor) {
   splice,
   push,
   toString,
+  minErrConfig,
+  errorHandlingConfig,
+  isValidObjectMaxDepth,
   ngMinErr,
   angularModule,
   uid,
@@ -2963,6 +2991,7 @@ function minErr(module, ErrorConstructor) {
   includes,
   arrayRemove,
   copy,
+  simpleCompare,
   equals,
   csp,
   jq,
@@ -3028,6 +3057,50 @@ var VALIDITY_STATE_PROPERTY = 'validity';
 
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+var minErrConfig = {
+  objectMaxDepth: 5
+};
+
+ /**
+ * @ngdoc function
+ * @name angular.errorHandlingConfig
+ * @module ng
+ * @kind function
+ *
+ * @description
+ * Configure several aspects of error handling in AngularJS if used as a setter or return the
+ * current configuration if used as a getter. The following options are supported:
+ *
+ * - **objectMaxDepth**: The maximum depth to which objects are traversed when stringified for error messages.
+ *
+ * Omitted or undefined options will leave the corresponding configuration values unchanged.
+ *
+ * @param {Object=} config - The configuration object. May only contain the options that need to be
+ *     updated. Supported keys:
+ *
+ * * `objectMaxDepth`  **{Number}** - The max depth for stringifying objects. Setting to a
+ *   non-positive or non-numeric value, removes the max depth limit.
+ *   Default: 5
+ */
+function errorHandlingConfig(config) {
+  if (isObject(config)) {
+    if (isDefined(config.objectMaxDepth)) {
+      minErrConfig.objectMaxDepth = isValidObjectMaxDepth(config.objectMaxDepth) ? config.objectMaxDepth : NaN;
+    }
+  } else {
+    return minErrConfig;
+  }
+}
+
+/**
+ * @private
+ * @param {Number} maxDepth
+ * @return {boolean}
+ */
+function isValidObjectMaxDepth(maxDepth) {
+  return isNumber(maxDepth) && maxDepth > 0;
+}
 
 /**
  * @ngdoc function
@@ -3751,9 +3824,10 @@ function arrayRemove(array, value) {
     </file>
   </example>
  */
-function copy(source, destination) {
+function copy(source, destination, maxDepth) {
   var stackSource = [];
   var stackDest = [];
+  maxDepth = isValidObjectMaxDepth(maxDepth) ? maxDepth : NaN;
 
   if (destination) {
     if (isTypedArray(destination) || isArrayBuffer(destination)) {
@@ -3776,35 +3850,39 @@ function copy(source, destination) {
 
     stackSource.push(source);
     stackDest.push(destination);
-    return copyRecurse(source, destination);
+    return copyRecurse(source, destination, maxDepth);
   }
 
-  return copyElement(source);
+  return copyElement(source, maxDepth);
 
-  function copyRecurse(source, destination) {
+  function copyRecurse(source, destination, maxDepth) {
+    maxDepth--;
+    if (maxDepth < 0) {
+      return '...';
+    }
     var h = destination.$$hashKey;
     var key;
     if (isArray(source)) {
       for (var i = 0, ii = source.length; i < ii; i++) {
-        destination.push(copyElement(source[i]));
+        destination.push(copyElement(source[i], maxDepth));
       }
     } else if (isBlankObject(source)) {
       // createMap() fast path --- Safe to avoid hasOwnProperty check because prototype chain is empty
       for (key in source) {
-        destination[key] = copyElement(source[key]);
+        destination[key] = copyElement(source[key], maxDepth);
       }
     } else if (source && typeof source.hasOwnProperty === 'function') {
       // Slow path, which must rely on hasOwnProperty
       for (key in source) {
         if (source.hasOwnProperty(key)) {
-          destination[key] = copyElement(source[key]);
+          destination[key] = copyElement(source[key], maxDepth);
         }
       }
     } else {
       // Slowest path --- hasOwnProperty can't be called as a method
       for (key in source) {
         if (hasOwnProperty.call(source, key)) {
-          destination[key] = copyElement(source[key]);
+          destination[key] = copyElement(source[key], maxDepth);
         }
       }
     }
@@ -3812,7 +3890,7 @@ function copy(source, destination) {
     return destination;
   }
 
-  function copyElement(source) {
+  function copyElement(source, maxDepth) {
     // Simple values
     if (!isObject(source)) {
       return source;
@@ -3841,7 +3919,7 @@ function copy(source, destination) {
     stackDest.push(destination);
 
     return needsRecurse
-      ? copyRecurse(source, destination)
+      ? copyRecurse(source, destination, maxDepth)
       : destination;
   }
 
@@ -3890,6 +3968,10 @@ function copy(source, destination) {
     }
   }
 }
+
+
+// eslint-disable-next-line no-self-compare
+function simpleCompare(a, b) { return a === b || (a !== a && b !== b); }
 
 
 /**
@@ -3972,7 +4054,7 @@ function equals(o1, o2) {
       }
     } else if (isDate(o1)) {
       if (!isDate(o2)) return false;
-      return equals(o1.getTime(), o2.getTime());
+      return simpleCompare(o1.getTime(), o2.getTime());
     } else if (isRegExp(o1)) {
       if (!isRegExp(o2)) return false;
       return o1.toString() === o2.toString();
@@ -4384,33 +4466,50 @@ function getNgAttribute(element, ngAttr) {
 
 function allowAutoBootstrap(document) {
   var script = document.currentScript;
-  var src = script && script.getAttribute('src');
 
-  if (!src) {
+  if (!script) {
+    // IE does not have `document.currentScript`
     return true;
   }
 
-  var link = document.createElement('a');
-  link.href = src;
-
-  if (document.location.origin === link.origin) {
-    // Same-origin resources are always allowed, even for non-whitelisted schemes.
-    return true;
+  // If the `currentScript` property has been clobbered just return false, since this indicates a probable attack
+  if (!(script instanceof window.HTMLScriptElement || script instanceof window.SVGScriptElement)) {
+    return false;
   }
-  // Disabled bootstrapping unless angular.js was loaded from a known scheme used on the web.
-  // This is to prevent angular.js bundled with browser extensions from being used to bypass the
-  // content security policy in web pages and other browser extensions.
-  switch (link.protocol) {
-    case 'http:':
-    case 'https:':
-    case 'ftp:':
-    case 'blob:':
-    case 'file:':
-    case 'data:':
+
+  var attributes = script.attributes;
+  var srcs = [attributes.getNamedItem('src'), attributes.getNamedItem('href'), attributes.getNamedItem('xlink:href')];
+
+  return srcs.every(function(src) {
+    if (!src) {
       return true;
-    default:
+    }
+    if (!src.value) {
       return false;
-  }
+    }
+
+    var link = document.createElement('a');
+    link.href = src.value;
+
+    if (document.location.origin === link.origin) {
+      // Same-origin resources are always allowed, even for non-whitelisted schemes.
+      return true;
+    }
+    // Disabled bootstrapping unless angular.js was loaded from a known scheme used on the web.
+    // This is to prevent angular.js bundled with browser extensions from being used to bypass the
+    // content security policy in web pages and other browser extensions.
+    switch (link.protocol) {
+      case 'http:':
+      case 'https:':
+      case 'ftp:':
+      case 'blob:':
+      case 'file:':
+      case 'data:':
+        return true;
+      default:
+        return false;
+    }
+  });
 }
 
 // Cached as it has to run during loading so that document.currentScript is available.
@@ -5007,6 +5106,9 @@ function setupModuleLoader(window) {
      * @returns {angular.Module} new module with the {@link angular.Module} api.
      */
     return function module(name, requires, configFn) {
+
+      var info = {};
+
       var assertNotHasOwnProperty = function(name, context) {
         if (name === 'hasOwnProperty') {
           throw ngMinErr('badname', 'hasOwnProperty is not a valid {0} name', context);
@@ -5041,6 +5143,45 @@ function setupModuleLoader(window) {
           _invokeQueue: invokeQueue,
           _configBlocks: configBlocks,
           _runBlocks: runBlocks,
+
+          /**
+           * @ngdoc method
+           * @name angular.Module#info
+           * @module ng
+           *
+           * @param {Object=} info Information about the module
+           * @returns {Object|Module} The current info object for this module if called as a getter,
+           *                          or `this` if called as a setter.
+           *
+           * @description
+           * Read and write custom information about this module.
+           * For example you could put the version of the module in here.
+           *
+           * ```js
+           * angular.module('myModule', []).info({ version: '1.0.0' });
+           * ```
+           *
+           * The version could then be read back out by accessing the module elsewhere:
+           *
+           * ```
+           * var version = angular.module('myModule').info().version;
+           * ```
+           *
+           * You can also retrieve this information during runtime via the
+           * {@link $injector#modules `$injector.modules`} property:
+           *
+           * ```js
+           * var version = $injector.modules['myModule'].info().version;
+           * ```
+           */
+          info: function(value) {
+            if (isDefined(value)) {
+              if (!isObject(value)) throw ngMinErr('aobj', 'Argument \'{0}\' must be an object', 'value');
+              info = value;
+              return this;
+            }
+            return info;
+          },
 
           /**
            * @ngdoc property
@@ -5320,9 +5461,15 @@ function shallowCopy(src, dst) {
 
 /* global toDebugString: true */
 
-function serializeObject(obj) {
+function serializeObject(obj, maxDepth) {
   var seen = [];
 
+  // There is no direct way to stringify object until reaching a specific depth
+  // and a very deep object can cause a performance issue, so we copy the object
+  // based on this specific depth and then stringify it.
+  if (isValidObjectMaxDepth(maxDepth)) {
+    obj = copy(obj, null, maxDepth);
+  }
   return JSON.stringify(obj, function(key, val) {
     val = toJsonReplacer(key, val);
     if (isObject(val)) {
@@ -5335,13 +5482,13 @@ function serializeObject(obj) {
   });
 }
 
-function toDebugString(obj) {
+function toDebugString(obj, maxDepth) {
   if (typeof obj === 'function') {
     return obj.toString().replace(/ \{[\s\S]*$/, '');
   } else if (isUndefined(obj)) {
     return 'undefined';
   } else if (typeof obj !== 'string') {
-    return serializeObject(obj);
+    return serializeObject(obj, maxDepth);
   }
   return obj;
 }
@@ -5462,16 +5609,17 @@ function toDebugString(obj) {
 var version = {
   // These placeholder strings will be replaced by grunt's `build` task.
   // They need to be double- or single-quoted.
-  full: '1.6.2',
+  full: '1.6.4',
   major: 1,
   minor: 6,
-  dot: 2,
-  codeName: 'llamacorn-lovehug'
+  dot: 4,
+  codeName: 'phenomenal-footnote'
 };
 
 
 function publishExternalAPI(angular) {
   extend(angular, {
+    'errorHandlingConfig': errorHandlingConfig,
     'bootstrap': bootstrap,
     'copy': copy,
     'extend': extend,
@@ -5610,7 +5758,8 @@ function publishExternalAPI(angular) {
         $$cookieReader: $$CookieReaderProvider
       });
     }
-  ]);
+  ])
+  .info({ angularVersion: '1.6.4' });
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -5814,12 +5963,6 @@ function jqLiteHasData(node) {
   return false;
 }
 
-function jqLiteCleanData(nodes) {
-  for (var i = 0, ii = nodes.length; i < ii; i++) {
-    jqLiteRemoveData(nodes[i]);
-  }
-}
-
 function jqLiteBuildFragment(html, context) {
   var tmp, tag, wrap,
       fragment = context.createDocumentFragment(),
@@ -5922,13 +6065,10 @@ function jqLiteClone(element) {
 }
 
 function jqLiteDealoc(element, onlyDescendants) {
-  if (!onlyDescendants) jqLiteRemoveData(element);
+  if (!onlyDescendants && jqLiteAcceptsData(element)) jqLite.cleanData([element]);
 
   if (element.querySelectorAll) {
-    var descendants = element.querySelectorAll('*');
-    for (var i = 0, l = descendants.length; i < l; i++) {
-      jqLiteRemoveData(descendants[i]);
-    }
+    jqLite.cleanData(element.querySelectorAll('*'));
   }
 }
 
@@ -6226,7 +6366,11 @@ forEach({
   data: jqLiteData,
   removeData: jqLiteRemoveData,
   hasData: jqLiteHasData,
-  cleanData: jqLiteCleanData
+  cleanData: function jqLiteCleanData(nodes) {
+    for (var i = 0, ii = nodes.length; i < ii; i++) {
+      jqLiteRemoveData(nodes[i]);
+    }
+  }
 }, function(fn, name) {
   JQLite[name] = fn;
 });
@@ -7002,6 +7146,28 @@ function annotate(fn, strictDi, name) {
  */
 
 /**
+ * @ngdoc property
+ * @name $injector#modules
+ * @type {Object}
+ * @description
+ * A hash containing all the modules that have been loaded into the
+ * $injector.
+ *
+ * You can use this property to find out information about a module via the
+ * {@link angular.Module#info `myModule.info(...)`} method.
+ *
+ * For example:
+ *
+ * ```
+ * var info = $injector.modules['ngAnimate'].info();
+ * ```
+ *
+ * **Do not use this property to attempt to modify the modules after the application
+ * has been bootstrapped.**
+ */
+
+
+/**
  * @ngdoc method
  * @name $injector#get
  *
@@ -7494,6 +7660,7 @@ function createInjector(modulesToLoad, strictDi) {
       instanceInjector = protoInstanceInjector;
 
   providerCache['$injector' + providerSuffix] = { $get: valueFn(protoInstanceInjector) };
+  instanceInjector.modules = providerInjector.modules = createMap();
   var runBlocks = loadModules(modulesToLoad);
   instanceInjector = protoInstanceInjector.get('$injector');
   instanceInjector.strictDi = strictDi;
@@ -7589,6 +7756,7 @@ function createInjector(modulesToLoad, strictDi) {
       try {
         if (isString(module)) {
           moduleFn = angularModule(module);
+          instanceInjector.modules[module] = moduleFn;
           runBlocks = runBlocks.concat(loadModules(moduleFn.requires)).concat(moduleFn._runBlocks);
           runInvokeQueue(moduleFn._invokeQueue);
           runInvokeQueue(moduleFn._configBlocks);
@@ -8179,6 +8347,7 @@ var $$CoreAnimateQueueProvider = /** @this */ function() {
  */
 var $AnimateProvider = ['$provide', /** @this */ function($provide) {
   var provider = this;
+  var classNameFilter = null;
 
   this.$$registeredAnimations = Object.create(null);
 
@@ -8247,15 +8416,16 @@ var $AnimateProvider = ['$provide', /** @this */ function($provide) {
    */
   this.classNameFilter = function(expression) {
     if (arguments.length === 1) {
-      this.$$classNameFilter = (expression instanceof RegExp) ? expression : null;
-      if (this.$$classNameFilter) {
-        var reservedRegex = new RegExp('(\\s+|\\/)' + NG_ANIMATE_CLASSNAME + '(\\s+|\\/)');
-        if (reservedRegex.test(this.$$classNameFilter.toString())) {
-          throw $animateMinErr('nongcls','$animateProvider.classNameFilter(regex) prohibits accepting a regex value which matches/contains the "{0}" CSS class.', NG_ANIMATE_CLASSNAME);
+      classNameFilter = (expression instanceof RegExp) ? expression : null;
+      if (classNameFilter) {
+        var reservedRegex = new RegExp('[(\\s|\\/)]' + NG_ANIMATE_CLASSNAME + '[(\\s|\\/)]');
+        if (reservedRegex.test(classNameFilter.toString())) {
+          classNameFilter = null;
+          throw $animateMinErr('nongcls', '$animateProvider.classNameFilter(regex) prohibits accepting a regex value which matches/contains the "{0}" CSS class.', NG_ANIMATE_CLASSNAME);
         }
       }
     }
-    return this.$$classNameFilter;
+    return classNameFilter;
   };
 
   this.$get = ['$$animateQueue', function($$animateQueue) {
@@ -9173,8 +9343,8 @@ function Browser(window, document, $log, $sniffer) {
   self.onUrlChange = function(callback) {
     // TODO(vojta): refactor to use node's syntax for events
     if (!urlChangeInit) {
-      // We listen on both (hashchange/popstate) when available, as some browsers (e.g. Opera)
-      // don't fire popstate when user change the address bar and don't fire hashchange when url
+      // We listen on both (hashchange/popstate) when available, as some browsers don't
+      // fire popstate when user changes the address bar and don't fire hashchange when url
       // changed by push/replaceState
 
       // html5 history api - popstate event
@@ -9963,10 +10133,12 @@ function $TemplateCacheProvider() {
  * the directive's element. If multiple directives on the same element request a new scope,
  * only one new scope is created.
  *
- * * **`{...}` (an object hash):** A new "isolate" scope is created for the directive's element. The
- * 'isolate' scope differs from normal scope in that it does not prototypically inherit from its parent
- * scope. This is useful when creating reusable components, which should not accidentally read or modify
- * data in the parent scope.
+ * * **`{...}` (an object hash):** A new "isolate" scope is created for the directive's template.
+ * The 'isolate' scope differs from normal scope in that it does not prototypically
+ * inherit from its parent scope. This is useful when creating reusable components, which should not
+ * accidentally read or modify data in the parent scope. Note that an isolate scope
+ * directive without a `template` or `templateUrl` will not apply the isolate scope
+ * to its children elements.
  *
  * The 'isolate' scope object hash defines a set of local scope properties derived from attributes on the
  * directive's element. These local properties are useful for aliasing values for templates. The keys in
@@ -10059,9 +10231,9 @@ function $TemplateCacheProvider() {
  * initialized.
  *
  * <div class="alert alert-warning">
- * **Deprecation warning:** although bindings for non-ES6 class controllers are currently
- * bound to `this` before the controller constructor is called, this use is now deprecated. Please place initialization
- * code that relies upon bindings inside a `$onInit` method on the controller, instead.
+ * **Deprecation warning:** if `$compileProcvider.preAssignBindingsEnabled(true)` was called, bindings for non-ES6 class
+ * controllers are bound to `this` before the controller constructor is called but this use is now deprecated. Please
+ * place initialization code that relies upon bindings inside a `$onInit` method on the controller, instead.
  * </div>
  *
  * It is also possible to set `bindToController` to an object hash with the same format as the `scope` property.
@@ -11074,7 +11246,14 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
    *
    * If disabled (false), the compiler calls the constructor first before assigning bindings.
    *
-   * The default value is true in Angular 1.5.x but will switch to false in Angular 1.6.x.
+   * The default value is false.
+   *
+   * @deprecated
+   * sinceVersion="1.6.0"
+   * removeVersion="1.7.0"
+   *
+   * This method and the option to assign the bindings before calling the controller's constructor
+   * will be removed in v1.7.0.
    */
   var preAssignBindingsEnabled = false;
   this.preAssignBindingsEnabled = function(enabled) {
@@ -13164,8 +13343,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
             if (parentGet.literal) {
               compare = equals;
             } else {
-              // eslint-disable-next-line no-self-compare
-              compare = function simpleCompare(a, b) { return a === b || (a !== a && b !== b); };
+              compare = simpleCompare;
             }
             parentSet = parentGet.assign || function() {
               // reset the change, or we will throw this exception on every $digest
@@ -13240,9 +13418,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
       });
 
       function recordChanges(key, currentValue, previousValue) {
-        if (isFunction(destination.$onChanges) && currentValue !== previousValue &&
-            // eslint-disable-next-line no-self-compare
-            (currentValue === currentValue || previousValue === previousValue)) {
+        if (isFunction(destination.$onChanges) && !simpleCompare(currentValue, previousValue)) {
           // If we have not already scheduled the top level onChangesQueue handler then do so now
           if (!onChangesQueue) {
             scope.$$postDigest(flushOnChangesQueue);
@@ -13857,7 +14033,12 @@ function defaultHttpResponseTransform(data, headers) {
     if (tempData) {
       var contentType = headers('Content-Type');
       if ((contentType && (contentType.indexOf(APPLICATION_JSON) === 0)) || isJsonLike(tempData)) {
-        data = fromJson(tempData);
+        try {
+          data = fromJson(tempData);
+        } catch (e) {
+          throw $httpMinErr('baddata', 'Data must be a valid JSON object. Received: "{0}". ' +
+          'Parse error: "{1}"', data, e);
+        }
       }
     }
   }
@@ -15762,7 +15943,7 @@ function $IntervalProvider() {
       * @param {boolean=} [invokeApply=true] If set to `false` skips model dirty checking, otherwise
       *   will invoke `fn` within the {@link ng.$rootScope.Scope#$apply $apply} block.
       * @param {...*=} Pass additional parameters to the executed function.
-      * @returns {promise} A promise which will be notified on each iteration.
+      * @returns {promise} A promise which will be notified on each iteration. It will resolve once all iterations of the interval complete.
       *
       * @example
       * <example module="intervalExample" name="interval-service">
@@ -15934,8 +16115,8 @@ function $IntervalProvider() {
  * how they vary compared to the requested url.
  */
 var $jsonpCallbacksProvider = /** @this */ function() {
-  this.$get = ['$window', function($window) {
-    var callbacks = $window.angular.callbacks;
+  this.$get = function() {
+    var callbacks = angular.callbacks;
     var callbackMap = {};
 
     function createCallback(callbackId) {
@@ -16002,7 +16183,7 @@ var $jsonpCallbacksProvider = /** @this */ function() {
         delete callbackMap[callbackPath];
       }
     };
-  }];
+  };
 };
 
 /**
@@ -17109,6 +17290,15 @@ function $LogProvider() {
   };
 
   this.$get = ['$window', function($window) {
+    // Support: IE 9-11, Edge 12-14+
+    // IE/Edge display errors in such a way that it requires the user to click in 4 places
+    // to see the stack trace. There is no way to feature-detect it so there's a chance
+    // of the user agent sniffing to go wrong but since it's only about logging, this shouldn't
+    // break apps. Other browsers display errors in a sensible way and some of them map stack
+    // traces along source maps if available so it makes sense to let browsers display it
+    // as they want.
+    var formatStackTrace = msie || /\bEdge\//.test($window.navigator && $window.navigator.userAgent);
+
     return {
       /**
        * @ngdoc method
@@ -17166,7 +17356,7 @@ function $LogProvider() {
 
     function formatError(arg) {
       if (arg instanceof Error) {
-        if (arg.stack) {
+        if (arg.stack && formatStackTrace) {
           arg = (arg.message && arg.stack.indexOf(arg.message) === -1)
               ? 'Error: ' + arg.message + '\n' + arg.stack
               : arg.stack;
@@ -17976,15 +18166,13 @@ function isConstant(ast) {
   return ast.constant;
 }
 
-function ASTCompiler(astBuilder, $filter) {
-  this.astBuilder = astBuilder;
+function ASTCompiler($filter) {
   this.$filter = $filter;
 }
 
 ASTCompiler.prototype = {
-  compile: function(expression) {
+  compile: function(ast) {
     var self = this;
-    var ast = this.astBuilder.ast(expression);
     this.state = {
       nextId: 0,
       filters: {},
@@ -18039,8 +18227,6 @@ ASTCompiler.prototype = {
           ifDefined,
           plusFn);
     this.state = this.stage = undefined;
-    fn.literal = isLiteral(ast);
-    fn.constant = isConstant(ast);
     return fn;
   },
 
@@ -18443,15 +18629,13 @@ ASTCompiler.prototype = {
 };
 
 
-function ASTInterpreter(astBuilder, $filter) {
-  this.astBuilder = astBuilder;
+function ASTInterpreter($filter) {
   this.$filter = $filter;
 }
 
 ASTInterpreter.prototype = {
-  compile: function(expression) {
+  compile: function(ast) {
     var self = this;
-    var ast = this.astBuilder.ast(expression);
     findConstantAndWatchExpressions(ast, self.$filter);
     var assignable;
     var assign;
@@ -18490,8 +18674,6 @@ ASTInterpreter.prototype = {
     if (inputs) {
       fn.inputs = inputs;
     }
-    fn.literal = isLiteral(ast);
-    fn.constant = isConstant(ast);
     return fn;
   },
 
@@ -18820,20 +19002,21 @@ ASTInterpreter.prototype = {
 /**
  * @constructor
  */
-var Parser = function Parser(lexer, $filter, options) {
-  this.lexer = lexer;
-  this.$filter = $filter;
-  this.options = options;
+function Parser(lexer, $filter, options) {
   this.ast = new AST(lexer, options);
-  this.astCompiler = options.csp ? new ASTInterpreter(this.ast, $filter) :
-                                   new ASTCompiler(this.ast, $filter);
-};
+  this.astCompiler = options.csp ? new ASTInterpreter($filter) :
+                                   new ASTCompiler($filter);
+}
 
 Parser.prototype = {
   constructor: Parser,
 
   parse: function(text) {
-    return this.astCompiler.compile(text);
+    var ast = this.ast.ast(text);
+    var fn = this.astCompiler.compile(ast);
+    fn.literal = isLiteral(ast);
+    fn.constant = isConstant(ast);
+    return fn;
   }
 };
 
@@ -18979,8 +19162,8 @@ function $ParseProvider() {
             if (parsedExpression.constant) {
               parsedExpression.$$watchDelegate = constantWatchDelegate;
             } else if (oneTime) {
-              parsedExpression.$$watchDelegate = parsedExpression.literal ?
-                  oneTimeLiteralWatchDelegate : oneTimeWatchDelegate;
+              parsedExpression.oneTime = true;
+              parsedExpression.$$watchDelegate = oneTimeWatchDelegate;
             } else if (parsedExpression.inputs) {
               parsedExpression.$$watchDelegate = inputsWatchDelegate;
             }
@@ -19002,14 +19185,14 @@ function $ParseProvider() {
         return newValue === oldValueOfValue;
       }
 
-      if (typeof newValue === 'object' && !compareObjectIdentity) {
+      if (typeof newValue === 'object') {
 
         // attempt to convert the value to a primitive type
         // TODO(docs): add a note to docs that by implementing valueOf even objects and arrays can
         //             be cheaply dirty-checked
         newValue = getValueOf(newValue);
 
-        if (typeof newValue === 'object') {
+        if (typeof newValue === 'object' && !compareObjectIdentity) {
           // objects/arrays are not supported - deep-watching them would be too expensive
           return false;
         }
@@ -19066,6 +19249,7 @@ function $ParseProvider() {
     }
 
     function oneTimeWatchDelegate(scope, listener, objectEquality, parsedExpression, prettyPrintExpression) {
+      var isDone = parsedExpression.literal ? isAllDefined : isDefined;
       var unwatch, lastValue;
       if (parsedExpression.inputs) {
         unwatch = inputsWatchDelegate(scope, oneTimeListener, objectEquality, parsedExpression, prettyPrintExpression);
@@ -19082,9 +19266,9 @@ function $ParseProvider() {
         if (isFunction(listener)) {
           listener(value, old, scope);
         }
-        if (isDefined(value)) {
+        if (isDone(value)) {
           scope.$$postDigest(function() {
-            if (isDefined(lastValue)) {
+            if (isDone(lastValue)) {
               unwatch();
             }
           });
@@ -19092,31 +19276,12 @@ function $ParseProvider() {
       }
     }
 
-    function oneTimeLiteralWatchDelegate(scope, listener, objectEquality, parsedExpression) {
-      var unwatch, lastValue;
-      unwatch = scope.$watch(function oneTimeWatch(scope) {
-        return parsedExpression(scope);
-      }, function oneTimeListener(value, old, scope) {
-        lastValue = value;
-        if (isFunction(listener)) {
-          listener(value, old, scope);
-        }
-        if (isAllDefined(value)) {
-          scope.$$postDigest(function() {
-            if (isAllDefined(lastValue)) unwatch();
-          });
-        }
-      }, objectEquality);
-
-      return unwatch;
-
-      function isAllDefined(value) {
-        var allDefined = true;
-        forEach(value, function(val) {
-          if (!isDefined(val)) allDefined = false;
-        });
-        return allDefined;
-      }
+    function isAllDefined(value) {
+      var allDefined = true;
+      forEach(value, function(val) {
+        if (!isDefined(val)) allDefined = false;
+      });
+      return allDefined;
     }
 
     function constantWatchDelegate(scope, listener, objectEquality, parsedExpression) {
@@ -19132,26 +19297,31 @@ function $ParseProvider() {
       var watchDelegate = parsedExpression.$$watchDelegate;
       var useInputs = false;
 
-      var regularWatch =
-          watchDelegate !== oneTimeLiteralWatchDelegate &&
-          watchDelegate !== oneTimeWatchDelegate;
+      var isDone = parsedExpression.literal ? isAllDefined : isDefined;
 
-      var fn = regularWatch ? function regularInterceptedExpression(scope, locals, assign, inputs) {
+      function regularInterceptedExpression(scope, locals, assign, inputs) {
         var value = useInputs && inputs ? inputs[0] : parsedExpression(scope, locals, assign, inputs);
         return interceptorFn(value, scope, locals);
-      } : function oneTimeInterceptedExpression(scope, locals, assign, inputs) {
-        var value = parsedExpression(scope, locals, assign, inputs);
+      }
+
+      function oneTimeInterceptedExpression(scope, locals, assign, inputs) {
+        var value = useInputs && inputs ? inputs[0] : parsedExpression(scope, locals, assign, inputs);
         var result = interceptorFn(value, scope, locals);
         // we only return the interceptor's result if the
         // initial value is defined (for bind-once)
-        return isDefined(value) ? result : value;
-      };
+        return isDone(value) ? result : value;
+      }
 
-      // Propagate $$watchDelegates other then inputsWatchDelegate
+      var fn = parsedExpression.oneTime ? oneTimeInterceptedExpression : regularInterceptedExpression;
+
+      // Propogate the literal/oneTime attributes
+      fn.literal = parsedExpression.literal;
+      fn.oneTime = parsedExpression.oneTime;
+
+      // Propagate or create inputs / $$watchDelegates
       useInputs = !parsedExpression.inputs;
-      if (parsedExpression.$$watchDelegate &&
-          parsedExpression.$$watchDelegate !== inputsWatchDelegate) {
-        fn.$$watchDelegate = parsedExpression.$$watchDelegate;
+      if (watchDelegate && watchDelegate !== inputsWatchDelegate) {
+        fn.$$watchDelegate = watchDelegate;
         fn.inputs = parsedExpression.inputs;
       } else if (!interceptorFn.$stateful) {
         // If there is an interceptor, but no watchDelegate then treat the interceptor like
@@ -20654,12 +20824,13 @@ function $RootScopeProvider() {
           current = target;
 
           // It's safe for asyncQueuePosition to be a local variable here because this loop can't
-          // be reentered recursively. Calling $digest from a function passed to $applyAsync would
+          // be reentered recursively. Calling $digest from a function passed to $evalAsync would
           // lead to a '$digest already in progress' error.
           for (var asyncQueuePosition = 0; asyncQueuePosition < asyncQueue.length; asyncQueuePosition++) {
             try {
               asyncTask = asyncQueue[asyncQueuePosition];
-              asyncTask.scope.$eval(asyncTask.expression, asyncTask.locals);
+              fn = asyncTask.fn;
+              fn(asyncTask.scope, asyncTask.locals);
             } catch (e) {
               $exceptionHandler(e);
             }
@@ -20893,7 +21064,7 @@ function $RootScopeProvider() {
           });
         }
 
-        asyncQueue.push({scope: this, expression: $parse(expr), locals: locals});
+        asyncQueue.push({scope: this, fn: $parse(expr), locals: locals});
       },
 
       $$postDigest: function(fn) {
@@ -21367,12 +21538,21 @@ function $$SanitizeUriProvider() {
 var $sceMinErr = minErr('$sce');
 
 var SCE_CONTEXTS = {
+  // HTML is used when there's HTML rendered (e.g. ng-bind-html, iframe srcdoc binding).
   HTML: 'html',
+
+  // Style statements or stylesheets. Currently unused in AngularJS.
   CSS: 'css',
+
+  // An URL used in a context where it does not refer to a resource that loads code. Currently
+  // unused in AngularJS.
   URL: 'url',
-  // RESOURCE_URL is a subtype of URL used in contexts where a privileged resource is sourced from a
-  // url.  (e.g. ng-include, script src, templateUrl)
+
+  // RESOURCE_URL is a subtype of URL used where the referred-to resource could be interpreted as
+  // code. (e.g. ng-include, script src binding, templateUrl)
   RESOURCE_URL: 'resourceUrl',
+
+  // Script. Currently unused in AngularJS.
   JS: 'js'
 };
 
@@ -21434,6 +21614,16 @@ function adjustMatchers(matchers) {
  * `$sceDelegate` is a service that is used by the `$sce` service to provide {@link ng.$sce Strict
  * Contextual Escaping (SCE)} services to AngularJS.
  *
+ * For an overview of this service and the functionnality it provides in AngularJS, see the main
+ * page for {@link ng.$sce SCE}. The current page is targeted for developers who need to alter how
+ * SCE works in their application, which shouldn't be needed in most cases.
+ *
+ * <div class="alert alert-danger">
+ * AngularJS strongly relies on contextual escaping for the security of bindings: disabling or
+ * modifying this might cause cross site scripting (XSS) vulnerabilities. For libraries owners,
+ * changes to this service will also influence users, so be extra careful and document your changes.
+ * </div>
+ *
  * Typically, you would configure or override the {@link ng.$sceDelegate $sceDelegate} instead of
  * the `$sce` service to customize the way Strict Contextual Escaping works in AngularJS.  This is
  * because, while the `$sce` provides numerous shorthand methods, etc., you really only need to
@@ -21459,10 +21649,14 @@ function adjustMatchers(matchers) {
  * @description
  *
  * The `$sceDelegateProvider` provider allows developers to configure the {@link ng.$sceDelegate
- * $sceDelegate} service.  This allows one to get/set the whitelists and blacklists used to ensure
- * that the URLs used for sourcing Angular templates are safe.  Refer {@link
- * ng.$sceDelegateProvider#resourceUrlWhitelist $sceDelegateProvider.resourceUrlWhitelist} and
- * {@link ng.$sceDelegateProvider#resourceUrlBlacklist $sceDelegateProvider.resourceUrlBlacklist}
+ * $sceDelegate service}, used as a delegate for {@link ng.$sce Strict Contextual Escaping (SCE)}.
+ *
+ * The `$sceDelegateProvider` allows one to get/set the whitelists and blacklists used to ensure
+ * that the URLs used for sourcing AngularJS templates and other script-running URLs are safe (all
+ * places that use the `$sce.RESOURCE_URL` context). See
+ * {@link ng.$sceDelegateProvider#resourceUrlWhitelist $sceDelegateProvider.resourceUrlWhitelist}
+ * and
+ * {@link ng.$sceDelegateProvider#resourceUrlBlacklist $sceDelegateProvider.resourceUrlBlacklist},
  *
  * For the general details about this service in Angular, read the main page for {@link ng.$sce
  * Strict Contextual Escaping (SCE)}.
@@ -21491,6 +21685,13 @@ function adjustMatchers(matchers) {
  *    ]);
  *  });
  * ```
+ * Note that an empty whitelist will block every resource URL from being loaded, and will require
+ * you to manually mark each one as trusted with `$sce.trustAsResourceUrl`. However, templates
+ * requested by {@link ng.$templateRequest $templateRequest} that are present in
+ * {@link ng.$templateCache $templateCache} will not go through this check. If you have a mechanism
+ * to populate your templates in that cache at config time, then it is a good idea to remove 'self'
+ * from that whitelist. This helps to mitigate the security impact of certain types of issues, like
+ * for instance attacker-controlled `ng-includes`.
  */
 
 function $SceDelegateProvider() {
@@ -21506,23 +21707,23 @@ function $SceDelegateProvider() {
    * @kind function
    *
    * @param {Array=} whitelist When provided, replaces the resourceUrlWhitelist with the value
-   *    provided.  This must be an array or null.  A snapshot of this array is used so further
-   *    changes to the array are ignored.
+   *     provided.  This must be an array or null.  A snapshot of this array is used so further
+   *     changes to the array are ignored.
+   *     Follow {@link ng.$sce#resourceUrlPatternItem this link} for a description of the items
+   *     allowed in this array.
    *
-   *    Follow {@link ng.$sce#resourceUrlPatternItem this link} for a description of the items
-   *    allowed in this array.
+   * @return {Array} The currently set whitelist array.
    *
-   *    <div class="alert alert-warning">
-   *    **Note:** an empty whitelist array will block all URLs!
-   *    </div>
-   *
-   * @return {Array} the currently set whitelist array.
+   * @description
+   * Sets/Gets the whitelist of trusted resource URLs.
    *
    * The **default value** when no whitelist has been explicitly set is `['self']` allowing only
    * same origin resource requests.
    *
-   * @description
-   * Sets/Gets the whitelist of trusted resource URLs.
+   * <div class="alert alert-warning">
+   * **Note:** the default whitelist of 'self' is not recommended if your app shares its origin
+   * with other apps! It is a good idea to limit it to only your application's directory.
+   * </div>
    */
   this.resourceUrlWhitelist = function(value) {
     if (arguments.length) {
@@ -21537,25 +21738,23 @@ function $SceDelegateProvider() {
    * @kind function
    *
    * @param {Array=} blacklist When provided, replaces the resourceUrlBlacklist with the value
-   *    provided.  This must be an array or null.  A snapshot of this array is used so further
-   *    changes to the array are ignored.
+   *     provided.  This must be an array or null.  A snapshot of this array is used so further
+   *     changes to the array are ignored.</p><p>
+   *     Follow {@link ng.$sce#resourceUrlPatternItem this link} for a description of the items
+   *     allowed in this array.</p><p>
+   *     The typical usage for the blacklist is to **block
+   *     [open redirects](http://cwe.mitre.org/data/definitions/601.html)** served by your domain as
+   *     these would otherwise be trusted but actually return content from the redirected domain.
+   *     </p><p>
+   *     Finally, **the blacklist overrides the whitelist** and has the final say.
    *
-   *    Follow {@link ng.$sce#resourceUrlPatternItem this link} for a description of the items
-   *    allowed in this array.
-   *
-   *    The typical usage for the blacklist is to **block
-   *    [open redirects](http://cwe.mitre.org/data/definitions/601.html)** served by your domain as
-   *    these would otherwise be trusted but actually return content from the redirected domain.
-   *
-   *    Finally, **the blacklist overrides the whitelist** and has the final say.
-   *
-   * @return {Array} the currently set blacklist array.
-   *
-   * The **default value** when no whitelist has been explicitly set is the empty array (i.e. there
-   * is no blacklist.)
+   * @return {Array} The currently set blacklist array.
    *
    * @description
    * Sets/Gets the blacklist of trusted resource URLs.
+   *
+   * The **default value** when no whitelist has been explicitly set is the empty array (i.e. there
+   * is no blacklist.)
    */
 
   this.resourceUrlBlacklist = function(value) {
@@ -21639,17 +21838,24 @@ function $SceDelegateProvider() {
      * @name $sceDelegate#trustAs
      *
      * @description
-     * Returns an object that is trusted by angular for use in specified strict
-     * contextual escaping contexts (such as ng-bind-html, ng-include, any src
-     * attribute interpolation, any dom event binding attribute interpolation
-     * such as for onclick,  etc.) that uses the provided value.
-     * See {@link ng.$sce $sce} for enabling strict contextual escaping.
+     * Returns a trusted representation of the parameter for the specified context. This trusted
+     * object will later on be used as-is, without any security check, by bindings or directives
+     * that require this security context.
+     * For instance, marking a string as trusted for the `$sce.HTML` context will entirely bypass
+     * the potential `$sanitize` call in corresponding `$sce.HTML` bindings or directives, such as
+     * `ng-bind-html`. Note that in most cases you won't need to call this function: if you have the
+     * sanitizer loaded, passing the value itself will render all the HTML that does not pose a
+     * security risk.
      *
-     * @param {string} type The kind of context in which this value is safe for use.  e.g. url,
-     *   resourceUrl, html, js and css.
-     * @param {*} value The value that that should be considered trusted/safe.
-     * @returns {*} A value that can be used to stand in for the provided `value` in places
-     * where Angular expects a $sce.trustAs() return value.
+     * See {@link ng.$sceDelegate#getTrusted getTrusted} for the function that will consume those
+     * trusted values, and {@link ng.$sce $sce} for general documentation about strict contextual
+     * escaping.
+     *
+     * @param {string} type The context in which this value is safe for use, e.g. `$sce.URL`,
+     *     `$sce.RESOURCE_URL`, `$sce.HTML`, `$sce.JS` or `$sce.CSS`.
+     *
+     * @param {*} value The value that should be considered trusted.
+     * @return {*} A trusted representation of value, that can be used in the given context.
      */
     function trustAs(type, trustedValue) {
       var Constructor = (byType.hasOwnProperty(type) ? byType[type] : null);
@@ -21681,11 +21887,11 @@ function $SceDelegateProvider() {
      * ng.$sceDelegate#trustAs `$sceDelegate.trustAs`}.
      *
      * If the passed parameter is not a value that had been returned by {@link
-     * ng.$sceDelegate#trustAs `$sceDelegate.trustAs`}, returns it as-is.
+     * ng.$sceDelegate#trustAs `$sceDelegate.trustAs`}, it must be returned as-is.
      *
      * @param {*} value The result of a prior {@link ng.$sceDelegate#trustAs `$sceDelegate.trustAs`}
-     *      call or anything else.
-     * @returns {*} The `value` that was originally provided to {@link ng.$sceDelegate#trustAs
+     *     call or anything else.
+     * @return {*} The `value` that was originally provided to {@link ng.$sceDelegate#trustAs
      *     `$sceDelegate.trustAs`} if `value` is the result of such a call.  Otherwise, returns
      *     `value` unchanged.
      */
@@ -21702,33 +21908,38 @@ function $SceDelegateProvider() {
      * @name $sceDelegate#getTrusted
      *
      * @description
-     * Takes the result of a {@link ng.$sceDelegate#trustAs `$sceDelegate.trustAs`} call and
-     * returns the originally supplied value if the queried context type is a supertype of the
-     * created type.  If this condition isn't satisfied, throws an exception.
+     * Takes any input, and either returns a value that's safe to use in the specified context, or
+     * throws an exception.
      *
-     * <div class="alert alert-danger">
-     * Disabling auto-escaping is extremely dangerous, it usually creates a Cross Site Scripting
-     * (XSS) vulnerability in your application.
-     * </div>
+     * In practice, there are several cases. When given a string, this function runs checks
+     * and sanitization to make it safe without prior assumptions. When given the result of a {@link
+     * ng.$sceDelegate#trustAs `$sceDelegate.trustAs`} call, it returns the originally supplied
+     * value if that value's context is valid for this call's context. Finally, this function can
+     * also throw when there is no way to turn `maybeTrusted` in a safe value (e.g., no sanitization
+     * is available or possible.)
      *
-     * @param {string} type The kind of context in which this value is to be used.
+     * @param {string} type The context in which this value is to be used (such as `$sce.HTML`).
      * @param {*} maybeTrusted The result of a prior {@link ng.$sceDelegate#trustAs
-     *     `$sceDelegate.trustAs`} call.
-     * @returns {*} The value the was originally provided to {@link ng.$sceDelegate#trustAs
-     *     `$sceDelegate.trustAs`} if valid in this context.  Otherwise, throws an exception.
+     *     `$sceDelegate.trustAs`} call, or anything else (which will not be considered trusted.)
+     * @return {*} A version of the value that's safe to use in the given context, or throws an
+     *     exception if this is impossible.
      */
     function getTrusted(type, maybeTrusted) {
       if (maybeTrusted === null || isUndefined(maybeTrusted) || maybeTrusted === '') {
         return maybeTrusted;
       }
       var constructor = (byType.hasOwnProperty(type) ? byType[type] : null);
+      // If maybeTrusted is a trusted class instance or subclass instance, then unwrap and return
+      // as-is.
       if (constructor && maybeTrusted instanceof constructor) {
         return maybeTrusted.$$unwrapTrustedValue();
       }
-      // If we get here, then we may only take one of two actions.
-      // 1. sanitize the value for the requested type, or
-      // 2. throw an exception.
+      // Otherwise, if we get here, then we may either make it safe, or throw an exception. This
+      // depends on the context: some are sanitizatible (HTML), some use whitelists (RESOURCE_URL),
+      // some are impossible to do (JS). This step isn't implemented for CSS and URL, as AngularJS
+      // has no corresponding sinks.
       if (type === SCE_CONTEXTS.RESOURCE_URL) {
+        // RESOURCE_URL uses a whitelist.
         if (isResourceUrlAllowedByPolicy(maybeTrusted)) {
           return maybeTrusted;
         } else {
@@ -21737,8 +21948,10 @@ function $SceDelegateProvider() {
               maybeTrusted.toString());
         }
       } else if (type === SCE_CONTEXTS.HTML) {
+        // htmlSanitizer throws its own error when no sanitizer is available.
         return htmlSanitizer(maybeTrusted);
       }
+      // Default error when the $sce service has no way to make the input safe.
       throw $sceMinErr('unsafe', 'Attempting to use an unsafe value in a safe context.');
     }
 
@@ -21774,21 +21987,27 @@ function $SceDelegateProvider() {
  *
  * # Strict Contextual Escaping
  *
- * Strict Contextual Escaping (SCE) is a mode in which AngularJS requires bindings in certain
- * contexts to result in a value that is marked as safe to use for that context.  One example of
- * such a context is binding arbitrary html controlled by the user via `ng-bind-html`.  We refer
- * to these contexts as privileged or SCE contexts.
+ * Strict Contextual Escaping (SCE) is a mode in which AngularJS constrains bindings to only render
+ * trusted values. Its goal is to assist in writing code in a way that (a) is secure by default, and
+ * (b) makes auditing for security vulnerabilities such as XSS, clickjacking, etc. a lot easier.
  *
- * As of version 1.2, Angular ships with SCE enabled by default.
+ * ## Overview
  *
- * Note:  When enabled (the default), IE<11 in quirks mode is not supported.  In this mode, IE<11 allow
- * one to execute arbitrary javascript by the use of the expression() syntax.  Refer
- * <http://blogs.msdn.com/b/ie/archive/2008/10/16/ending-expressions.aspx> to learn more about them.
- * You can ensure your document is in standards mode and not quirks mode by adding `<!doctype html>`
- * to the top of your HTML document.
+ * To systematically block XSS security bugs, AngularJS treats all values as untrusted by default in
+ * HTML or sensitive URL bindings. When binding untrusted values, AngularJS will automatically
+ * run security checks on them (sanitizations, whitelists, depending on context), or throw when it
+ * cannot guarantee the security of the result. That behavior depends strongly on contexts: HTML
+ * can be sanitized, but template URLs cannot, for instance.
  *
- * SCE assists in writing code in a way that (a) is secure by default and (b) makes auditing for
- * security vulnerabilities such as XSS, clickjacking, etc. a lot easier.
+ * To illustrate this, consider the `ng-bind-html` directive. It renders its value directly as HTML:
+ * we call that the *context*. When given an untrusted input, AngularJS will attempt to sanitize it
+ * before rendering if a sanitizer is available, and throw otherwise. To bypass sanitization and
+ * render the input as-is, you will need to mark it as trusted for that context before attempting
+ * to bind it.
+ *
+ * As of version 1.2, AngularJS ships with SCE enabled by default.
+ *
+ * ## In practice
  *
  * Here's an example of a binding in a privileged context:
  *
@@ -21798,10 +22017,10 @@ function $SceDelegateProvider() {
  * ```
  *
  * Notice that `ng-bind-html` is bound to `userHtml` controlled by the user.  With SCE
- * disabled, this application allows the user to render arbitrary HTML into the DIV.
- * In a more realistic example, one may be rendering user comments, blog articles, etc. via
- * bindings.  (HTML is just one example of a context where rendering user controlled input creates
- * security vulnerabilities.)
+ * disabled, this application allows the user to render arbitrary HTML into the DIV, which would
+ * be an XSS security bug. In a more realistic example, one may be rendering user comments, blog
+ * articles, etc. via bindings. (HTML is just one example of a context where rendering user
+ * controlled input creates security vulnerabilities.)
  *
  * For the case of HTML, you might use a library, either on the client side, or on the server side,
  * to sanitize unsafe HTML before binding to the value and rendering it in the document.
@@ -21811,25 +22030,29 @@ function $SceDelegateProvider() {
  * ensure that you didn't accidentally delete the line that sanitized the value, or renamed some
  * properties/fields and forgot to update the binding to the sanitized value?
  *
- * To be secure by default, you want to ensure that any such bindings are disallowed unless you can
- * determine that something explicitly says it's safe to use a value for binding in that
- * context.  You can then audit your code (a simple grep would do) to ensure that this is only done
- * for those values that you can easily tell are safe - because they were received from your server,
- * sanitized by your library, etc.  You can organize your codebase to help with this - perhaps
- * allowing only the files in a specific directory to do this.  Ensuring that the internal API
- * exposed by that code doesn't markup arbitrary values as safe then becomes a more manageable task.
+ * To be secure by default, AngularJS makes sure bindings go through that sanitization, or
+ * any similar validation process, unless there's a good reason to trust the given value in this
+ * context.  That trust is formalized with a function call. This means that as a developer, you
+ * can assume all untrusted bindings are safe. Then, to audit your code for binding security issues,
+ * you just need to ensure the values you mark as trusted indeed are safe - because they were
+ * received from your server, sanitized by your library, etc. You can organize your codebase to
+ * help with this - perhaps allowing only the files in a specific directory to do this.
+ * Ensuring that the internal API exposed by that code doesn't markup arbitrary values as safe then
+ * becomes a more manageable task.
  *
  * In the case of AngularJS' SCE service, one uses {@link ng.$sce#trustAs $sce.trustAs}
  * (and shorthand methods such as {@link ng.$sce#trustAsHtml $sce.trustAsHtml}, etc.) to
- * obtain values that will be accepted by SCE / privileged contexts.
- *
+ * build the trusted versions of your values.
  *
  * ## How does it work?
  *
  * In privileged contexts, directives and code will bind to the result of {@link ng.$sce#getTrusted
- * $sce.getTrusted(context, value)} rather than to the value directly.  Directives use {@link
- * ng.$sce#parseAs $sce.parseAs} rather than `$parse` to watch attribute bindings, which performs the
- * {@link ng.$sce#getTrusted $sce.getTrusted} behind the scenes on non-constant literals.
+ * $sce.getTrusted(context, value)} rather than to the value directly.  Think of this function as
+ * a way to enforce the required security context in your data sink. Directives use {@link
+ * ng.$sce#parseAs $sce.parseAs} rather than `$parse` to watch attribute bindings, which performs
+ * the {@link ng.$sce#getTrusted $sce.getTrusted} behind the scenes on non-constant literals. Also,
+ * when binding without directives, AngularJS will understand the context of your bindings
+ * automatically.
  *
  * As an example, {@link ng.directive:ngBindHtml ngBindHtml} uses {@link
  * ng.$sce#parseAsHtml $sce.parseAsHtml(binding expression)}.  Here's the actual code (slightly
@@ -21870,11 +22093,12 @@ function $SceDelegateProvider() {
  * It's important to remember that SCE only applies to interpolation expressions.
  *
  * If your expressions are constant literals, they're automatically trusted and you don't need to
- * call `$sce.trustAs` on them (remember to include the `ngSanitize` module) (e.g.
- * `<div ng-bind-html="'<b>implicitly trusted</b>'"></div>`) just works.
- *
- * Additionally, `a[href]` and `img[src]` automatically sanitize their URLs and do not pass them
- * through {@link ng.$sce#getTrusted $sce.getTrusted}.  SCE doesn't play a role here.
+ * call `$sce.trustAs` on them (e.g.
+ * `<div ng-bind-html="'<b>implicitly trusted</b>'"></div>`) just works. The `$sceDelegate` will
+ * also use the `$sanitize` service if it is available when binding untrusted values to
+ * `$sce.HTML` context. AngularJS provides an implementation in `angular-sanitize.js`, and if you
+ * wish to use it, you will also need to depend on the {@link ngSanitize `ngSanitize`} module in
+ * your application.
  *
  * The included {@link ng.$sceDelegate $sceDelegate} comes with sane defaults to allow you to load
  * templates in `ng-include` from your application's domain without having to even know about SCE.
@@ -21892,11 +22116,17 @@ function $SceDelegateProvider() {
  *
  * | Context             | Notes          |
  * |---------------------|----------------|
- * | `$sce.HTML`         | For HTML that's safe to source into the application.  The {@link ng.directive:ngBindHtml ngBindHtml} directive uses this context for bindings. If an unsafe value is encountered and the {@link ngSanitize $sanitize} module is present this will sanitize the value instead of throwing an error. |
- * | `$sce.CSS`          | For CSS that's safe to source into the application.  Currently unused.  Feel free to use it in your own directives. |
- * | `$sce.URL`          | For URLs that are safe to follow as links.  Currently unused (`<a href=` and `<img src=` sanitize their urls and don't constitute an SCE context. |
- * | `$sce.RESOURCE_URL` | For URLs that are not only safe to follow as links, but whose contents are also safe to include in your application.  Examples include `ng-include`, `src` / `ngSrc` bindings for tags other than `IMG`, `VIDEO`, `AUDIO`, `SOURCE`, and `TRACK` (e.g. `IFRAME`, `OBJECT`, etc.)  <br><br>Note that `$sce.RESOURCE_URL` makes a stronger statement about the URL than `$sce.URL` does and therefore contexts requiring values trusted for `$sce.RESOURCE_URL` can be used anywhere that values trusted for `$sce.URL` are required. |
- * | `$sce.JS`           | For JavaScript that is safe to execute in your application's context.  Currently unused.  Feel free to use it in your own directives. |
+ * | `$sce.HTML`         | For HTML that's safe to source into the application.  The {@link ng.directive:ngBindHtml ngBindHtml} directive uses this context for bindings. If an unsafe value is encountered, and the {@link ngSanitize.$sanitize $sanitize} service is available (implemented by the {@link ngSanitize ngSanitize} module) this will sanitize the value instead of throwing an error. |
+ * | `$sce.CSS`          | For CSS that's safe to source into the application.  Currently, no bindings require this context. Feel free to use it in your own directives. |
+ * | `$sce.URL`          | For URLs that are safe to follow as links.  Currently unused (`<a href=`, `<img src=`, and some others sanitize their urls and don't constitute an SCE context.) |
+ * | `$sce.RESOURCE_URL` | For URLs that are not only safe to follow as links, but whose contents are also safe to include in your application.  Examples include `ng-include`, `src` / `ngSrc` bindings for tags other than `IMG`, `VIDEO`, `AUDIO`, `SOURCE`, and `TRACK` (e.g. `IFRAME`, `OBJECT`, etc.)  <br><br>Note that `$sce.RESOURCE_URL` makes a stronger statement about the URL than `$sce.URL` does (it's not just the URL that matters, but also what is at the end of it), and therefore contexts requiring values trusted for `$sce.RESOURCE_URL` can be used anywhere that values trusted for `$sce.URL` are required. |
+ * | `$sce.JS`           | For JavaScript that is safe to execute in your application's context.  Currently, no bindings require this context.  Feel free to use it in your own directives. |
+ *
+ *
+ * Be aware that `a[href]` and `img[src]` automatically sanitize their URLs and do not pass them
+ * through {@link ng.$sce#getTrusted $sce.getTrusted}. There's no CSS-, URL-, or JS-context bindings
+ * in AngularJS currently, so their corresponding `$sce.trustAs` functions aren't useful yet. This
+ * might evolve.
  *
  * ## Format of items in {@link ng.$sceDelegateProvider#resourceUrlWhitelist resourceUrlWhitelist}/{@link ng.$sceDelegateProvider#resourceUrlBlacklist Blacklist} <a name="resourceUrlPatternItem"></a>
  *
@@ -22015,14 +22245,15 @@ function $SceDelegateProvider() {
  * for little coding overhead.  It will be much harder to take an SCE disabled application and
  * either secure it on your own or enable SCE at a later stage.  It might make sense to disable SCE
  * for cases where you have a lot of existing code that was written before SCE was introduced and
- * you're migrating them a module at a time.
+ * you're migrating them a module at a time. Also do note that this is an app-wide setting, so if
+ * you are writing a library, you will cause security bugs applications using it.
  *
  * That said, here's how you can completely disable SCE:
  *
  * ```
  * angular.module('myAppWithSceDisabledmyApp', []).config(function($sceProvider) {
  *   // Completely disable SCE.  For demonstration purposes only!
- *   // Do not use in new projects.
+ *   // Do not use in new projects or libraries.
  *   $sceProvider.enabled(false);
  * });
  * ```
@@ -22037,8 +22268,8 @@ function $SceProvider() {
    * @name $sceProvider#enabled
    * @kind function
    *
-   * @param {boolean=} value If provided, then enables/disables SCE.
-   * @return {boolean} true if SCE is enabled, false otherwise.
+   * @param {boolean=} value If provided, then enables/disables SCE application-wide.
+   * @return {boolean} True if SCE is enabled, false otherwise.
    *
    * @description
    * Enables/disables SCE and returns the current value.
@@ -22092,9 +22323,9 @@ function $SceProvider() {
    *     getTrusted($sce.RESOURCE_URL, value) succeeding implies that getTrusted($sce.URL, value)
    *     will also succeed.
    *
-   * Inheritance happens to capture this in a natural way.  In some future, we
-   * may not use inheritance anymore.  That is OK because no code outside of
-   * sce.js and sceSpecs.js would need to be aware of this detail.
+   * Inheritance happens to capture this in a natural way. In some future, we may not use
+   * inheritance anymore. That is OK because no code outside of sce.js and sceSpecs.js would need to
+   * be aware of this detail.
    */
 
   this.$get = ['$parse', '$sceDelegate', function(
@@ -22116,8 +22347,8 @@ function $SceProvider() {
      * @name $sce#isEnabled
      * @kind function
      *
-     * @return {Boolean} true if SCE is enabled, false otherwise.  If you want to set the value, you
-     * have to do it at module config time on {@link ng.$sceProvider $sceProvider}.
+     * @return {Boolean} True if SCE is enabled, false otherwise.  If you want to set the value, you
+     *     have to do it at module config time on {@link ng.$sceProvider $sceProvider}.
      *
      * @description
      * Returns a boolean indicating if SCE is enabled.
@@ -22144,14 +22375,14 @@ function $SceProvider() {
      * wraps the expression in a call to {@link ng.$sce#getTrusted $sce.getTrusted(*type*,
      * *result*)}
      *
-     * @param {string} type The kind of SCE context in which this result will be used.
+     * @param {string} type The SCE context in which this result will be used.
      * @param {string} expression String expression to compile.
-     * @returns {function(context, locals)} a function which represents the compiled expression:
+     * @return {function(context, locals)} A function which represents the compiled expression:
      *
-     *    * `context` – `{object}` – an object against which any expressions embedded in the strings
-     *      are evaluated against (typically a scope object).
-     *    * `locals` – `{object=}` – local variables context object, useful for overriding values in
-     *      `context`.
+     *    * `context` – `{object}` – an object against which any expressions embedded in the
+     *      strings are evaluated against (typically a scope object).
+     *    * `locals` – `{object=}` – local variables context object, useful for overriding values
+     *      in `context`.
      */
     sce.parseAs = function sceParseAs(type, expr) {
       var parsed = $parse(expr);
@@ -22169,18 +22400,18 @@ function $SceProvider() {
      * @name $sce#trustAs
      *
      * @description
-     * Delegates to {@link ng.$sceDelegate#trustAs `$sceDelegate.trustAs`}.  As such,
-     * returns an object that is trusted by angular for use in specified strict contextual
-     * escaping contexts (such as ng-bind-html, ng-include, any src attribute
-     * interpolation, any dom event binding attribute interpolation such as for onclick,  etc.)
-     * that uses the provided value.  See * {@link ng.$sce $sce} for enabling strict contextual
-     * escaping.
+     * Delegates to {@link ng.$sceDelegate#trustAs `$sceDelegate.trustAs`}. As such, returns a
+     * wrapped object that represents your value, and the trust you have in its safety for the given
+     * context. AngularJS can then use that value as-is in bindings of the specified secure context.
+     * This is used in bindings for `ng-bind-html`, `ng-include`, and most `src` attribute
+     * interpolations. See {@link ng.$sce $sce} for strict contextual escaping.
      *
-     * @param {string} type The kind of context in which this value is safe for use.  e.g. url,
-     *   resourceUrl, html, js and css.
-     * @param {*} value The value that that should be considered trusted/safe.
-     * @returns {*} A value that can be used to stand in for the provided `value` in places
-     * where Angular expects a $sce.trustAs() return value.
+     * @param {string} type The context in which this value is safe for use, e.g. `$sce.URL`,
+     *     `$sce.RESOURCE_URL`, `$sce.HTML`, `$sce.JS` or `$sce.CSS`.
+     *
+     * @param {*} value The value that that should be considered trusted.
+     * @return {*} A wrapped version of value that can be used as a trusted variant of your `value`
+     *     in the context you specified.
      */
 
     /**
@@ -22191,11 +22422,23 @@ function $SceProvider() {
      * Shorthand method.  `$sce.trustAsHtml(value)` →
      *     {@link ng.$sceDelegate#trustAs `$sceDelegate.trustAs($sce.HTML, value)`}
      *
-     * @param {*} value The value to trustAs.
-     * @returns {*} An object that can be passed to {@link ng.$sce#getTrustedHtml
-     *     $sce.getTrustedHtml(value)} to obtain the original value.  (privileged directives
-     *     only accept expressions that are either literal constants or are the
-     *     return value of {@link ng.$sce#trustAs $sce.trustAs}.)
+     * @param {*} value The value to mark as trusted for `$sce.HTML` context.
+     * @return {*} A wrapped version of value that can be used as a trusted variant of your `value`
+     *     in `$sce.HTML` context (like `ng-bind-html`).
+     */
+
+    /**
+     * @ngdoc method
+     * @name $sce#trustAsCss
+     *
+     * @description
+     * Shorthand method.  `$sce.trustAsCss(value)` →
+     *     {@link ng.$sceDelegate#trustAs `$sceDelegate.trustAs($sce.CSS, value)`}
+     *
+     * @param {*} value The value to mark as trusted for `$sce.CSS` context.
+     * @return {*} A wrapped version of value that can be used as a trusted variant
+     *     of your `value` in `$sce.CSS` context. This context is currently unused, so there are
+     *     almost no reasons to use this function so far.
      */
 
     /**
@@ -22206,11 +22449,10 @@ function $SceProvider() {
      * Shorthand method.  `$sce.trustAsUrl(value)` →
      *     {@link ng.$sceDelegate#trustAs `$sceDelegate.trustAs($sce.URL, value)`}
      *
-     * @param {*} value The value to trustAs.
-     * @returns {*} An object that can be passed to {@link ng.$sce#getTrustedUrl
-     *     $sce.getTrustedUrl(value)} to obtain the original value.  (privileged directives
-     *     only accept expressions that are either literal constants or are the
-     *     return value of {@link ng.$sce#trustAs $sce.trustAs}.)
+     * @param {*} value The value to mark as trusted for `$sce.URL` context.
+     * @return {*} A wrapped version of value that can be used as a trusted variant of your `value`
+     *     in `$sce.URL` context. That context is currently unused, so there are almost no reasons
+     *     to use this function so far.
      */
 
     /**
@@ -22221,11 +22463,10 @@ function $SceProvider() {
      * Shorthand method.  `$sce.trustAsResourceUrl(value)` →
      *     {@link ng.$sceDelegate#trustAs `$sceDelegate.trustAs($sce.RESOURCE_URL, value)`}
      *
-     * @param {*} value The value to trustAs.
-     * @returns {*} An object that can be passed to {@link ng.$sce#getTrustedResourceUrl
-     *     $sce.getTrustedResourceUrl(value)} to obtain the original value.  (privileged directives
-     *     only accept expressions that are either literal constants or are the return
-     *     value of {@link ng.$sce#trustAs $sce.trustAs}.)
+     * @param {*} value The value to mark as trusted for `$sce.RESOURCE_URL` context.
+     * @return {*} A wrapped version of value that can be used as a trusted variant of your `value`
+     *     in `$sce.RESOURCE_URL` context (template URLs in `ng-include`, most `src` attribute
+     *     bindings, ...)
      */
 
     /**
@@ -22236,11 +22477,10 @@ function $SceProvider() {
      * Shorthand method.  `$sce.trustAsJs(value)` →
      *     {@link ng.$sceDelegate#trustAs `$sceDelegate.trustAs($sce.JS, value)`}
      *
-     * @param {*} value The value to trustAs.
-     * @returns {*} An object that can be passed to {@link ng.$sce#getTrustedJs
-     *     $sce.getTrustedJs(value)} to obtain the original value.  (privileged directives
-     *     only accept expressions that are either literal constants or are the
-     *     return value of {@link ng.$sce#trustAs $sce.trustAs}.)
+     * @param {*} value The value to mark as trusted for `$sce.JS` context.
+     * @return {*} A wrapped version of value that can be used as a trusted variant of your `value`
+     *     in `$sce.JS` context. That context is currently unused, so there are almost no reasons to
+     *     use this function so far.
      */
 
     /**
@@ -22249,16 +22489,17 @@ function $SceProvider() {
      *
      * @description
      * Delegates to {@link ng.$sceDelegate#getTrusted `$sceDelegate.getTrusted`}.  As such,
-     * takes the result of a {@link ng.$sce#trustAs `$sce.trustAs`}() call and returns the
-     * originally supplied value if the queried context type is a supertype of the created type.
-     * If this condition isn't satisfied, throws an exception.
+     * takes any input, and either returns a value that's safe to use in the specified context,
+     * or throws an exception. This function is aware of trusted values created by the `trustAs`
+     * function and its shorthands, and when contexts are appropriate, returns the unwrapped value
+     * as-is. Finally, this function can also throw when there is no way to turn `maybeTrusted` in a
+     * safe value (e.g., no sanitization is available or possible.)
      *
-     * @param {string} type The kind of context in which this value is to be used.
-     * @param {*} maybeTrusted The result of a prior {@link ng.$sce#trustAs `$sce.trustAs`}
-     *                         call.
-     * @returns {*} The value the was originally provided to
-     *              {@link ng.$sce#trustAs `$sce.trustAs`} if valid in this context.
-     *              Otherwise, throws an exception.
+     * @param {string} type The context in which this value is to be used.
+     * @param {*} maybeTrusted The result of a prior {@link ng.$sce#trustAs
+     *     `$sce.trustAs`} call, or anything else (which will not be considered trusted.)
+     * @return {*} A version of the value that's safe to use in the given context, or throws an
+     *     exception if this is impossible.
      */
 
     /**
@@ -22270,7 +22511,7 @@ function $SceProvider() {
      *     {@link ng.$sceDelegate#getTrusted `$sceDelegate.getTrusted($sce.HTML, value)`}
      *
      * @param {*} value The value to pass to `$sce.getTrusted`.
-     * @returns {*} The return value of `$sce.getTrusted($sce.HTML, value)`
+     * @return {*} The return value of `$sce.getTrusted($sce.HTML, value)`
      */
 
     /**
@@ -22282,7 +22523,7 @@ function $SceProvider() {
      *     {@link ng.$sceDelegate#getTrusted `$sceDelegate.getTrusted($sce.CSS, value)`}
      *
      * @param {*} value The value to pass to `$sce.getTrusted`.
-     * @returns {*} The return value of `$sce.getTrusted($sce.CSS, value)`
+     * @return {*} The return value of `$sce.getTrusted($sce.CSS, value)`
      */
 
     /**
@@ -22294,7 +22535,7 @@ function $SceProvider() {
      *     {@link ng.$sceDelegate#getTrusted `$sceDelegate.getTrusted($sce.URL, value)`}
      *
      * @param {*} value The value to pass to `$sce.getTrusted`.
-     * @returns {*} The return value of `$sce.getTrusted($sce.URL, value)`
+     * @return {*} The return value of `$sce.getTrusted($sce.URL, value)`
      */
 
     /**
@@ -22306,7 +22547,7 @@ function $SceProvider() {
      *     {@link ng.$sceDelegate#getTrusted `$sceDelegate.getTrusted($sce.RESOURCE_URL, value)`}
      *
      * @param {*} value The value to pass to `$sceDelegate.getTrusted`.
-     * @returns {*} The return value of `$sce.getTrusted($sce.RESOURCE_URL, value)`
+     * @return {*} The return value of `$sce.getTrusted($sce.RESOURCE_URL, value)`
      */
 
     /**
@@ -22318,7 +22559,7 @@ function $SceProvider() {
      *     {@link ng.$sceDelegate#getTrusted `$sceDelegate.getTrusted($sce.JS, value)`}
      *
      * @param {*} value The value to pass to `$sce.getTrusted`.
-     * @returns {*} The return value of `$sce.getTrusted($sce.JS, value)`
+     * @return {*} The return value of `$sce.getTrusted($sce.JS, value)`
      */
 
     /**
@@ -22330,12 +22571,12 @@ function $SceProvider() {
      *     {@link ng.$sce#parseAs `$sce.parseAs($sce.HTML, value)`}
      *
      * @param {string} expression String expression to compile.
-     * @returns {function(context, locals)} a function which represents the compiled expression:
+     * @return {function(context, locals)} A function which represents the compiled expression:
      *
-     *    * `context` – `{object}` – an object against which any expressions embedded in the strings
-     *      are evaluated against (typically a scope object).
-     *    * `locals` – `{object=}` – local variables context object, useful for overriding values in
-     *      `context`.
+     *    * `context` – `{object}` – an object against which any expressions embedded in the
+     *      strings are evaluated against (typically a scope object).
+     *    * `locals` – `{object=}` – local variables context object, useful for overriding values
+     *      in `context`.
      */
 
     /**
@@ -22347,12 +22588,12 @@ function $SceProvider() {
      *     {@link ng.$sce#parseAs `$sce.parseAs($sce.CSS, value)`}
      *
      * @param {string} expression String expression to compile.
-     * @returns {function(context, locals)} a function which represents the compiled expression:
+     * @return {function(context, locals)} A function which represents the compiled expression:
      *
-     *    * `context` – `{object}` – an object against which any expressions embedded in the strings
-     *      are evaluated against (typically a scope object).
-     *    * `locals` – `{object=}` – local variables context object, useful for overriding values in
-     *      `context`.
+     *    * `context` – `{object}` – an object against which any expressions embedded in the
+     *      strings are evaluated against (typically a scope object).
+     *    * `locals` – `{object=}` – local variables context object, useful for overriding values
+     *      in `context`.
      */
 
     /**
@@ -22364,12 +22605,12 @@ function $SceProvider() {
      *     {@link ng.$sce#parseAs `$sce.parseAs($sce.URL, value)`}
      *
      * @param {string} expression String expression to compile.
-     * @returns {function(context, locals)} a function which represents the compiled expression:
+     * @return {function(context, locals)} A function which represents the compiled expression:
      *
-     *    * `context` – `{object}` – an object against which any expressions embedded in the strings
-     *      are evaluated against (typically a scope object).
-     *    * `locals` – `{object=}` – local variables context object, useful for overriding values in
-     *      `context`.
+     *    * `context` – `{object}` – an object against which any expressions embedded in the
+     *      strings are evaluated against (typically a scope object).
+     *    * `locals` – `{object=}` – local variables context object, useful for overriding values
+     *      in `context`.
      */
 
     /**
@@ -22381,12 +22622,12 @@ function $SceProvider() {
      *     {@link ng.$sce#parseAs `$sce.parseAs($sce.RESOURCE_URL, value)`}
      *
      * @param {string} expression String expression to compile.
-     * @returns {function(context, locals)} a function which represents the compiled expression:
+     * @return {function(context, locals)} A function which represents the compiled expression:
      *
-     *    * `context` – `{object}` – an object against which any expressions embedded in the strings
-     *      are evaluated against (typically a scope object).
-     *    * `locals` – `{object=}` – local variables context object, useful for overriding values in
-     *      `context`.
+     *    * `context` – `{object}` – an object against which any expressions embedded in the
+     *      strings are evaluated against (typically a scope object).
+     *    * `locals` – `{object=}` – local variables context object, useful for overriding values
+     *      in `context`.
      */
 
     /**
@@ -22398,12 +22639,12 @@ function $SceProvider() {
      *     {@link ng.$sce#parseAs `$sce.parseAs($sce.JS, value)`}
      *
      * @param {string} expression String expression to compile.
-     * @returns {function(context, locals)} a function which represents the compiled expression:
+     * @return {function(context, locals)} A function which represents the compiled expression:
      *
-     *    * `context` – `{object}` – an object against which any expressions embedded in the strings
-     *      are evaluated against (typically a scope object).
-     *    * `locals` – `{object=}` – local variables context object, useful for overriding values in
-     *      `context`.
+     *    * `context` – `{object}` – an object against which any expressions embedded in the
+     *      strings are evaluated against (typically a scope object).
+     *    * `locals` – `{object=}` – local variables context object, useful for overriding values
+     *      in `context`.
      */
 
     // Shorthand delegations.
@@ -22861,7 +23102,7 @@ var originUrl = urlResolve(window.location.href);
  * URL will be resolved into an absolute URL in the context of the application document.
  * Parsing means that the anchor node's host, hostname, protocol, port, pathname and related
  * properties are all populated to reflect the normalized URL.  This approach has wide
- * compatibility - Safari 1+, Mozilla 1+, Opera 7+,e etc.  See
+ * compatibility - Safari 1+, Mozilla 1+ etc.  See
  * http://www.aptana.com/reference/html/api/HTMLAnchorElement.html
  *
  * Implementation Notes for IE
@@ -23227,6 +23468,9 @@ function $FilterProvider($provide) {
  * Selects a subset of items from `array` and returns it as a new array.
  *
  * @param {Array} array The source array.
+ * <div class="alert alert-info">
+ *   **Note**: If the array contains objects that reference themselves, filtering is not possible.
+ * </div>
  * @param {string|Object|function()} expression The predicate to be used for selecting items from
  *   `array`.
  *
@@ -23260,8 +23504,9 @@ function $FilterProvider($provide) {
  *     The final result is an array of those elements that the predicate returned true for.
  *
  * @param {function(actual, expected)|true|false} [comparator] Comparator which is used in
- *     determining if the expected value (from the filter expression) and actual value (from
- *     the object in the array) should be considered a match.
+ *     determining if values retrieved using `expression` (when it is not a function) should be
+ *     considered a match based on the the expected value (from the filter expression) and actual
+ *     value (from the object in the array).
  *
  *   Can be one of:
  *
@@ -23444,7 +23689,10 @@ function deepCompare(actual, expected, comparator, anyPropertyKey, matchAgainstA
       var key;
       if (matchAgainstAnyProp) {
         for (key in actual) {
-          if ((key.charAt(0) !== '$') && deepCompare(actual[key], expected, comparator, anyPropertyKey, true)) {
+          // Under certain, rare, circumstances, key may not be a string and `charAt` will be undefined
+          // See: https://github.com/angular/angular.js/issues/15644
+          if (key.charAt && (key.charAt(0) !== '$') &&
+              deepCompare(actual[key], expected, comparator, anyPropertyKey, true)) {
             return true;
           }
         }
@@ -23953,7 +24201,7 @@ var DATE_FORMATS = {
      GGGG: longEraGetter
 };
 
-var DATE_FORMATS_SPLIT = /((?:[^yMLdHhmsaZEwG']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|L+|d+|H+|h+|m+|s+|a|Z|G+|w+))(.*)/,
+var DATE_FORMATS_SPLIT = /((?:[^yMLdHhmsaZEwG']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|L+|d+|H+|h+|m+|s+|a|Z|G+|w+))([\s\S]*)/,
     NUMBER_STRING = /^-?\d+$/;
 
 /**
@@ -24011,6 +24259,8 @@ var DATE_FORMATS_SPLIT = /((?:[^yMLdHhmsaZEwG']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+
  *   `format` string can contain literal values. These need to be escaped by surrounding with single quotes (e.g.
  *   `"h 'in the morning'"`). In order to output a single quote, escape it - i.e., two single quotes in a sequence
  *   (e.g. `"h 'o''clock'"`).
+ *
+ *   Any other characters in the `format` string will be output as-is.
  *
  * @param {(Date|number|string)} date Date to format either as Date object, milliseconds (string or
  *    number) or various ISO 8601 datetime string formats (e.g. yyyy-MM-ddTHH:mm:ss.sssZ and its
@@ -28626,13 +28876,6 @@ function classDirective(name, selector) {
     return {
       restrict: 'AC',
       link: function(scope, element, attr) {
-        var expression = attr[name].trim();
-        var isOneTime = (expression.charAt(0) === ':') && (expression.charAt(1) === ':');
-
-        var watchInterceptor = isOneTime ? toFlatValue : toClassString;
-        var watchExpression = $parse(expression, watchInterceptor);
-        var watchAction = isOneTime ? ngClassOneTimeWatchAction : ngClassWatchAction;
-
         var classCounts = element.data('$classCounts');
         var oldModulo = true;
         var oldClassString;
@@ -28655,7 +28898,7 @@ function classDirective(name, selector) {
           scope.$watch(indexWatchExpression, ngClassIndexWatchAction);
         }
 
-        scope.$watch(watchExpression, watchAction, isOneTime);
+        scope.$watch($parse(attr[name], toClassString), ngClassWatchAction);
 
         function addClasses(classString) {
           classString = digestClassCounts(split(classString), 1);
@@ -28697,9 +28940,9 @@ function classDirective(name, selector) {
         }
 
         function ngClassIndexWatchAction(newModulo) {
-          // This watch-action should run before the `ngClass[OneTime]WatchAction()`, thus it
+          // This watch-action should run before the `ngClassWatchAction()`, thus it
           // adds/removes `oldClassString`. If the `ngClass` expression has changed as well, the
-          // `ngClass[OneTime]WatchAction()` will update the classes.
+          // `ngClassWatchAction()` will update the classes.
           if (newModulo === selector) {
             addClasses(oldClassString);
           } else {
@@ -28709,15 +28952,13 @@ function classDirective(name, selector) {
           oldModulo = newModulo;
         }
 
-        function ngClassOneTimeWatchAction(newClassValue) {
-          var newClassString = toClassString(newClassValue);
-
-          if (newClassString !== oldClassString) {
-            ngClassWatchAction(newClassString);
-          }
-        }
-
         function ngClassWatchAction(newClassString) {
+          // When using a one-time binding the newClassString will return
+          // the pre-interceptor value until the one-time is complete
+          if (!isString(newClassString)) {
+            newClassString = toClassString(newClassString);
+          }
+
           if (oldModulo === selector) {
             updateClasses(oldClassString, newClassString);
           }
@@ -28763,34 +29004,6 @@ function classDirective(name, selector) {
     }
 
     return classString;
-  }
-
-  function toFlatValue(classValue) {
-    var flatValue = classValue;
-
-    if (isArray(classValue)) {
-      flatValue = classValue.map(toFlatValue);
-    } else if (isObject(classValue)) {
-      var hasUndefined = false;
-
-      flatValue = Object.keys(classValue).filter(function(key) {
-        var value = classValue[key];
-
-        if (!hasUndefined && isUndefined(value)) {
-          hasUndefined = true;
-        }
-
-        return value;
-      });
-
-      if (hasUndefined) {
-        // Prevent the `oneTimeLiteralWatchInterceptor` from unregistering
-        // the watcher, by including at least one `undefined` value.
-        flatValue.push(undefined);
-      }
-    }
-
-    return flatValue;
   }
 }
 
@@ -30721,32 +30934,57 @@ var ngModelMinErr = minErr('ngModel');
  * @property {*} $viewValue The actual value from the control's view. For `input` elements, this is a
  * String. See {@link ngModel.NgModelController#$setViewValue} for information about when the $viewValue
  * is set.
+ *
  * @property {*} $modelValue The value in the model that the control is bound to.
+ *
  * @property {Array.<Function>} $parsers Array of functions to execute, as a pipeline, whenever
-       the control reads value from the DOM. The functions are called in array order, each passing
-       its return value through to the next. The last return value is forwarded to the
-       {@link ngModel.NgModelController#$validators `$validators`} collection.
+ *  the control updates the ngModelController with a new {@link ngModel.NgModelController#$viewValue
+    `$viewValue`} from the DOM, usually via user input.
+    See {@link ngModel.NgModelController#$setViewValue `$setViewValue()`} for a detailed lifecycle explanation.
+    Note that the `$parsers` are not called when the bound ngModel expression changes programmatically.
 
-Parsers are used to sanitize / convert the {@link ngModel.NgModelController#$viewValue
-`$viewValue`}.
+  The functions are called in array order, each passing
+    its return value through to the next. The last return value is forwarded to the
+    {@link ngModel.NgModelController#$validators `$validators`} collection.
 
-Returning `undefined` from a parser means a parse error occurred. In that case,
-no {@link ngModel.NgModelController#$validators `$validators`} will run and the `ngModel`
-will be set to `undefined` unless {@link ngModelOptions `ngModelOptions.allowInvalid`}
-is set to `true`. The parse error is stored in `ngModel.$error.parse`.
+  Parsers are used to sanitize / convert the {@link ngModel.NgModelController#$viewValue
+    `$viewValue`}.
+
+  Returning `undefined` from a parser means a parse error occurred. In that case,
+    no {@link ngModel.NgModelController#$validators `$validators`} will run and the `ngModel`
+    will be set to `undefined` unless {@link ngModelOptions `ngModelOptions.allowInvalid`}
+    is set to `true`. The parse error is stored in `ngModel.$error.parse`.
+
+  This simple example shows a parser that would convert text input value to lowercase:
+ * ```js
+ * function parse(value) {
+ *   if (value) {
+ *     return value.toLowerCase();
+ *   }
+ * }
+ * ngModelController.$parsers.push(parse);
+ * ```
 
  *
  * @property {Array.<Function>} $formatters Array of functions to execute, as a pipeline, whenever
-       the model value changes. The functions are called in reverse array order, each passing the value through to the
-       next. The last return value is used as the actual DOM value.
-       Used to format / convert values for display in the control.
+    the bound ngModel expression changes programmatically. The `$formatters` are not called when the
+    value of the control is changed by user interaction.
+
+  Formatters are used to format / convert the {@link ngModel.NgModelController#$modelValue
+    `$modelValue`} for display in the control.
+
+  The functions are called in reverse array order, each passing the value through to the
+    next. The last return value is used as the actual DOM value.
+
+  This simple example shows a formatter that would convert the model value to uppercase:
+
  * ```js
- * function formatter(value) {
+ * function format(value) {
  *   if (value) {
  *     return value.toUpperCase();
  *   }
  * }
- * ngModel.$formatters.push(formatter);
+ * ngModel.$formatters.push(format);
  * ```
  *
  * @property {Object.<string, function>} $validators A collection of validators that are applied
@@ -30946,7 +31184,9 @@ function NgModelController($scope, $exceptionHandler, $attr, $element, $parse, $
 
   this.$$currentValidationRunId = 0;
 
-  this.$$scope = $scope;
+  // https://github.com/angular/angular.js/issues/15833
+  // Prevent `$$scope` from being iterated over by `copy` when NgModelController is deep watched
+  Object.defineProperty(this, '$$scope', {value: $scope});
   this.$$attr = $attr;
   this.$$element = $element;
   this.$$animate = $animate;
@@ -31454,9 +31694,10 @@ NgModelController.prototype = {
    *
    * When `$setViewValue` is called, the new `value` will be staged for committing through the `$parsers`
    * and `$validators` pipelines. If there are no special {@link ngModelOptions} specified then the staged
-   * value sent directly for processing, finally to be applied to `$modelValue` and then the
-   * **expression** specified in the `ng-model` attribute. Lastly, all the registered change listeners,
-   * in the `$viewChangeListeners` list, are called.
+   * value is sent directly for processing through the `$parsers` pipeline. After this, the `$validators` and
+   * `$asyncValidators` are called and the value is applied to `$modelValue`.
+   * Finally, the value is set to the **expression** specified in the `ng-model` attribute and
+   * all the registered change listeners, in the `$viewChangeListeners` list are called.
    *
    * In case the {@link ng.directive:ngModelOptions ngModelOptions} directive is used with `updateOn`
    * and the `default` trigger is not listed, all those actions will remain pending until one of the
@@ -31554,8 +31795,8 @@ function setupModelWatcher(ctrl) {
   //    -> scope value did not change since the last digest as
   //       ng-change executes in apply phase
   // 4. view should be changed back to 'a'
-  ctrl.$$scope.$watch(function ngModelWatch() {
-    var modelValue = ctrl.$$ngModelGet(ctrl.$$scope);
+  ctrl.$$scope.$watch(function ngModelWatch(scope) {
+    var modelValue = ctrl.$$ngModelGet(scope);
 
     // if scope model value and ngModel value are out of sync
     // TODO(perf): why not move this to the action fn?
@@ -32383,13 +32624,8 @@ var ngOptionsMinErr = minErr('ngOptions');
  * is not matched against any `<option>` and the `<select>` appears as having no selected value.
  *
  *
- * @param {string} ngModel Assignable angular expression to data-bind to.
- * @param {string=} name Property name of the form under which the control is published.
- * @param {string=} required The control is considered valid only if value is entered.
- * @param {string=} ngRequired Adds `required` attribute and `required` validation constraint to
- *    the element when the ngRequired expression evaluates to true. Use `ngRequired` instead of
- *    `required` when you want to data-bind to the `required` attribute.
- * @param {comprehension_expression=} ngOptions in one of the following forms:
+ * @param {string} ngModel Assignable AngularJS expression to data-bind to.
+ * @param {comprehension_expression} ngOptions in one of the following forms:
  *
  *   * for array data sources:
  *     * `label` **`for`** `value` **`in`** `array`
@@ -32428,6 +32664,13 @@ var ngOptionsMinErr = minErr('ngOptions');
  *      used to identify the objects in the array. The `trackexpr` will most likely refer to the
  *     `value` variable (e.g. `value.propertyName`). With this the selection is preserved
  *      even when the options are recreated (e.g. reloaded from the server).
+ * @param {string=} name Property name of the form under which the control is published.
+ * @param {string=} required The control is considered valid only if value is entered.
+ * @param {string=} ngRequired Adds `required` attribute and `required` validation constraint to
+ *    the element when the ngRequired expression evaluates to true. Use `ngRequired` instead of
+ *    `required` when you want to data-bind to the `required` attribute.
+ * @param {string=} ngAttrSize sets the size of the select element dynamically. Uses the
+ * {@link guide/interpolation#-ngattr-for-binding-to-arbitrary-attributes ngAttr} directive.
  *
  * @example
     <example module="selectExample" name="select">
@@ -33239,6 +33482,7 @@ var ngPluralizeDirective = ['$locale', '$interpolate', '$log', function($locale,
  * @ngdoc directive
  * @name ngRepeat
  * @multiElement
+ * @restrict A
  *
  * @description
  * The `ngRepeat` directive instantiates a template once per item from a collection. Each template
@@ -34763,6 +35007,18 @@ var scriptDirective = ['$templateCache', function($templateCache) {
 
 var noopNgModelController = { $setViewValue: noop, $render: noop };
 
+function setOptionSelectedStatus(optionEl, value) {
+  optionEl.prop('selected', value); // needed for IE
+  /**
+   * When unselecting an option, setting the property to null / false should be enough
+   * However, screenreaders might react to the selected attribute instead, see
+   * https://github.com/angular/angular.js/issues/14419
+   * Note: "selected" is a boolean attr and will be removed when the "value" arg in attr() is false
+   * or null
+   */
+  optionEl.attr('selected', value);
+}
+
 /**
  * @ngdoc type
  * @name  select.SelectController
@@ -34803,14 +35059,14 @@ var SelectController =
     var unknownVal = self.generateUnknownOptionValue(val);
     self.unknownOption.val(unknownVal);
     $element.prepend(self.unknownOption);
-    setOptionAsSelected(self.unknownOption);
+    setOptionSelectedStatus(self.unknownOption, true);
     $element.val(unknownVal);
   };
 
   self.updateUnknownOption = function(val) {
     var unknownVal = self.generateUnknownOptionValue(val);
     self.unknownOption.val(unknownVal);
-    setOptionAsSelected(self.unknownOption);
+    setOptionSelectedStatus(self.unknownOption, true);
     $element.val(unknownVal);
   };
 
@@ -34825,7 +35081,7 @@ var SelectController =
   self.selectEmptyOption = function() {
     if (self.emptyOption) {
       $element.val('');
-      setOptionAsSelected(self.emptyOption);
+      setOptionSelectedStatus(self.emptyOption, true);
     }
   };
 
@@ -34861,7 +35117,7 @@ var SelectController =
     // Make sure to remove the selected attribute from the previously selected option
     // Otherwise, screen readers might get confused
     var currentlySelectedOption = $element[0].options[$element[0].selectedIndex];
-    if (currentlySelectedOption) currentlySelectedOption.removeAttribute('selected');
+    if (currentlySelectedOption) setOptionSelectedStatus(jqLite(currentlySelectedOption), false);
 
     if (self.hasOption(value)) {
       self.removeUnknownOption();
@@ -34871,7 +35127,7 @@ var SelectController =
 
       // Set selected attribute and property on selected option for screen readers
       var selectedOption = $element[0].options[$element[0].selectedIndex];
-      setOptionAsSelected(jqLite(selectedOption));
+      setOptionSelectedStatus(jqLite(selectedOption), true);
     } else {
       if (value == null && self.emptyOption) {
         self.removeUnknownOption();
@@ -35051,11 +35307,6 @@ var SelectController =
       }
     });
   };
-
-  function setOptionAsSelected(optionEl) {
-    optionEl.prop('selected', true); // needed for IE
-    optionEl.attr('selected', true);
-  }
 }];
 
 /**
@@ -35125,6 +35376,8 @@ var SelectController =
  *    interaction with the select element.
  * @param {string=} ngOptions sets the options that the select is populated with and defines what is
  * set on the model on selection. See {@link ngOptions `ngOptions`}.
+ * @param {string=} ngAttrSize sets the size of the select element dynamically. Uses the
+ * {@link guide/interpolation#-ngattr-for-binding-to-arbitrary-attributes ngAttr} directive.
  *
  * @example
  * ### Simple `select` elements with static options
@@ -35366,8 +35619,20 @@ var selectDirective = function() {
         // Write value now needs to set the selected property of each matching option
         selectCtrl.writeValue = function writeMultipleValue(value) {
           forEach(element.find('option'), function(option) {
-            option.selected = !!value && (includes(value, option.value) ||
-                                          includes(value, selectCtrl.selectValueMap[option.value]));
+            var shouldBeSelected = !!value && (includes(value, option.value) ||
+                                               includes(value, selectCtrl.selectValueMap[option.value]));
+            var currentlySelected = option.selected;
+
+            // IE and Edge, adding options to the selection via shift+click/UP/DOWN,
+            // will de-select already selected options if "selected" on those options was set
+            // more than once (i.e. when the options were already selected)
+            // So we only modify the selected property if neccessary.
+            // Note: this behavior cannot be replicated via unit tests because it only shows in the
+            // actual user interface.
+            if (shouldBeSelected !== currentlySelected) {
+              setOptionSelectedStatus(jqLite(option), shouldBeSelected);
+            }
+
           });
         };
 
@@ -41889,7 +42154,72 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":15}],5:[function(_dereq_,module,exports){
+},{"util/":29}],5:[function(_dereq_,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            var source = ev.source;
+            if ((source === window || source === null) && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
+},{}],6:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -41978,7 +42308,7 @@ function assert(expression) {
 }
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"assert":4,"util":15}],6:[function(_dereq_,module,exports){
+},{"assert":4,"util":29}],7:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -42281,72 +42611,3798 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],7:[function(_dereq_,module,exports){
-// shim for using process in browser
+},{}],8:[function(_dereq_,module,exports){
+(function (global){
+;__browserify_shim_require__=_dereq_;(function browserifyShim(module, exports, _dereq_, define, browserify_shim__define__module__export__) {
+/*
+ CryptoJS v3.1.2
+ core.js
+ code.google.com/p/crypto-js
+ (c) 2009-2013 by Jeff Mott. All rights reserved.
+ code.google.com/p/crypto-js/wiki/License
+ */
+/**
+ * CryptoJS core components.
+ */
+var CryptoJS = CryptoJS || (function (Math, undefined) {
+  /**
+   * CryptoJS namespace.
+   */
+  var C = {};
 
-var process = module.exports = {};
+  /**
+   * Library namespace.
+   */
+  var C_lib = C.lib = {};
 
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
+  /**
+   * Base object for prototypal inheritance.
+   */
+  var Base = C_lib.Base = (function () {
+    function F() {}
 
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
+    return {
+      /**
+       * Creates a new object that inherits from this object.
+       *
+       * @param {Object} overrides Properties to copy into the new object.
+       *
+       * @return {Object} The new object.
+       *
+       * @static
+       *
+       * @example
+       *
+       *     var MyType = CryptoJS.lib.Base.extend({
+             *         field: 'value',
+             *
+             *         method: function () {
+             *         }
+             *     });
+       */
+      extend: function (overrides) {
+        // Spawn
+        F.prototype = this;
+        var subtype = new F();
 
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            var source = ev.source;
-            if ((source === window || source === null) && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
+        // Augment
+        if (overrides) {
+          subtype.mixIn(overrides);
+        }
 
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
+        // Create default initializer
+        if (!subtype.hasOwnProperty('init')) {
+          subtype.init = function () {
+            subtype.$super.init.apply(this, arguments);
+          };
+        }
 
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
+        // Initializer's prototype is the subtype object
+        subtype.init.prototype = subtype;
+
+        // Reference supertype
+        subtype.$super = this;
+
+        return subtype;
+      },
+
+      /**
+       * Extends this object and runs the init method.
+       * Arguments to create() will be passed to init().
+       *
+       * @return {Object} The new object.
+       *
+       * @static
+       *
+       * @example
+       *
+       *     var instance = MyType.create();
+       */
+      create: function () {
+        var instance = this.extend();
+        instance.init.apply(instance, arguments);
+
+        return instance;
+      },
+
+      /**
+       * Initializes a newly created object.
+       * Override this method to add some logic when your objects are created.
+       *
+       * @example
+       *
+       *     var MyType = CryptoJS.lib.Base.extend({
+             *         init: function () {
+             *             // ...
+             *         }
+             *     });
+       */
+      init: function () {
+      },
+
+      /**
+       * Copies properties into this object.
+       *
+       * @param {Object} properties The properties to mix in.
+       *
+       * @example
+       *
+       *     MyType.mixIn({
+             *         field: 'value'
+             *     });
+       */
+      mixIn: function (properties) {
+        for (var propertyName in properties) {
+          if (properties.hasOwnProperty(propertyName)) {
+            this[propertyName] = properties[propertyName];
+          }
+        }
+
+        // IE won't copy toString using the loop above
+        if (properties.hasOwnProperty('toString')) {
+          this.toString = properties.toString;
+        }
+      },
+
+      /**
+       * Creates a copy of this object.
+       *
+       * @return {Object} The clone.
+       *
+       * @example
+       *
+       *     var clone = instance.clone();
+       */
+      clone: function () {
+        return this.init.prototype.extend(this);
+      }
     };
-})();
+  }());
 
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
+  /**
+   * An array of 32-bit words.
+   *
+   * @property {Array} words The array of 32-bit words.
+   * @property {number} sigBytes The number of significant bytes in this word array.
+   */
+  var WordArray = C_lib.WordArray = Base.extend({
+    /**
+     * Initializes a newly created word array.
+     *
+     * @param {Array} words (Optional) An array of 32-bit words.
+     * @param {number} sigBytes (Optional) The number of significant bytes in the words.
+     *
+     * @example
+     *
+     *     var wordArray = CryptoJS.lib.WordArray.create();
+     *     var wordArray = CryptoJS.lib.WordArray.create([0x00010203, 0x04050607]);
+     *     var wordArray = CryptoJS.lib.WordArray.create([0x00010203, 0x04050607], 6);
+     */
+    init: function (words, sigBytes) {
+      words = this.words = words || [];
 
-function noop() {}
+      if (sigBytes != undefined) {
+        this.sigBytes = sigBytes;
+      } else {
+        this.sigBytes = words.length * 4;
+      }
+    },
 
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
+    /**
+     * Converts this word array to a string.
+     *
+     * @param {Encoder} encoder (Optional) The encoding strategy to use. Default: CryptoJS.enc.Hex
+     *
+     * @return {string} The stringified word array.
+     *
+     * @example
+     *
+     *     var string = wordArray + '';
+     *     var string = wordArray.toString();
+     *     var string = wordArray.toString(CryptoJS.enc.Utf8);
+     */
+    toString: function (encoder) {
+      return (encoder || Hex).stringify(this);
+    },
 
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
+    /**
+     * Concatenates a word array to this word array.
+     *
+     * @param {WordArray} wordArray The word array to append.
+     *
+     * @return {WordArray} This word array.
+     *
+     * @example
+     *
+     *     wordArray1.concat(wordArray2);
+     */
+    concat: function (wordArray) {
+      // Shortcuts
+      var thisWords = this.words;
+      var thatWords = wordArray.words;
+      var thisSigBytes = this.sigBytes;
+      var thatSigBytes = wordArray.sigBytes;
+
+      // Clamp excess bits
+      this.clamp();
+
+      // Concat
+      if (thisSigBytes % 4) {
+        // Copy one byte at a time
+        for (var i = 0; i < thatSigBytes; i++) {
+          var thatByte = (thatWords[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+          thisWords[(thisSigBytes + i) >>> 2] |= thatByte << (24 - ((thisSigBytes + i) % 4) * 8);
+        }
+      } else if (thatWords.length > 0xffff) {
+        // Copy one word at a time
+        for (var i = 0; i < thatSigBytes; i += 4) {
+          thisWords[(thisSigBytes + i) >>> 2] = thatWords[i >>> 2];
+        }
+      } else {
+        // Copy all words at once
+        thisWords.push.apply(thisWords, thatWords);
+      }
+      this.sigBytes += thatSigBytes;
+
+      // Chainable
+      return this;
+    },
+
+    /**
+     * Removes insignificant bits.
+     *
+     * @example
+     *
+     *     wordArray.clamp();
+     */
+    clamp: function () {
+      // Shortcuts
+      var words = this.words;
+      var sigBytes = this.sigBytes;
+
+      // Clamp
+      words[sigBytes >>> 2] &= 0xffffffff << (32 - (sigBytes % 4) * 8);
+      words.length = Math.ceil(sigBytes / 4);
+    },
+
+    /**
+     * Creates a copy of this word array.
+     *
+     * @return {WordArray} The clone.
+     *
+     * @example
+     *
+     *     var clone = wordArray.clone();
+     */
+    clone: function () {
+      var clone = Base.clone.call(this);
+      clone.words = this.words.slice(0);
+
+      return clone;
+    },
+
+    /**
+     * Creates a word array filled with random bytes.
+     *
+     * @param {number} nBytes The number of random bytes to generate.
+     *
+     * @return {WordArray} The random word array.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var wordArray = CryptoJS.lib.WordArray.random(16);
+     */
+    random: function (nBytes) {
+      var words = [];
+      for (var i = 0; i < nBytes; i += 4) {
+        words.push((Math.random() * 0x100000000) | 0);
+      }
+
+      return new WordArray.init(words, nBytes);
+    }
+  });
+
+  /**
+   * Encoder namespace.
+   */
+  var C_enc = C.enc = {};
+
+  /**
+   * Hex encoding strategy.
+   */
+  var Hex = C_enc.Hex = {
+    /**
+     * Converts a word array to a hex string.
+     *
+     * @param {WordArray} wordArray The word array.
+     *
+     * @return {string} The hex string.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var hexString = CryptoJS.enc.Hex.stringify(wordArray);
+     */
+    stringify: function (wordArray) {
+      // Shortcuts
+      var words = wordArray.words;
+      var sigBytes = wordArray.sigBytes;
+
+      // Convert
+      var hexChars = [];
+      for (var i = 0; i < sigBytes; i++) {
+        var bite = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+        hexChars.push((bite >>> 4).toString(16));
+        hexChars.push((bite & 0x0f).toString(16));
+      }
+
+      return hexChars.join('');
+    },
+
+    /**
+     * Converts a hex string to a word array.
+     *
+     * @param {string} hexStr The hex string.
+     *
+     * @return {WordArray} The word array.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var wordArray = CryptoJS.enc.Hex.parse(hexString);
+     */
+    parse: function (hexStr) {
+      // Shortcut
+      var hexStrLength = hexStr.length;
+
+      // Convert
+      var words = [];
+      for (var i = 0; i < hexStrLength; i += 2) {
+        words[i >>> 3] |= parseInt(hexStr.substr(i, 2), 16) << (24 - (i % 8) * 4);
+      }
+
+      return new WordArray.init(words, hexStrLength / 2);
+    }
+  };
+
+  /**
+   * Latin1 encoding strategy.
+   */
+  var Latin1 = C_enc.Latin1 = {
+    /**
+     * Converts a word array to a Latin1 string.
+     *
+     * @param {WordArray} wordArray The word array.
+     *
+     * @return {string} The Latin1 string.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var latin1String = CryptoJS.enc.Latin1.stringify(wordArray);
+     */
+    stringify: function (wordArray) {
+      // Shortcuts
+      var words = wordArray.words;
+      var sigBytes = wordArray.sigBytes;
+
+      // Convert
+      var latin1Chars = [];
+      for (var i = 0; i < sigBytes; i++) {
+        var bite = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+        latin1Chars.push(String.fromCharCode(bite));
+      }
+
+      return latin1Chars.join('');
+    },
+
+    /**
+     * Converts a Latin1 string to a word array.
+     *
+     * @param {string} latin1Str The Latin1 string.
+     *
+     * @return {WordArray} The word array.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var wordArray = CryptoJS.enc.Latin1.parse(latin1String);
+     */
+    parse: function (latin1Str) {
+      // Shortcut
+      var latin1StrLength = latin1Str.length;
+
+      // Convert
+      var words = [];
+      for (var i = 0; i < latin1StrLength; i++) {
+        words[i >>> 2] |= (latin1Str.charCodeAt(i) & 0xff) << (24 - (i % 4) * 8);
+      }
+
+      return new WordArray.init(words, latin1StrLength);
+    }
+  };
+
+  /**
+   * UTF-8 encoding strategy.
+   */
+  var Utf8 = C_enc.Utf8 = {
+    /**
+     * Converts a word array to a UTF-8 string.
+     *
+     * @param {WordArray} wordArray The word array.
+     *
+     * @return {string} The UTF-8 string.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var utf8String = CryptoJS.enc.Utf8.stringify(wordArray);
+     */
+    stringify: function (wordArray) {
+      try {
+        return decodeURIComponent(escape(Latin1.stringify(wordArray)));
+      } catch (e) {
+        throw new Error('Malformed UTF-8 data');
+      }
+    },
+
+    /**
+     * Converts a UTF-8 string to a word array.
+     *
+     * @param {string} utf8Str The UTF-8 string.
+     *
+     * @return {WordArray} The word array.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var wordArray = CryptoJS.enc.Utf8.parse(utf8String);
+     */
+    parse: function (utf8Str) {
+      return Latin1.parse(unescape(encodeURIComponent(utf8Str)));
+    }
+  };
+
+  /**
+   * Abstract buffered block algorithm template.
+   *
+   * The property blockSize must be implemented in a concrete subtype.
+   *
+   * @property {number} _minBufferSize The number of blocks that should be kept unprocessed in the buffer. Default: 0
+   */
+  var BufferedBlockAlgorithm = C_lib.BufferedBlockAlgorithm = Base.extend({
+    /**
+     * Resets this block algorithm's data buffer to its initial state.
+     *
+     * @example
+     *
+     *     bufferedBlockAlgorithm.reset();
+     */
+    reset: function () {
+      // Initial values
+      this._data = new WordArray.init();
+      this._nDataBytes = 0;
+    },
+
+    /**
+     * Adds new data to this block algorithm's buffer.
+     *
+     * @param {WordArray|string} data The data to append. Strings are converted to a WordArray using UTF-8.
+     *
+     * @example
+     *
+     *     bufferedBlockAlgorithm._append('data');
+     *     bufferedBlockAlgorithm._append(wordArray);
+     */
+    _append: function (data) {
+      // Convert string to WordArray, else assume WordArray already
+      if (typeof data == 'string') {
+        data = Utf8.parse(data);
+      }
+
+      // Append
+      this._data.concat(data);
+      this._nDataBytes += data.sigBytes;
+    },
+
+    /**
+     * Processes available data blocks.
+     *
+     * This method invokes _doProcessBlock(offset), which must be implemented by a concrete subtype.
+     *
+     * @param {boolean} doFlush Whether all blocks and partial blocks should be processed.
+     *
+     * @return {WordArray} The processed data.
+     *
+     * @example
+     *
+     *     var processedData = bufferedBlockAlgorithm._process();
+     *     var processedData = bufferedBlockAlgorithm._process(!!'flush');
+     */
+    _process: function (doFlush) {
+      // Shortcuts
+      var data = this._data;
+      var dataWords = data.words;
+      var dataSigBytes = data.sigBytes;
+      var blockSize = this.blockSize;
+      var blockSizeBytes = blockSize * 4;
+
+      // Count blocks ready
+      var nBlocksReady = dataSigBytes / blockSizeBytes;
+      if (doFlush) {
+        // Round up to include partial blocks
+        nBlocksReady = Math.ceil(nBlocksReady);
+      } else {
+        // Round down to include only full blocks,
+        // less the number of blocks that must remain in the buffer
+        nBlocksReady = Math.max((nBlocksReady | 0) - this._minBufferSize, 0);
+      }
+
+      // Count words ready
+      var nWordsReady = nBlocksReady * blockSize;
+
+      // Count bytes ready
+      var nBytesReady = Math.min(nWordsReady * 4, dataSigBytes);
+
+      // Process blocks
+      if (nWordsReady) {
+        for (var offset = 0; offset < nWordsReady; offset += blockSize) {
+          // Perform concrete-algorithm logic
+          this._doProcessBlock(dataWords, offset);
+        }
+
+        // Remove processed words
+        var processedWords = dataWords.splice(0, nWordsReady);
+        data.sigBytes -= nBytesReady;
+      }
+
+      // Return processed words
+      return new WordArray.init(processedWords, nBytesReady);
+    },
+
+    /**
+     * Creates a copy of this object.
+     *
+     * @return {Object} The clone.
+     *
+     * @example
+     *
+     *     var clone = bufferedBlockAlgorithm.clone();
+     */
+    clone: function () {
+      var clone = Base.clone.call(this);
+      clone._data = this._data.clone();
+
+      return clone;
+    },
+
+    _minBufferSize: 0
+  });
+
+  /**
+   * Abstract hasher template.
+   *
+   * @property {number} blockSize The number of 32-bit words this hasher operates on. Default: 16 (512 bits)
+   */
+  var Hasher = C_lib.Hasher = BufferedBlockAlgorithm.extend({
+    /**
+     * Configuration options.
+     */
+    cfg: Base.extend(),
+
+    /**
+     * Initializes a newly created hasher.
+     *
+     * @param {Object} cfg (Optional) The configuration options to use for this hash computation.
+     *
+     * @example
+     *
+     *     var hasher = CryptoJS.algo.SHA256.create();
+     */
+    init: function (cfg) {
+      // Apply config defaults
+      this.cfg = this.cfg.extend(cfg);
+
+      // Set initial values
+      this.reset();
+    },
+
+    /**
+     * Resets this hasher to its initial state.
+     *
+     * @example
+     *
+     *     hasher.reset();
+     */
+    reset: function () {
+      // Reset data buffer
+      BufferedBlockAlgorithm.reset.call(this);
+
+      // Perform concrete-hasher logic
+      this._doReset();
+    },
+
+    /**
+     * Updates this hasher with a message.
+     *
+     * @param {WordArray|string} messageUpdate The message to append.
+     *
+     * @return {Hasher} This hasher.
+     *
+     * @example
+     *
+     *     hasher.update('message');
+     *     hasher.update(wordArray);
+     */
+    update: function (messageUpdate) {
+      // Append
+      this._append(messageUpdate);
+
+      // Update the hash
+      this._process();
+
+      // Chainable
+      return this;
+    },
+
+    /**
+     * Finalizes the hash computation.
+     * Note that the finalize operation is effectively a destructive, read-once operation.
+     *
+     * @param {WordArray|string} messageUpdate (Optional) A final message update.
+     *
+     * @return {WordArray} The hash.
+     *
+     * @example
+     *
+     *     var hash = hasher.finalize();
+     *     var hash = hasher.finalize('message');
+     *     var hash = hasher.finalize(wordArray);
+     */
+    finalize: function (messageUpdate) {
+      // Final message update
+      if (messageUpdate) {
+        this._append(messageUpdate);
+      }
+
+      // Perform concrete-hasher logic
+      var hash = this._doFinalize();
+
+      return hash;
+    },
+
+    blockSize: 512/32,
+
+    /**
+     * Creates a shortcut function to a hasher's object interface.
+     *
+     * @param {Hasher} hasher The hasher to create a helper for.
+     *
+     * @return {Function} The shortcut function.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var SHA256 = CryptoJS.lib.Hasher._createHelper(CryptoJS.algo.SHA256);
+     */
+    _createHelper: function (hasher) {
+      return function (message, cfg) {
+        return new hasher.init(cfg).finalize(message);
+      };
+    },
+
+    /**
+     * Creates a shortcut function to the HMAC's object interface.
+     *
+     * @param {Hasher} hasher The hasher to use in this HMAC helper.
+     *
+     * @return {Function} The shortcut function.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var HmacSHA256 = CryptoJS.lib.Hasher._createHmacHelper(CryptoJS.algo.SHA256);
+     */
+    _createHmacHelper: function (hasher) {
+      return function (message, key) {
+        return new C_algo.HMAC.init(hasher, key).finalize(message);
+      };
+    }
+  });
+
+  /**
+   * Algorithm namespace.
+   */
+  var C_algo = C.algo = {};
+
+  return C;
+}(Math));
+/*
+ CryptoJS v3.1.2
+ cipher-core
+ code.google.com/p/crypto-js
+ (c) 2009-2013 by Jeff Mott. All rights reserved.
+ code.google.com/p/crypto-js/wiki/License
+ */
+/**
+ * Cipher core components.
+ */
+CryptoJS.lib.Cipher || (function (undefined) {
+  // Shortcuts
+  var C = CryptoJS;
+  var C_lib = C.lib;
+  var Base = C_lib.Base;
+  var WordArray = C_lib.WordArray;
+  var BufferedBlockAlgorithm = C_lib.BufferedBlockAlgorithm;
+  var C_enc = C.enc;
+  var Utf8 = C_enc.Utf8;
+  var Base64 = C_enc.Base64;
+  var C_algo = C.algo;
+  var EvpKDF = C_algo.EvpKDF;
+
+  /**
+   * Abstract base cipher template.
+   *
+   * @property {number} keySize This cipher's key size. Default: 4 (128 bits)
+   * @property {number} ivSize This cipher's IV size. Default: 4 (128 bits)
+   * @property {number} _ENC_XFORM_MODE A constant representing encryption mode.
+   * @property {number} _DEC_XFORM_MODE A constant representing decryption mode.
+   */
+  var Cipher = C_lib.Cipher = BufferedBlockAlgorithm.extend({
+    /**
+     * Configuration options.
+     *
+     * @property {WordArray} iv The IV to use for this operation.
+     */
+    cfg: Base.extend(),
+
+    /**
+     * Creates this cipher in encryption mode.
+     *
+     * @param {WordArray} key The key.
+     * @param {Object} cfg (Optional) The configuration options to use for this operation.
+     *
+     * @return {Cipher} A cipher instance.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var cipher = CryptoJS.algo.AES.createEncryptor(keyWordArray, { iv: ivWordArray });
+     */
+    createEncryptor: function (key, cfg) {
+      return this.create(this._ENC_XFORM_MODE, key, cfg);
+    },
+
+    /**
+     * Creates this cipher in decryption mode.
+     *
+     * @param {WordArray} key The key.
+     * @param {Object} cfg (Optional) The configuration options to use for this operation.
+     *
+     * @return {Cipher} A cipher instance.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var cipher = CryptoJS.algo.AES.createDecryptor(keyWordArray, { iv: ivWordArray });
+     */
+    createDecryptor: function (key, cfg) {
+      return this.create(this._DEC_XFORM_MODE, key, cfg);
+    },
+
+    /**
+     * Initializes a newly created cipher.
+     *
+     * @param {number} xformMode Either the encryption or decryption transormation mode constant.
+     * @param {WordArray} key The key.
+     * @param {Object} cfg (Optional) The configuration options to use for this operation.
+     *
+     * @example
+     *
+     *     var cipher = CryptoJS.algo.AES.create(CryptoJS.algo.AES._ENC_XFORM_MODE, keyWordArray, { iv: ivWordArray });
+     */
+    init: function (xformMode, key, cfg) {
+      // Apply config defaults
+      this.cfg = this.cfg.extend(cfg);
+
+      // Store transform mode and key
+      this._xformMode = xformMode;
+      this._key = key;
+
+      // Set initial values
+      this.reset();
+    },
+
+    /**
+     * Resets this cipher to its initial state.
+     *
+     * @example
+     *
+     *     cipher.reset();
+     */
+    reset: function () {
+      // Reset data buffer
+      BufferedBlockAlgorithm.reset.call(this);
+
+      // Perform concrete-cipher logic
+      this._doReset();
+    },
+
+    /**
+     * Adds data to be encrypted or decrypted.
+     *
+     * @param {WordArray|string} dataUpdate The data to encrypt or decrypt.
+     *
+     * @return {WordArray} The data after processing.
+     *
+     * @example
+     *
+     *     var encrypted = cipher.process('data');
+     *     var encrypted = cipher.process(wordArray);
+     */
+    process: function (dataUpdate) {
+      // Append
+      this._append(dataUpdate);
+
+      // Process available blocks
+      return this._process();
+    },
+
+    /**
+     * Finalizes the encryption or decryption process.
+     * Note that the finalize operation is effectively a destructive, read-once operation.
+     *
+     * @param {WordArray|string} dataUpdate The final data to encrypt or decrypt.
+     *
+     * @return {WordArray} The data after final processing.
+     *
+     * @example
+     *
+     *     var encrypted = cipher.finalize();
+     *     var encrypted = cipher.finalize('data');
+     *     var encrypted = cipher.finalize(wordArray);
+     */
+    finalize: function (dataUpdate) {
+      // Final data update
+      if (dataUpdate) {
+        this._append(dataUpdate);
+      }
+
+      // Perform concrete-cipher logic
+      var finalProcessedData = this._doFinalize();
+
+      return finalProcessedData;
+    },
+
+    keySize: 128/32,
+
+    ivSize: 128/32,
+
+    _ENC_XFORM_MODE: 1,
+
+    _DEC_XFORM_MODE: 2,
+
+    /**
+     * Creates shortcut functions to a cipher's object interface.
+     *
+     * @param {Cipher} cipher The cipher to create a helper for.
+     *
+     * @return {Object} An object with encrypt and decrypt shortcut functions.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var AES = CryptoJS.lib.Cipher._createHelper(CryptoJS.algo.AES);
+     */
+    _createHelper: (function () {
+      function selectCipherStrategy(key) {
+        if (typeof key == 'string') {
+          return PasswordBasedCipher;
+        } else {
+          return SerializableCipher;
+        }
+      }
+
+      return function (cipher) {
+        return {
+          encrypt: function (message, key, cfg) {
+            return selectCipherStrategy(key).encrypt(cipher, message, key, cfg);
+          },
+
+          decrypt: function (ciphertext, key, cfg) {
+            return selectCipherStrategy(key).decrypt(cipher, ciphertext, key, cfg);
+          }
+        };
+      };
+    }())
+  });
+
+  /**
+   * Abstract base stream cipher template.
+   *
+   * @property {number} blockSize The number of 32-bit words this cipher operates on. Default: 1 (32 bits)
+   */
+  var StreamCipher = C_lib.StreamCipher = Cipher.extend({
+    _doFinalize: function () {
+      // Process partial blocks
+      var finalProcessedBlocks = this._process(!!'flush');
+
+      return finalProcessedBlocks;
+    },
+
+    blockSize: 1
+  });
+
+  /**
+   * Mode namespace.
+   */
+  var C_mode = C.mode = {};
+
+  /**
+   * Abstract base block cipher mode template.
+   */
+  var BlockCipherMode = C_lib.BlockCipherMode = Base.extend({
+    /**
+     * Creates this mode for encryption.
+     *
+     * @param {Cipher} cipher A block cipher instance.
+     * @param {Array} iv The IV words.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var mode = CryptoJS.mode.CBC.createEncryptor(cipher, iv.words);
+     */
+    createEncryptor: function (cipher, iv) {
+      return this.Encryptor.create(cipher, iv);
+    },
+
+    /**
+     * Creates this mode for decryption.
+     *
+     * @param {Cipher} cipher A block cipher instance.
+     * @param {Array} iv The IV words.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var mode = CryptoJS.mode.CBC.createDecryptor(cipher, iv.words);
+     */
+    createDecryptor: function (cipher, iv) {
+      return this.Decryptor.create(cipher, iv);
+    },
+
+    /**
+     * Initializes a newly created mode.
+     *
+     * @param {Cipher} cipher A block cipher instance.
+     * @param {Array} iv The IV words.
+     *
+     * @example
+     *
+     *     var mode = CryptoJS.mode.CBC.Encryptor.create(cipher, iv.words);
+     */
+    init: function (cipher, iv) {
+      this._cipher = cipher;
+      this._iv = iv;
+    }
+  });
+
+  /**
+   * Cipher Block Chaining mode.
+   */
+  var CBC = C_mode.CBC = (function () {
+    /**
+     * Abstract base CBC mode.
+     */
+    var CBC = BlockCipherMode.extend();
+
+    /**
+     * CBC encryptor.
+     */
+    CBC.Encryptor = CBC.extend({
+      /**
+       * Processes the data block at offset.
+       *
+       * @param {Array} words The data words to operate on.
+       * @param {number} offset The offset where the block starts.
+       *
+       * @example
+       *
+       *     mode.processBlock(data.words, offset);
+       */
+      processBlock: function (words, offset) {
+        // Shortcuts
+        var cipher = this._cipher;
+        var blockSize = cipher.blockSize;
+
+        // XOR and encrypt
+        xorBlock.call(this, words, offset, blockSize);
+        cipher.encryptBlock(words, offset);
+
+        // Remember this block to use with next block
+        this._prevBlock = words.slice(offset, offset + blockSize);
+      }
+    });
+
+    /**
+     * CBC decryptor.
+     */
+    CBC.Decryptor = CBC.extend({
+      /**
+       * Processes the data block at offset.
+       *
+       * @param {Array} words The data words to operate on.
+       * @param {number} offset The offset where the block starts.
+       *
+       * @example
+       *
+       *     mode.processBlock(data.words, offset);
+       */
+      processBlock: function (words, offset) {
+        // Shortcuts
+        var cipher = this._cipher;
+        var blockSize = cipher.blockSize;
+
+        // Remember this block to use with next block
+        var thisBlock = words.slice(offset, offset + blockSize);
+
+        // Decrypt and XOR
+        cipher.decryptBlock(words, offset);
+        xorBlock.call(this, words, offset, blockSize);
+
+        // This block becomes the previous block
+        this._prevBlock = thisBlock;
+      }
+    });
+
+    function xorBlock(words, offset, blockSize) {
+      // Shortcut
+      var iv = this._iv;
+
+      // Choose mixing block
+      if (iv) {
+        var block = iv;
+
+        // Remove IV for subsequent blocks
+        this._iv = undefined;
+      } else {
+        var block = this._prevBlock;
+      }
+
+      // XOR blocks
+      for (var i = 0; i < blockSize; i++) {
+        words[offset + i] ^= block[i];
+      }
+    }
+
+    return CBC;
+  }());
+
+  /**
+   * Padding namespace.
+   */
+  var C_pad = C.pad = {};
+
+  /**
+   * PKCS #5/7 padding strategy.
+   */
+  var Pkcs7 = C_pad.Pkcs7 = {
+    /**
+     * Pads data using the algorithm defined in PKCS #5/7.
+     *
+     * @param {WordArray} data The data to pad.
+     * @param {number} blockSize The multiple that the data should be padded to.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     CryptoJS.pad.Pkcs7.pad(wordArray, 4);
+     */
+    pad: function (data, blockSize) {
+      // Shortcut
+      var blockSizeBytes = blockSize * 4;
+
+      // Count padding bytes
+      var nPaddingBytes = blockSizeBytes - data.sigBytes % blockSizeBytes;
+
+      // Create padding word
+      var paddingWord = (nPaddingBytes << 24) | (nPaddingBytes << 16) | (nPaddingBytes << 8) | nPaddingBytes;
+
+      // Create padding
+      var paddingWords = [];
+      for (var i = 0; i < nPaddingBytes; i += 4) {
+        paddingWords.push(paddingWord);
+      }
+      var padding = WordArray.create(paddingWords, nPaddingBytes);
+
+      // Add padding
+      data.concat(padding);
+    },
+
+    /**
+     * Unpads data that had been padded using the algorithm defined in PKCS #5/7.
+     *
+     * @param {WordArray} data The data to unpad.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     CryptoJS.pad.Pkcs7.unpad(wordArray);
+     */
+    unpad: function (data) {
+      // Get number of padding bytes from last byte
+      var nPaddingBytes = data.words[(data.sigBytes - 1) >>> 2] & 0xff;
+
+      // Remove padding
+      data.sigBytes -= nPaddingBytes;
+    }
+  };
+
+  /**
+   * Abstract base block cipher template.
+   *
+   * @property {number} blockSize The number of 32-bit words this cipher operates on. Default: 4 (128 bits)
+   */
+  var BlockCipher = C_lib.BlockCipher = Cipher.extend({
+    /**
+     * Configuration options.
+     *
+     * @property {Mode} mode The block mode to use. Default: CBC
+     * @property {Padding} padding The padding strategy to use. Default: Pkcs7
+     */
+    cfg: Cipher.cfg.extend({
+      mode: CBC,
+      padding: Pkcs7
+    }),
+
+    reset: function () {
+      // Reset cipher
+      Cipher.reset.call(this);
+
+      // Shortcuts
+      var cfg = this.cfg;
+      var iv = cfg.iv;
+      var mode = cfg.mode;
+
+      // Reset block mode
+      if (this._xformMode == this._ENC_XFORM_MODE) {
+        var modeCreator = mode.createEncryptor;
+      } else /* if (this._xformMode == this._DEC_XFORM_MODE) */ {
+        var modeCreator = mode.createDecryptor;
+
+        // Keep at least one block in the buffer for unpadding
+        this._minBufferSize = 1;
+      }
+      this._mode = modeCreator.call(mode, this, iv && iv.words);
+    },
+
+    _doProcessBlock: function (words, offset) {
+      this._mode.processBlock(words, offset);
+    },
+
+    _doFinalize: function () {
+      // Shortcut
+      var padding = this.cfg.padding;
+
+      // Finalize
+      if (this._xformMode == this._ENC_XFORM_MODE) {
+        // Pad data
+        padding.pad(this._data, this.blockSize);
+
+        // Process final blocks
+        var finalProcessedBlocks = this._process(!!'flush');
+      } else /* if (this._xformMode == this._DEC_XFORM_MODE) */ {
+        // Process final blocks
+        var finalProcessedBlocks = this._process(!!'flush');
+
+        // Unpad data
+        padding.unpad(finalProcessedBlocks);
+      }
+
+      return finalProcessedBlocks;
+    },
+
+    blockSize: 128/32
+  });
+
+  /**
+   * A collection of cipher parameters.
+   *
+   * @property {WordArray} ciphertext The raw ciphertext.
+   * @property {WordArray} key The key to this ciphertext.
+   * @property {WordArray} iv The IV used in the ciphering operation.
+   * @property {WordArray} salt The salt used with a key derivation function.
+   * @property {Cipher} algorithm The cipher algorithm.
+   * @property {Mode} mode The block mode used in the ciphering operation.
+   * @property {Padding} padding The padding scheme used in the ciphering operation.
+   * @property {number} blockSize The block size of the cipher.
+   * @property {Format} formatter The default formatting strategy to convert this cipher params object to a string.
+   */
+  var CipherParams = C_lib.CipherParams = Base.extend({
+    /**
+     * Initializes a newly created cipher params object.
+     *
+     * @param {Object} cipherParams An object with any of the possible cipher parameters.
+     *
+     * @example
+     *
+     *     var cipherParams = CryptoJS.lib.CipherParams.create({
+         *         ciphertext: ciphertextWordArray,
+         *         key: keyWordArray,
+         *         iv: ivWordArray,
+         *         salt: saltWordArray,
+         *         algorithm: CryptoJS.algo.AES,
+         *         mode: CryptoJS.mode.CBC,
+         *         padding: CryptoJS.pad.PKCS7,
+         *         blockSize: 4,
+         *         formatter: CryptoJS.format.OpenSSL
+         *     });
+     */
+    init: function (cipherParams) {
+      this.mixIn(cipherParams);
+    },
+
+    /**
+     * Converts this cipher params object to a string.
+     *
+     * @param {Format} formatter (Optional) The formatting strategy to use.
+     *
+     * @return {string} The stringified cipher params.
+     *
+     * @throws Error If neither the formatter nor the default formatter is set.
+     *
+     * @example
+     *
+     *     var string = cipherParams + '';
+     *     var string = cipherParams.toString();
+     *     var string = cipherParams.toString(CryptoJS.format.OpenSSL);
+     */
+    toString: function (formatter) {
+      return (formatter || this.formatter).stringify(this);
+    }
+  });
+
+  /**
+   * Format namespace.
+   */
+  var C_format = C.format = {};
+
+  /**
+   * OpenSSL formatting strategy.
+   */
+  var OpenSSLFormatter = C_format.OpenSSL = {
+    /**
+     * Converts a cipher params object to an OpenSSL-compatible string.
+     *
+     * @param {CipherParams} cipherParams The cipher params object.
+     *
+     * @return {string} The OpenSSL-compatible string.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var openSSLString = CryptoJS.format.OpenSSL.stringify(cipherParams);
+     */
+    stringify: function (cipherParams) {
+      // Shortcuts
+      var ciphertext = cipherParams.ciphertext;
+      var salt = cipherParams.salt;
+
+      // Format
+      if (salt) {
+        var wordArray = WordArray.create([0x53616c74, 0x65645f5f]).concat(salt).concat(ciphertext);
+      } else {
+        var wordArray = ciphertext;
+      }
+
+      return wordArray.toString(Base64);
+    },
+
+    /**
+     * Converts an OpenSSL-compatible string to a cipher params object.
+     *
+     * @param {string} openSSLStr The OpenSSL-compatible string.
+     *
+     * @return {CipherParams} The cipher params object.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var cipherParams = CryptoJS.format.OpenSSL.parse(openSSLString);
+     */
+    parse: function (openSSLStr) {
+      // Parse base64
+      var ciphertext = Base64.parse(openSSLStr);
+
+      // Shortcut
+      var ciphertextWords = ciphertext.words;
+
+      // Test for salt
+      if (ciphertextWords[0] == 0x53616c74 && ciphertextWords[1] == 0x65645f5f) {
+        // Extract salt
+        var salt = WordArray.create(ciphertextWords.slice(2, 4));
+
+        // Remove salt from ciphertext
+        ciphertextWords.splice(0, 4);
+        ciphertext.sigBytes -= 16;
+      }
+
+      return CipherParams.create({ ciphertext: ciphertext, salt: salt });
+    }
+  };
+
+  /**
+   * A cipher wrapper that returns ciphertext as a serializable cipher params object.
+   */
+  var SerializableCipher = C_lib.SerializableCipher = Base.extend({
+    /**
+     * Configuration options.
+     *
+     * @property {Formatter} format The formatting strategy to convert cipher param objects to and from a string. Default: OpenSSL
+     */
+    cfg: Base.extend({
+      format: OpenSSLFormatter
+    }),
+
+    /**
+     * Encrypts a message.
+     *
+     * @param {Cipher} cipher The cipher algorithm to use.
+     * @param {WordArray|string} message The message to encrypt.
+     * @param {WordArray} key The key.
+     * @param {Object} cfg (Optional) The configuration options to use for this operation.
+     *
+     * @return {CipherParams} A cipher params object.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var ciphertextParams = CryptoJS.lib.SerializableCipher.encrypt(CryptoJS.algo.AES, message, key);
+     *     var ciphertextParams = CryptoJS.lib.SerializableCipher.encrypt(CryptoJS.algo.AES, message, key, { iv: iv });
+     *     var ciphertextParams = CryptoJS.lib.SerializableCipher.encrypt(CryptoJS.algo.AES, message, key, { iv: iv, format: CryptoJS.format.OpenSSL });
+     */
+    encrypt: function (cipher, message, key, cfg) {
+      // Apply config defaults
+      cfg = this.cfg.extend(cfg);
+
+      // Encrypt
+      var encryptor = cipher.createEncryptor(key, cfg);
+      var ciphertext = encryptor.finalize(message);
+
+      // Shortcut
+      var cipherCfg = encryptor.cfg;
+
+      // Create and return serializable cipher params
+      return CipherParams.create({
+        ciphertext: ciphertext,
+        key: key,
+        iv: cipherCfg.iv,
+        algorithm: cipher,
+        mode: cipherCfg.mode,
+        padding: cipherCfg.padding,
+        blockSize: cipher.blockSize,
+        formatter: cfg.format
+      });
+    },
+
+    /**
+     * Decrypts serialized ciphertext.
+     *
+     * @param {Cipher} cipher The cipher algorithm to use.
+     * @param {CipherParams|string} ciphertext The ciphertext to decrypt.
+     * @param {WordArray} key The key.
+     * @param {Object} cfg (Optional) The configuration options to use for this operation.
+     *
+     * @return {WordArray} The plaintext.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var plaintext = CryptoJS.lib.SerializableCipher.decrypt(CryptoJS.algo.AES, formattedCiphertext, key, { iv: iv, format: CryptoJS.format.OpenSSL });
+     *     var plaintext = CryptoJS.lib.SerializableCipher.decrypt(CryptoJS.algo.AES, ciphertextParams, key, { iv: iv, format: CryptoJS.format.OpenSSL });
+     */
+    decrypt: function (cipher, ciphertext, key, cfg) {
+      // Apply config defaults
+      cfg = this.cfg.extend(cfg);
+
+      // Convert string to CipherParams
+      ciphertext = this._parse(ciphertext, cfg.format);
+
+      // Decrypt
+      var plaintext = cipher.createDecryptor(key, cfg).finalize(ciphertext.ciphertext);
+
+      return plaintext;
+    },
+
+    /**
+     * Converts serialized ciphertext to CipherParams,
+     * else assumed CipherParams already and returns ciphertext unchanged.
+     *
+     * @param {CipherParams|string} ciphertext The ciphertext.
+     * @param {Formatter} format The formatting strategy to use to parse serialized ciphertext.
+     *
+     * @return {CipherParams} The unserialized ciphertext.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var ciphertextParams = CryptoJS.lib.SerializableCipher._parse(ciphertextStringOrParams, format);
+     */
+    _parse: function (ciphertext, format) {
+      if (typeof ciphertext == 'string') {
+        return format.parse(ciphertext, this);
+      } else {
+        return ciphertext;
+      }
+    }
+  });
+
+  /**
+   * Key derivation function namespace.
+   */
+  var C_kdf = C.kdf = {};
+
+  /**
+   * OpenSSL key derivation function.
+   */
+  var OpenSSLKdf = C_kdf.OpenSSL = {
+    /**
+     * Derives a key and IV from a password.
+     *
+     * @param {string} password The password to derive from.
+     * @param {number} keySize The size in words of the key to generate.
+     * @param {number} ivSize The size in words of the IV to generate.
+     * @param {WordArray|string} salt (Optional) A 64-bit salt to use. If omitted, a salt will be generated randomly.
+     *
+     * @return {CipherParams} A cipher params object with the key, IV, and salt.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var derivedParams = CryptoJS.kdf.OpenSSL.execute('Password', 256/32, 128/32);
+     *     var derivedParams = CryptoJS.kdf.OpenSSL.execute('Password', 256/32, 128/32, 'saltsalt');
+     */
+    execute: function (password, keySize, ivSize, salt) {
+      // Generate random salt
+      if (!salt) {
+        salt = WordArray.random(64/8);
+      }
+
+      // Derive key and IV
+      var key = EvpKDF.create({ keySize: keySize + ivSize }).compute(password, salt);
+
+      // Separate key and IV
+      var iv = WordArray.create(key.words.slice(keySize), ivSize * 4);
+      key.sigBytes = keySize * 4;
+
+      // Return params
+      return CipherParams.create({ key: key, iv: iv, salt: salt });
+    }
+  };
+
+  /**
+   * A serializable cipher wrapper that derives the key from a password,
+   * and returns ciphertext as a serializable cipher params object.
+   */
+  var PasswordBasedCipher = C_lib.PasswordBasedCipher = SerializableCipher.extend({
+    /**
+     * Configuration options.
+     *
+     * @property {KDF} kdf The key derivation function to use to generate a key and IV from a password. Default: OpenSSL
+     */
+    cfg: SerializableCipher.cfg.extend({
+      kdf: OpenSSLKdf
+    }),
+
+    /**
+     * Encrypts a message using a password.
+     *
+     * @param {Cipher} cipher The cipher algorithm to use.
+     * @param {WordArray|string} message The message to encrypt.
+     * @param {string} password The password.
+     * @param {Object} cfg (Optional) The configuration options to use for this operation.
+     *
+     * @return {CipherParams} A cipher params object.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var ciphertextParams = CryptoJS.lib.PasswordBasedCipher.encrypt(CryptoJS.algo.AES, message, 'password');
+     *     var ciphertextParams = CryptoJS.lib.PasswordBasedCipher.encrypt(CryptoJS.algo.AES, message, 'password', { format: CryptoJS.format.OpenSSL });
+     */
+    encrypt: function (cipher, message, password, cfg) {
+      // Apply config defaults
+      cfg = this.cfg.extend(cfg);
+
+      // Derive key and other params
+      var derivedParams = cfg.kdf.execute(password, cipher.keySize, cipher.ivSize);
+
+      // Add IV to config
+      cfg.iv = derivedParams.iv;
+
+      // Encrypt
+      var ciphertext = SerializableCipher.encrypt.call(this, cipher, message, derivedParams.key, cfg);
+
+      // Mix in derived params
+      ciphertext.mixIn(derivedParams);
+
+      return ciphertext;
+    },
+
+    /**
+     * Decrypts serialized ciphertext using a password.
+     *
+     * @param {Cipher} cipher The cipher algorithm to use.
+     * @param {CipherParams|string} ciphertext The ciphertext to decrypt.
+     * @param {string} password The password.
+     * @param {Object} cfg (Optional) The configuration options to use for this operation.
+     *
+     * @return {WordArray} The plaintext.
+     *
+     * @static
+     *
+     * @example
+     *
+     *     var plaintext = CryptoJS.lib.PasswordBasedCipher.decrypt(CryptoJS.algo.AES, formattedCiphertext, 'password', { format: CryptoJS.format.OpenSSL });
+     *     var plaintext = CryptoJS.lib.PasswordBasedCipher.decrypt(CryptoJS.algo.AES, ciphertextParams, 'password', { format: CryptoJS.format.OpenSSL });
+     */
+    decrypt: function (cipher, ciphertext, password, cfg) {
+      // Apply config defaults
+      cfg = this.cfg.extend(cfg);
+
+      // Convert string to CipherParams
+      ciphertext = this._parse(ciphertext, cfg.format);
+
+      // Derive key and other params
+      var derivedParams = cfg.kdf.execute(password, cipher.keySize, cipher.ivSize, ciphertext.salt);
+
+      // Add IV to config
+      cfg.iv = derivedParams.iv;
+
+      // Decrypt
+      var plaintext = SerializableCipher.decrypt.call(this, cipher, ciphertext, derivedParams.key, cfg);
+
+      return plaintext;
+    }
+  });
+}());
+/*
+ CryptoJS v3.1.2
+ sha1.js
+ code.google.com/p/crypto-js
+ (c) 2009-2013 by Jeff Mott. All rights reserved.
+ code.google.com/p/crypto-js/wiki/License
+ */
+(function () {
+  // Shortcuts
+  var C = CryptoJS;
+  var C_lib = C.lib;
+  var WordArray = C_lib.WordArray;
+  var Hasher = C_lib.Hasher;
+  var C_algo = C.algo;
+
+  // Reusable object
+  var W = [];
+
+  /**
+   * SHA-1 hash algorithm.
+   */
+  var SHA1 = C_algo.SHA1 = Hasher.extend({
+    _doReset: function () {
+      this._hash = new WordArray.init([
+        0x67452301, 0xefcdab89,
+        0x98badcfe, 0x10325476,
+        0xc3d2e1f0
+      ]);
+    },
+
+    _doProcessBlock: function (M, offset) {
+      // Shortcut
+      var H = this._hash.words;
+
+      // Working variables
+      var a = H[0];
+      var b = H[1];
+      var c = H[2];
+      var d = H[3];
+      var e = H[4];
+
+      // Computation
+      for (var i = 0; i < 80; i++) {
+        if (i < 16) {
+          W[i] = M[offset + i] | 0;
+        } else {
+          var n = W[i - 3] ^ W[i - 8] ^ W[i - 14] ^ W[i - 16];
+          W[i] = (n << 1) | (n >>> 31);
+        }
+
+        var t = ((a << 5) | (a >>> 27)) + e + W[i];
+        if (i < 20) {
+          t += ((b & c) | (~b & d)) + 0x5a827999;
+        } else if (i < 40) {
+          t += (b ^ c ^ d) + 0x6ed9eba1;
+        } else if (i < 60) {
+          t += ((b & c) | (b & d) | (c & d)) - 0x70e44324;
+        } else /* if (i < 80) */ {
+          t += (b ^ c ^ d) - 0x359d3e2a;
+        }
+
+        e = d;
+        d = c;
+        c = (b << 30) | (b >>> 2);
+        b = a;
+        a = t;
+      }
+
+      // Intermediate hash value
+      H[0] = (H[0] + a) | 0;
+      H[1] = (H[1] + b) | 0;
+      H[2] = (H[2] + c) | 0;
+      H[3] = (H[3] + d) | 0;
+      H[4] = (H[4] + e) | 0;
+    },
+
+    _doFinalize: function () {
+      // Shortcuts
+      var data = this._data;
+      var dataWords = data.words;
+
+      var nBitsTotal = this._nDataBytes * 8;
+      var nBitsLeft = data.sigBytes * 8;
+
+      // Add padding
+      dataWords[nBitsLeft >>> 5] |= 0x80 << (24 - nBitsLeft % 32);
+      dataWords[(((nBitsLeft + 64) >>> 9) << 4) + 14] = Math.floor(nBitsTotal / 0x100000000);
+      dataWords[(((nBitsLeft + 64) >>> 9) << 4) + 15] = nBitsTotal;
+      data.sigBytes = dataWords.length * 4;
+
+      // Hash final blocks
+      this._process();
+
+      // Return final computed hash
+      return this._hash;
+    },
+
+    clone: function () {
+      var clone = Hasher.clone.call(this);
+      clone._hash = this._hash.clone();
+
+      return clone;
+    }
+  });
+
+  /**
+   * Shortcut function to the hasher's object interface.
+   *
+   * @param {WordArray|string} message The message to hash.
+   *
+   * @return {WordArray} The hash.
+   *
+   * @static
+   *
+   * @example
+   *
+   *     var hash = CryptoJS.SHA1('message');
+   *     var hash = CryptoJS.SHA1(wordArray);
+   */
+  C.SHA1 = Hasher._createHelper(SHA1);
+
+  /**
+   * Shortcut function to the HMAC's object interface.
+   *
+   * @param {WordArray|string} message The message to hash.
+   * @param {WordArray|string} key The secret key.
+   *
+   * @return {WordArray} The HMAC.
+   *
+   * @static
+   *
+   * @example
+   *
+   *     var hmac = CryptoJS.HmacSHA1(message, key);
+   */
+  C.HmacSHA1 = Hasher._createHmacHelper(SHA1);
+}());
+/*
+ CryptoJS v3.1.2
+ x64-core.js
+ code.google.com/p/crypto-js
+ (c) 2009-2013 by Jeff Mott. All rights reserved.
+ code.google.com/p/crypto-js/wiki/License
+ */
+(function (undefined) {
+  // Shortcuts
+  var C = CryptoJS;
+  var C_lib = C.lib;
+  var Base = C_lib.Base;
+  var X32WordArray = C_lib.WordArray;
+
+  /**
+   * x64 namespace.
+   */
+  var C_x64 = C.x64 = {};
+
+  /**
+   * A 64-bit word.
+   */
+  var X64Word = C_x64.Word = Base.extend({
+    /**
+     * Initializes a newly created 64-bit word.
+     *
+     * @param {number} high The high 32 bits.
+     * @param {number} low The low 32 bits.
+     *
+     * @example
+     *
+     *     var x64Word = CryptoJS.x64.Word.create(0x00010203, 0x04050607);
+     */
+    init: function (high, low) {
+      this.high = high;
+      this.low = low;
+    }
+
+    /**
+     * Bitwise NOTs this word.
+     *
+     * @return {X64Word} A new x64-Word object after negating.
+     *
+     * @example
+     *
+     *     var negated = x64Word.not();
+     */
+    // not: function () {
+    // var high = ~this.high;
+    // var low = ~this.low;
+
+    // return X64Word.create(high, low);
+    // },
+
+    /**
+     * Bitwise ANDs this word with the passed word.
+     *
+     * @param {X64Word} word The x64-Word to AND with this word.
+     *
+     * @return {X64Word} A new x64-Word object after ANDing.
+     *
+     * @example
+     *
+     *     var anded = x64Word.and(anotherX64Word);
+     */
+    // and: function (word) {
+    // var high = this.high & word.high;
+    // var low = this.low & word.low;
+
+    // return X64Word.create(high, low);
+    // },
+
+    /**
+     * Bitwise ORs this word with the passed word.
+     *
+     * @param {X64Word} word The x64-Word to OR with this word.
+     *
+     * @return {X64Word} A new x64-Word object after ORing.
+     *
+     * @example
+     *
+     *     var ored = x64Word.or(anotherX64Word);
+     */
+    // or: function (word) {
+    // var high = this.high | word.high;
+    // var low = this.low | word.low;
+
+    // return X64Word.create(high, low);
+    // },
+
+    /**
+     * Bitwise XORs this word with the passed word.
+     *
+     * @param {X64Word} word The x64-Word to XOR with this word.
+     *
+     * @return {X64Word} A new x64-Word object after XORing.
+     *
+     * @example
+     *
+     *     var xored = x64Word.xor(anotherX64Word);
+     */
+    // xor: function (word) {
+    // var high = this.high ^ word.high;
+    // var low = this.low ^ word.low;
+
+    // return X64Word.create(high, low);
+    // },
+
+    /**
+     * Shifts this word n bits to the left.
+     *
+     * @param {number} n The number of bits to shift.
+     *
+     * @return {X64Word} A new x64-Word object after shifting.
+     *
+     * @example
+     *
+     *     var shifted = x64Word.shiftL(25);
+     */
+    // shiftL: function (n) {
+    // if (n < 32) {
+    // var high = (this.high << n) | (this.low >>> (32 - n));
+    // var low = this.low << n;
+    // } else {
+    // var high = this.low << (n - 32);
+    // var low = 0;
+    // }
+
+    // return X64Word.create(high, low);
+    // },
+
+    /**
+     * Shifts this word n bits to the right.
+     *
+     * @param {number} n The number of bits to shift.
+     *
+     * @return {X64Word} A new x64-Word object after shifting.
+     *
+     * @example
+     *
+     *     var shifted = x64Word.shiftR(7);
+     */
+    // shiftR: function (n) {
+    // if (n < 32) {
+    // var low = (this.low >>> n) | (this.high << (32 - n));
+    // var high = this.high >>> n;
+    // } else {
+    // var low = this.high >>> (n - 32);
+    // var high = 0;
+    // }
+
+    // return X64Word.create(high, low);
+    // },
+
+    /**
+     * Rotates this word n bits to the left.
+     *
+     * @param {number} n The number of bits to rotate.
+     *
+     * @return {X64Word} A new x64-Word object after rotating.
+     *
+     * @example
+     *
+     *     var rotated = x64Word.rotL(25);
+     */
+    // rotL: function (n) {
+    // return this.shiftL(n).or(this.shiftR(64 - n));
+    // },
+
+    /**
+     * Rotates this word n bits to the right.
+     *
+     * @param {number} n The number of bits to rotate.
+     *
+     * @return {X64Word} A new x64-Word object after rotating.
+     *
+     * @example
+     *
+     *     var rotated = x64Word.rotR(7);
+     */
+    // rotR: function (n) {
+    // return this.shiftR(n).or(this.shiftL(64 - n));
+    // },
+
+    /**
+     * Adds this word with the passed word.
+     *
+     * @param {X64Word} word The x64-Word to add with this word.
+     *
+     * @return {X64Word} A new x64-Word object after adding.
+     *
+     * @example
+     *
+     *     var added = x64Word.add(anotherX64Word);
+     */
+    // add: function (word) {
+    // var low = (this.low + word.low) | 0;
+    // var carry = (low >>> 0) < (this.low >>> 0) ? 1 : 0;
+    // var high = (this.high + word.high + carry) | 0;
+
+    // return X64Word.create(high, low);
+    // }
+  });
+
+  /**
+   * An array of 64-bit words.
+   *
+   * @property {Array} words The array of CryptoJS.x64.Word objects.
+   * @property {number} sigBytes The number of significant bytes in this word array.
+   */
+  var X64WordArray = C_x64.WordArray = Base.extend({
+    /**
+     * Initializes a newly created word array.
+     *
+     * @param {Array} words (Optional) An array of CryptoJS.x64.Word objects.
+     * @param {number} sigBytes (Optional) The number of significant bytes in the words.
+     *
+     * @example
+     *
+     *     var wordArray = CryptoJS.x64.WordArray.create();
+     *
+     *     var wordArray = CryptoJS.x64.WordArray.create([
+     *         CryptoJS.x64.Word.create(0x00010203, 0x04050607),
+     *         CryptoJS.x64.Word.create(0x18191a1b, 0x1c1d1e1f)
+     *     ]);
+     *
+     *     var wordArray = CryptoJS.x64.WordArray.create([
+     *         CryptoJS.x64.Word.create(0x00010203, 0x04050607),
+     *         CryptoJS.x64.Word.create(0x18191a1b, 0x1c1d1e1f)
+     *     ], 10);
+     */
+    init: function (words, sigBytes) {
+      words = this.words = words || [];
+
+      if (sigBytes != undefined) {
+        this.sigBytes = sigBytes;
+      } else {
+        this.sigBytes = words.length * 8;
+      }
+    },
+
+    /**
+     * Converts this 64-bit word array to a 32-bit word array.
+     *
+     * @return {CryptoJS.lib.WordArray} This word array's data as a 32-bit word array.
+     *
+     * @example
+     *
+     *     var x32WordArray = x64WordArray.toX32();
+     */
+    toX32: function () {
+      // Shortcuts
+      var x64Words = this.words;
+      var x64WordsLength = x64Words.length;
+
+      // Convert
+      var x32Words = [];
+      for (var i = 0; i < x64WordsLength; i++) {
+        var x64Word = x64Words[i];
+        x32Words.push(x64Word.high);
+        x32Words.push(x64Word.low);
+      }
+
+      return X32WordArray.create(x32Words, this.sigBytes);
+    },
+
+    /**
+     * Creates a copy of this word array.
+     *
+     * @return {X64WordArray} The clone.
+     *
+     * @example
+     *
+     *     var clone = x64WordArray.clone();
+     */
+    clone: function () {
+      var clone = Base.clone.call(this);
+
+      // Clone "words" array
+      var words = clone.words = this.words.slice(0);
+
+      // Clone each X64Word object
+      var wordsLength = words.length;
+      for (var i = 0; i < wordsLength; i++) {
+        words[i] = words[i].clone();
+      }
+
+      return clone;
+    }
+  });
+}());
+; browserify_shim__define__module__export__(typeof CryptoJS != "undefined" ? CryptoJS : window.CryptoJS);
+
+}).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
+
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],9:[function(_dereq_,module,exports){
+module.exports=_dereq_(2)
+},{}],10:[function(_dereq_,module,exports){
+var v1 = _dereq_('./v1');
+var v4 = _dereq_('./v4');
+
+var uuid = v4;
+uuid.v1 = v1;
+uuid.v4 = v4;
+
+module.exports = uuid;
+
+},{"./v1":13,"./v4":14}],11:[function(_dereq_,module,exports){
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+var byteToHex = [];
+for (var i = 0; i < 256; ++i) {
+  byteToHex[i] = (i + 0x100).toString(16).substr(1);
 }
 
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
+function bytesToUuid(buf, offset) {
+  var i = offset || 0;
+  var bth = byteToHex;
+  return  bth[buf[i++]] + bth[buf[i++]] +
+          bth[buf[i++]] + bth[buf[i++]] + '-' +
+          bth[buf[i++]] + bth[buf[i++]] + '-' +
+          bth[buf[i++]] + bth[buf[i++]] + '-' +
+          bth[buf[i++]] + bth[buf[i++]] + '-' +
+          bth[buf[i++]] + bth[buf[i++]] +
+          bth[buf[i++]] + bth[buf[i++]] +
+          bth[buf[i++]] + bth[buf[i++]];
+}
+
+module.exports = bytesToUuid;
+
+},{}],12:[function(_dereq_,module,exports){
+(function (global){
+// Unique ID creation requires a high quality random # generator.  In the
+// browser this is a little complicated due to unknown quality of Math.random()
+// and inconsistent support for the `crypto` API.  We do the best we can via
+// feature-detection
+var rng;
+
+var crypto = global.crypto || global.msCrypto; // for IE 11
+if (crypto && crypto.getRandomValues) {
+  // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
+  var rnds8 = new Uint8Array(16);
+  rng = function whatwgRNG() {
+    crypto.getRandomValues(rnds8);
+    return rnds8;
+  };
+}
+
+if (!rng) {
+  // Math.random()-based (RNG)
+  //
+  // If all else fails, use Math.random().  It's fast, but is of unspecified
+  // quality.
+  var  rnds = new Array(16);
+  rng = function() {
+    for (var i = 0, r; i < 16; i++) {
+      if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
+      rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
+    }
+
+    return rnds;
+  };
+}
+
+module.exports = rng;
+
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],13:[function(_dereq_,module,exports){
+// Unique ID creation requires a high quality random # generator.  We feature
+// detect to determine the best RNG source, normalizing to a function that
+// returns 128-bits of randomness, since that's what's usually required
+var rng = _dereq_('./lib/rng');
+var bytesToUuid = _dereq_('./lib/bytesToUuid');
+
+// **`v1()` - Generate time-based UUID**
+//
+// Inspired by https://github.com/LiosK/UUID.js
+// and http://docs.python.org/library/uuid.html
+
+// random #'s we need to init node and clockseq
+var _seedBytes = rng();
+
+// Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+var _nodeId = [
+  _seedBytes[0] | 0x01,
+  _seedBytes[1], _seedBytes[2], _seedBytes[3], _seedBytes[4], _seedBytes[5]
+];
+
+// Per 4.2.2, randomize (14 bit) clockseq
+var _clockseq = (_seedBytes[6] << 8 | _seedBytes[7]) & 0x3fff;
+
+// Previous uuid creation time
+var _lastMSecs = 0, _lastNSecs = 0;
+
+// See https://github.com/broofa/node-uuid for API details
+function v1(options, buf, offset) {
+  var i = buf && offset || 0;
+  var b = buf || [];
+
+  options = options || {};
+
+  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
+
+  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
+
+  // Per 4.2.1.2, use count of uuid's generated during the current clock
+  // cycle to simulate higher resolution clock
+  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
+
+  // Time since last uuid creation (in msecs)
+  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
+
+  // Per 4.2.1.2, Bump clockseq on clock regression
+  if (dt < 0 && options.clockseq === undefined) {
+    clockseq = clockseq + 1 & 0x3fff;
+  }
+
+  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+  // time interval
+  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
+    nsecs = 0;
+  }
+
+  // Per 4.2.1.2 Throw error if too many uuids are requested
+  if (nsecs >= 10000) {
+    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
+  }
+
+  _lastMSecs = msecs;
+  _lastNSecs = nsecs;
+  _clockseq = clockseq;
+
+  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+  msecs += 12219292800000;
+
+  // `time_low`
+  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+  b[i++] = tl >>> 24 & 0xff;
+  b[i++] = tl >>> 16 & 0xff;
+  b[i++] = tl >>> 8 & 0xff;
+  b[i++] = tl & 0xff;
+
+  // `time_mid`
+  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
+  b[i++] = tmh >>> 8 & 0xff;
+  b[i++] = tmh & 0xff;
+
+  // `time_high_and_version`
+  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+  b[i++] = tmh >>> 16 & 0xff;
+
+  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+  b[i++] = clockseq >>> 8 | 0x80;
+
+  // `clock_seq_low`
+  b[i++] = clockseq & 0xff;
+
+  // `node`
+  var node = options.node || _nodeId;
+  for (var n = 0; n < 6; ++n) {
+    b[i + n] = node[n];
+  }
+
+  return buf ? buf : bytesToUuid(b);
+}
+
+module.exports = v1;
+
+},{"./lib/bytesToUuid":11,"./lib/rng":12}],14:[function(_dereq_,module,exports){
+var rng = _dereq_('./lib/rng');
+var bytesToUuid = _dereq_('./lib/bytesToUuid');
+
+function v4(options, buf, offset) {
+  var i = buf && offset || 0;
+
+  if (typeof(options) == 'string') {
+    buf = options == 'binary' ? new Array(16) : null;
+    options = null;
+  }
+  options = options || {};
+
+  var rnds = options.random || (options.rng || rng)();
+
+  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+  rnds[6] = (rnds[6] & 0x0f) | 0x40;
+  rnds[8] = (rnds[8] & 0x3f) | 0x80;
+
+  // Copy bytes to buffer, if provided
+  if (buf) {
+    for (var ii = 0; ii < 16; ++ii) {
+      buf[i + ii] = rnds[ii];
+    }
+  }
+
+  return buf || bytesToUuid(rnds);
+}
+
+module.exports = v4;
+
+},{"./lib/bytesToUuid":11,"./lib/rng":12}],15:[function(_dereq_,module,exports){
+var uuidGenerator = _dereq_('uuid').v1;
+var CLIENT_ID_TAG = "feedhenry_sync_client";
+
+/**
+ * Get unique client id for current browser/platform/user
+ */
+function getClientId() {
+    if (window && window.device) {
+        return window.device.uuid;
+    }
+    if (navigator && navigator.device) {
+        return navigator.device.uuid;
+    }
+    if (window && window.localStorage) {
+        var clientId = window.localStorage.getItem(CLIENT_ID_TAG);
+        if (!clientId) {
+            clientId = uuidGenerator();
+            localStorage.setItem(CLIENT_ID_TAG, clientId);
+        }
+        return clientId;
+    } else {
+        throw Error("Cannot create and store client id");
+    }
+}
+
+module.exports = {
+    getClientId: getClientId
+};
+},{"uuid":10}],16:[function(_dereq_,module,exports){
+var cloudURL;
+var cloudPath;
+var cidProvider = _dereq_('./clientIdProvider');
+
+/**
+ * Default sync cloud handler responsible for making all sync requests to 
+ * server. 
+ */
+var handler = function (params, success, failure) {
+    if (!cloudPath) {
+        // Default server sync api route
+        cloudPath = '/sync/';
+    }
+    var url = cloudURL + cloudPath + params.dataset_id;
+    var payload = params.req;
+    payload.__fh = {
+        cuid: cidProvider.getClientId()
+    };
+    var json = JSON.stringify(payload);
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+            if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304) {
+                var responseJson;
+                try {
+                    if (xhr.responseText) {
+                        responseJson = JSON.parse(xhr.responseText);
+                    }
+                } catch (e) {
+                    return failure(e);
+                }
+                success(responseJson);
+            } else {
+                failure(xhr.responseText);
+            }
+        }
+    };
+    xhr.send(json);
 };
 
-},{}],8:[function(_dereq_,module,exports){
+/**
+ * Default sync cloud handler init method
+ * 
+ * @param url - for example http://example.com:7000
+ * @param path - api path (will default to '/sync')
+ */
+var init = function (url, path) {
+    cloudURL = url;
+    cloudPath = path;
+};
+
+module.exports = {
+    handler: handler,
+    init: init,
+};
+},{"./clientIdProvider":15}],17:[function(_dereq_,module,exports){
+var api_sync = _dereq_("./sync-client");
+
+// Mounting into global fh namespace
+var fh = window.$fh = window.$fh || {};
+fh.sync = api_sync;
+
+module.exports = fh.sync;
+},{"./sync-client":18}],18:[function(_dereq_,module,exports){
+var CryptoJS = _dereq_("../libs/generated/crypto");
+var Lawnchair = _dereq_('../libs/generated/lawnchair');
+var defaultCloudHandler = _dereq_('./cloudHandler');
+
+var self = {
+
+  // CONFIG
+  defaults: {
+    "sync_frequency": 10,
+    // How often to synchronise data with the cloud in seconds.
+    "auto_sync_local_updates": true,
+    // Should local chages be syned to the cloud immediately, or should they wait for the next sync interval
+    "notify_client_storage_failed": true,
+    // Should a notification event be triggered when loading/saving to client storage fails
+    "notify_sync_started": true,
+    // Should a notification event be triggered when a sync cycle with the server has been started
+    "notify_sync_complete": true,
+    // Should a notification event be triggered when a sync cycle with the server has been completed
+    "notify_offline_update": true,
+    // Should a notification event be triggered when an attempt was made to update a record while offline
+    "notify_collision_detected": true,
+    // Should a notification event be triggered when an update failed due to data collision
+    "notify_remote_update_failed": true,
+    // Should a notification event be triggered when an update failed for a reason other than data collision
+    "notify_local_update_applied": true,
+    // Should a notification event be triggered when an update was applied to the local data store
+    "notify_remote_update_applied": true,
+    // Should a notification event be triggered when an update was applied to the remote data store
+    "notify_delta_received": true,
+    // Should a notification event be triggered when a delta was received from the remote data store for the dataset 
+    "notify_record_delta_received": true,
+    // Should a notification event be triggered when a delta was received from the remote data store for a record
+    "notify_sync_failed": true,
+    // Should a notification event be triggered when the sync loop failed to complete
+    "do_console_log": false,
+    // Should log statements be written to console.log
+    "crashed_count_wait" : 10,
+    // How many syncs should we check for updates on crashed in flight updates before we give up searching
+    "resend_crashed_updates" : true,
+    // If we have reached the crashed_count_wait limit, should we re-try sending the crashed in flight pending record
+    "sync_active" : true,
+    // Is the background sync with the cloud currently active
+    "storage_strategy" : "html5-filesystem",
+    // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
+    "file_system_quota" : 50 * 1024 * 1204,
+    // Amount of space to request from the HTML5 filesystem API when running in browser
+    "icloud_backup" : false //ios only. If set to true, the file will be backed by icloud
+  },
+
+  notifications: {
+    "CLIENT_STORAGE_FAILED": "client_storage_failed",
+    // loading/saving to client storage failed
+    "SYNC_STARTED": "sync_started",
+    // A sync cycle with the server has been started
+    "SYNC_COMPLETE": "sync_complete",
+    // A sync cycle with the server has been completed
+    "OFFLINE_UPDATE": "offline_update",
+    // An attempt was made to update a record while offline
+    "COLLISION_DETECTED": "collision_detected",
+    //Update Failed due to data collision
+    "REMOTE_UPDATE_FAILED": "remote_update_failed",
+    // Update Failed for a reason other than data collision
+    "REMOTE_UPDATE_APPLIED": "remote_update_applied",
+    // An update was applied to the remote data store
+    "LOCAL_UPDATE_APPLIED": "local_update_applied",
+    // An update was applied to the local data store
+    "DELTA_RECEIVED": "delta_received",
+    // A delta was received from the remote data store for the dataset 
+    "RECORD_DELTA_RECEIVED": "record_delta_received",
+    // A delta was received from the remote data store for the record 
+    "SYNC_FAILED": "sync_failed"
+    // Sync loop failed to complete
+  },
+
+  datasets: {},
+
+  // Initialise config to default values;
+  config: undefined,
+
+  //TODO: deprecate this
+  notify_callback: undefined,
+
+  notify_callback_map : {},
+
+  init_is_called: false,
+
+  //this is used to map the temp data uid (created on client) to the real uid (created in the cloud)
+  uid_map: {},
+
+  // PUBLIC FUNCTION IMPLEMENTATIONS
+  init: function(options) {
+    self.consoleLog('sync - init called');
+
+    self.config = JSON.parse(JSON.stringify(self.defaults));
+    for (var i in options) {
+      self.config[i] = options[i];
+    }
+
+    //prevent multiple monitors from created if init is called multiple times
+    if(!self.init_is_called){
+      self.init_is_called = true;
+      self.datasetMonitor();
+    }
+    defaultCloudHandler.init(self.config.cloudUrl, self.config.cloudPath);
+  },
+
+  notify: function(datasetId, callback) {
+    if(arguments.length === 1 && typeof datasetId === 'function'){
+      self.notify_callback = datasetId;
+    } else {
+      self.notify_callback_map[datasetId] = callback;
+    }
+  },
+
+  manage: function(dataset_id, opts, query_params, meta_data, cb) {
+    self.consoleLog('manage - START');
+
+    // Currently we do not enforce the rule that init() function should be called before manage().
+    // We need this check to guard against self.config undefined
+    if (!self.config){
+      self.config = JSON.parse(JSON.stringify(self.defaults));
+    }
+
+    var options = opts || {};
+
+    var doManage = function(dataset) {
+      self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
+
+      var currentDatasetCfg = (dataset.config) ? dataset.config : self.config;
+      var datasetConfig = self.setOptions(currentDatasetCfg, options);
+
+      dataset.query_params = query_params || dataset.query_params || {};
+      dataset.meta_data = meta_data || dataset.meta_data || {};
+      dataset.config = datasetConfig;
+      dataset.syncRunning = false;
+      dataset.syncPending = true;
+      dataset.initialised = true;
+      if(typeof dataset.meta === "undefined"){
+        dataset.meta = {};
+      }
+
+      self.saveDataSet(dataset_id, function() {
+
+        if( cb ) {
+          cb();
+        }
+      });
+    };
+
+    // Check if the dataset is already loaded
+    self.getDataSet(dataset_id, function(dataset) {
+      self.consoleLog('manage - dataset already loaded');
+      doManage(dataset);
+    }, function(err) {
+      self.consoleLog('manage - dataset not loaded... trying to load');
+
+      // Not already loaded, try to load from local storage
+      self.loadDataSet(dataset_id, function(dataset) {
+          self.consoleLog('manage - dataset loaded from local storage');
+
+          // Loading from local storage worked
+
+          // Fire the local update event to indicate that dataset was loaded from local storage
+          self.doNotify(dataset_id, null, self.notifications.LOCAL_UPDATE_APPLIED, "load");
+
+          // Put the dataet under the management of the sync service
+          doManage(dataset);
+        },
+        function(err) {
+          // No dataset in memory or local storage - create a new one and put it in memory
+          self.consoleLog('manage - Creating new dataset for id ' + dataset_id);
+          var dataset = {};
+          dataset.data = {};
+          dataset.pending = {};
+          dataset.meta = {};
+          self.datasets[dataset_id] = dataset;
+          doManage(dataset);
+        });
+    });
+  },
+
+  /**
+   * Sets options for passed in config, if !config then options will be applied to default config.
+   * @param {Object} config - config to which options will be applied
+   * @param {Object} options - options to be applied to the config
+   */
+  setOptions: function(config, options) {
+    // Make sure config is initialised
+    if( ! config ) {
+      config = JSON.parse(JSON.stringify(self.defaults));
+    }
+
+
+    var datasetConfig = JSON.parse(JSON.stringify(config));
+    var optionsIn = JSON.parse(JSON.stringify(options));
+    for (var k in optionsIn) {
+      datasetConfig[k] = optionsIn[k];
+    }
+
+    return datasetConfig;
+  },
+
+  list: function(dataset_id, success, failure) {
+    self.getDataSet(dataset_id, function(dataset) {
+      if (dataset && dataset.data) {
+        // Return a copy of the dataset so updates will not automatically make it back into the dataset
+        var res = JSON.parse(JSON.stringify(dataset.data));
+        success(res);
+      } else {
+        if(failure) {
+          failure('no_data');
+        }
+      }
+    }, function(code, msg) {
+      if(failure) {
+        failure(code, msg);
+      }
+    });
+  },
+
+  getUID: function(oldOrNewUid){
+    var uid = self.uid_map[oldOrNewUid];
+    if(uid || uid === 0){
+      return uid;
+    } else {
+      return oldOrNewUid;
+    }
+  },
+
+  create: function(dataset_id, data, success, failure) {
+    if(data == null){
+      if(failure){
+        return failure("null_data");
+      }
+    }
+    self.addPendingObj(dataset_id, null, data, "create", success, failure);
+  },
+
+  read: function(dataset_id, uid, success, failure) {
+    self.getDataSet(dataset_id, function(dataset) {
+      uid = self.getUID(uid);
+      var rec = dataset.data[uid];
+      if (!rec) {
+        failure("unknown_uid");
+      } else {
+        // Return a copy of the record so updates will not automatically make it back into the dataset
+        var res = JSON.parse(JSON.stringify(rec));
+        success(res);
+      }
+    }, function(code, msg) {
+      if(failure) {
+        failure(code, msg);
+      }
+    });
+  },
+
+  update: function(dataset_id, uid, data, success, failure) {
+    uid = self.getUID(uid);
+    self.addPendingObj(dataset_id, uid, data, "update", success, failure);
+  },
+
+  'delete': function(dataset_id, uid, success, failure) {
+    uid = self.getUID(uid);
+    self.addPendingObj(dataset_id, uid, null, "delete", success, failure);
+  },
+
+  getPending: function(dataset_id, cb) {
+    self.getDataSet(dataset_id, function(dataset) {
+      var res;
+      if( dataset ) {
+        res = dataset.pending;
+      }
+      cb(res);
+    }, function(err, datatset_id) {
+        self.consoleLog(err);
+    });
+  },
+
+  clearPending: function(dataset_id, cb) {
+    self.getDataSet(dataset_id, function(dataset) {
+      dataset.pending = {};
+      self.saveDataSet(dataset_id, cb);
+    });
+  },
+
+  listCollisions : function(dataset_id, success, failure){
+    self.getDataSet(dataset_id, function(dataset) {
+      self.doCloudCall({
+        "dataset_id": dataset_id,
+        "req": {
+          "fn": "listCollisions",
+          "meta_data" : dataset.meta_data
+        }
+      }, success, failure);
+    }, failure);
+  },
+
+  removeCollision: function(dataset_id, colissionHash, success, failure) {
+    self.getDataSet(dataset_id, function(dataset) {
+      self.doCloudCall({
+        "dataset_id" : dataset_id,
+        "req": {
+          "fn": "removeCollision",
+          "hash": colissionHash,
+          meta_data: dataset.meta_data
+        }
+      }, success, failure);
+    });
+  },
+
+
+  // PRIVATE FUNCTIONS
+  isOnline: function(callback) {
+    var online = true;
+
+    // first, check if navigator.online is available
+    if(typeof navigator.onLine !== "undefined"){
+      online = navigator.onLine;
+    }
+
+    // second, check if Phonegap is available and has online info
+    if(online){
+      //use phonegap to determin if the network is available
+      if(typeof navigator.network !== "undefined" && typeof navigator.network.connection !== "undefined"){
+        var networkType = navigator.network.connection.type;
+        if(networkType === "none" || networkType === null) {
+          online = false;
+        }
+      }
+    }
+
+    return callback(online);
+  },
+
+  doNotify: function(dataset_id, uid, code, message) {
+
+    if( self.notify_callback || self.notify_callback_map[dataset_id]) {
+      var notifyFunc = self.notify_callback_map[dataset_id] || self.notify_callback;
+      if ( self.config['notify_' + code] ) {
+        var notification = {
+          "dataset_id" : dataset_id,
+          "uid" : uid,
+          "code" : code,
+          "message" : message
+        };
+        // make sure user doesn't block
+        setTimeout(function () {
+          notifyFunc(notification);
+        }, 0);
+      }
+    }
+  },
+
+  getDataSet: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      success(dataset);
+    } else {
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  getQueryParams: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      success(dataset.query_params);
+    } else {
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  setQueryParams: function(dataset_id, queryParams, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      dataset.query_params = queryParams;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success(dataset.query_params);
+      }
+    } else {
+      if ( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  getMetaData: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      success(dataset.meta_data);
+    } else {
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  setMetaData: function(dataset_id, metaData, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      dataset.meta_data = metaData;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success(dataset.meta_data);
+      }
+    } else {
+      if( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  getConfig: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      success(dataset.config);
+    } else {
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  setConfig: function(dataset_id, config, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      var fullConfig = self.setOptions(dataset.config, config);
+      dataset.config = fullConfig;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success(dataset.config);
+      }
+    } else {
+      if( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  stopSync: function(dataset_id, success, failure) {
+    self.setConfig(dataset_id, {"sync_active" : false}, function() {
+      if( success ) {
+        success();
+      }
+    }, failure);
+  },
+
+  startSync: function(dataset_id, success, failure) {
+    self.setConfig(dataset_id, {"sync_active" : true}, function() {
+      if( success ) {
+        success();
+      }
+    }, failure);
+  },
+
+  doSync: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      dataset.syncPending = true;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success();
+      }
+    } else {
+      if( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  forceSync: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      dataset.syncForced = true;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success();
+      }
+    } else {
+      if( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  sortObject : function(object) {
+    if (typeof object !== "object" || object === null) {
+      return object;
+    }
+
+    var result = [];
+
+    Object.keys(object).sort().forEach(function(key) {
+      result.push({
+        key: key,
+        value: self.sortObject(object[key])
+      });
+    });
+
+    return result;
+  },
+
+  sortedStringify : function(obj) {
+
+    var str = '';
+
+    try {
+      str = JSON.stringify(self.sortObject(obj));
+    } catch (e) {
+      console.error('Error stringifying sorted object:' + e);
+    }
+
+    return str;
+  },
+
+  generateHash: function(object) {
+    var hash = self.getHashMethod(self.sortedStringify(object));
+    return hash.toString();
+  },
+
+  addPendingObj: function(dataset_id, uid, data, action, success, failure) {
+    self.isOnline(function (online) {
+      if (!online) {
+        self.doNotify(dataset_id, uid, self.notifications.OFFLINE_UPDATE, action);
+      }
+    });
+
+    function storePendingObject(obj) {
+      obj.hash = obj.hash || self.generateHash(obj);
+
+      self.getDataSet(dataset_id, function(dataset) {
+
+        dataset.pending[obj.hash] = obj;
+
+        self.updateDatasetFromLocal(dataset, obj);
+
+        if(self.config.auto_sync_local_updates) {
+          dataset.syncPending = true;
+        }
+        self.saveDataSet(dataset_id);
+        self.doNotify(dataset_id, uid, self.notifications.LOCAL_UPDATE_APPLIED, action);
+
+        success(obj);
+      }, function(code, msg) {
+        if(failure) {
+          failure(code, msg);
+        }
+      });
+    }
+
+    var pendingObj = {};
+    pendingObj.inFlight = false;
+    pendingObj.action = action;
+    pendingObj.post = JSON.parse(JSON.stringify(data));
+    pendingObj.postHash = self.generateHash(pendingObj.post);
+    pendingObj.timestamp = new Date().getTime();
+    if( "create" === action ) {
+      //this hash value will be returned later on when the cloud returns updates. We can then link the old uid
+      //with new uid
+      pendingObj.hash = self.generateHash(pendingObj);
+      pendingObj.uid = pendingObj.hash;
+      storePendingObject(pendingObj);
+    } else {
+      self.read(dataset_id, uid, function(rec) {
+        pendingObj.uid = uid;
+        pendingObj.pre = rec.data;
+        pendingObj.preHash = self.generateHash(rec.data);
+        storePendingObject(pendingObj);
+      }, function(code, msg) {
+        if(failure){
+          failure(code, msg);
+        }
+      });
+    }
+  },
+
+  syncLoop: function(dataset_id) {
+    self.getDataSet(dataset_id, function(dataSet) {
+    
+      // The sync loop is currently active
+      dataSet.syncPending = false;
+      dataSet.syncRunning = true;
+      dataSet.syncLoopStart = new Date().getTime();
+      self.doNotify(dataset_id, null, self.notifications.SYNC_STARTED, null);
+
+      self.isOnline(function(online) {
+        if (!online) {
+          self.syncComplete(dataset_id, "offline", self.notifications.SYNC_FAILED);
+        } else {
+            var syncLoopParams = {};
+            syncLoopParams.fn = 'sync';
+            syncLoopParams.dataset_id = dataset_id;
+            syncLoopParams.query_params = dataSet.query_params;
+            syncLoopParams.config = dataSet.config;
+            syncLoopParams.meta_data = dataSet.meta_data;
+            //var datasetHash = self.generateLocalDatasetHash(dataSet);
+            syncLoopParams.dataset_hash = dataSet.hash;
+            syncLoopParams.acknowledgements = dataSet.acknowledgements || [];
+
+            var pending = dataSet.pending;
+            var pendingArray = [];
+            for(var i in pending ) {
+              // Mark the pending records we are about to submit as inflight and add them to the array for submission
+              // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
+              // Don't add delayed records
+              if( !pending[i].inFlight && !pending[i].crashed && !pending[i].delayed) {
+                pending[i].inFlight = true;
+                pending[i].inFlightDate = new Date().getTime();
+                pendingArray.push(pending[i]);
+              }
+            }
+            syncLoopParams.pending = pendingArray;
+
+            if( pendingArray.length > 0 ) {
+              self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));
+            }
+            self.doCloudCall({
+              'dataset_id': dataset_id,
+              'req': syncLoopParams
+            }, function(res) {
+              var rec;
+
+              function processUpdates(updates, notification, acknowledgements) {
+                if( updates ) {
+                  for (var up in updates) {
+                    rec = updates[up];
+                    acknowledgements.push(rec);
+                    if( dataSet.pending[up] && dataSet.pending[up].inFlight) {
+                      delete dataSet.pending[up];
+                      self.doNotify(dataset_id, rec.uid, notification, rec);
+                    }
+                  }
+                }
+              }
+
+              // Check to see if any previously crashed inflight records can now be resolved
+              self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
+
+              //Check to see if any delayed pending records can now be set to ready
+              self.updateDelayedFromNewData(dataset_id, dataSet, res);
+
+              //Check meta data as well to make sure it contains the correct info
+              self.updateMetaFromNewData(dataset_id, dataSet, res);
+
+
+              if (res.updates) {
+                var acknowledgements = [];
+                self.checkUidChanges(dataSet, res.updates.applied);
+                processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
+                processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);
+                processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);
+                dataSet.acknowledgements = acknowledgements;
+              }
+
+              if (res.hash && res.hash !== dataSet.hash) {
+                self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
+                // Different hash value returned - Sync individual records
+                self.syncRecords(dataset_id);
+              } else {
+                self.consoleLog("Local dataset up to date");
+                self.syncComplete(dataset_id,  "online", self.notifications.SYNC_COMPLETE);
+              }
+            }, function(msg, err) {
+              // The AJAX call failed to complete succesfully, so the state of the current pending updates is unknown
+              // Mark them as "crashed". The next time a syncLoop completets successfully, we will review the crashed
+              // records to see if we can determine their current state.
+              self.markInFlightAsCrashed(dataSet);
+              self.consoleLog("syncLoop failed : msg=" + msg + " :: err = " + err);
+              self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
+            });
+        }
+      });
+    });
+  },
+
+  syncRecords: function(dataset_id) {
+
+    self.getDataSet(dataset_id, function(dataSet) {
+
+      var localDataSet = dataSet.data || {};
+
+      var clientRecs = {};
+      for (var i in localDataSet) {
+        var uid = i;
+        var hash = localDataSet[i].hash;
+        clientRecs[uid] = hash;
+      }
+
+      var syncRecParams = {};
+
+      syncRecParams.fn = 'syncRecords';
+      syncRecParams.dataset_id = dataset_id;
+      syncRecParams.query_params = dataSet.query_params;
+      syncRecParams.clientRecs = clientRecs;
+
+      self.consoleLog("syncRecParams :: " + JSON.stringify(syncRecParams));
+
+      self.doCloudCall({
+        'dataset_id': dataset_id,
+        'req': syncRecParams
+      }, function(res) {
+        self.consoleLog('syncRecords Res before applying pending changes :: ' + JSON.stringify(res));
+        self.applyPendingChangesToRecords(dataSet, res);
+        self.consoleLog('syncRecords Res after apply pending changes :: ' + JSON.stringify(res));
+
+        var i;
+
+        if (res.create) {
+          for (i in res.create) {
+            localDataSet[i] = {"hash" : res.create[i].hash, "data" : res.create[i].data};
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
+          }
+        }
+        
+        if (res.update) {
+          for (i in res.update) {
+            localDataSet[i].hash = res.update[i].hash;
+            localDataSet[i].data = res.update[i].data;
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
+          }
+        }
+        if (res['delete']) {
+          for (i in res['delete']) {
+            delete localDataSet[i];
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "delete");
+          }
+        }
+
+        self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'partial dataset');
+
+        dataSet.data = localDataSet;
+        if(res.hash) {
+          dataSet.hash = res.hash;
+        }
+        self.syncComplete(dataset_id, "online", self.notifications.SYNC_COMPLETE);
+      }, function(msg, err) {
+        self.consoleLog("syncRecords failed : msg=" + msg + " :: err=" + err);
+        self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
+      });
+    });
+  },
+
+  syncComplete: function(dataset_id, status, notification) {
+
+    self.getDataSet(dataset_id, function(dataset) {
+      dataset.syncRunning = false;
+      dataset.syncLoopEnd = new Date().getTime();
+      self.saveDataSet(dataset_id);
+      self.doNotify(dataset_id, dataset.hash, notification, status);
+    });
+  },
+
+  applyPendingChangesToRecords: function(dataset, records){
+    var pendings = dataset.pending;
+    for(var pendingUid in pendings){
+      if(pendings.hasOwnProperty(pendingUid)){
+        var pendingObj = pendings[pendingUid];
+        var uid = pendingObj.uid;
+        //if the records contain any thing about the data records that are currently in pendings,
+        //it means there are local changes that haven't been applied to the cloud yet,
+        //so update the pre value of each pending record to relect the latest status from cloud
+        //and remove them from the response
+        if(records.create){
+          var creates = records.create;
+          if(creates && creates[uid]){
+            delete creates[uid];
+          }
+        }
+        if(records.update){
+          var updates = records.update;
+          if(updates && updates[uid]){
+            delete updates[uid];
+          }
+        }
+        if(records['delete']){
+          var deletes = records['delete'];
+          if(deletes && deletes[uid]){
+            delete deletes[uid];
+          }
+        }
+      }
+    }
+  },
+
+  checkUidChanges: function(dataset, appliedUpdates){
+    if(appliedUpdates){
+      var new_uids = {};
+      var changeUidsCount = 0;
+      for(var update in appliedUpdates){
+        if(appliedUpdates.hasOwnProperty(update)){
+          var applied_update = appliedUpdates[update];
+          var action = applied_update.action;
+          if(action && action === 'create'){
+            //we are receving the results of creations, at this point, we will have the old uid(the hash) and the real uid generated by the cloud
+            var newUid = applied_update.uid;
+            var oldUid = applied_update.hash;
+            changeUidsCount++;
+            //remember the mapping
+            self.uid_map[oldUid] = newUid;
+            new_uids[oldUid] = newUid;
+            //update the data uid in the dataset
+            var record = dataset.data[oldUid];
+            if(record){
+              dataset.data[newUid] = record;
+              delete dataset.data[oldUid];
+            }
+
+            //update the old uid in meta data
+            var metaData = dataset.meta[oldUid];
+            if(metaData) {
+              dataset.meta[newUid] = metaData;
+              delete dataset.meta[oldUid];
+            }
+          }
+        }
+      }
+      if(changeUidsCount > 0){
+        //we need to check all existing pendingRecords and update their UIDs if they are still the old values
+        for(var pending in dataset.pending){
+          if(dataset.pending.hasOwnProperty(pending)){
+            var pendingObj = dataset.pending[pending];
+            var pendingRecordUid = pendingObj.uid;
+            if(new_uids[pendingRecordUid]){
+              pendingObj.uid = new_uids[pendingRecordUid];
+            }
+          }
+        }
+      }
+    }
+  },
+
+  checkDatasets: function() {
+    for( var dataset_id in self.datasets ) {
+      if( self.datasets.hasOwnProperty(dataset_id) ) {
+        var dataset = self.datasets[dataset_id];
+        if(dataset && !dataset.syncRunning && (dataset.config.sync_active || dataset.syncForced)) {
+          // Check to see if it is time for the sync loop to run again
+          var lastSyncStart = dataset.syncLoopStart;
+          var lastSyncCmp = dataset.syncLoopEnd;
+          if(dataset.syncForced){
+            dataset.syncPending = true;
+          } else if( lastSyncStart == null ) {
+            self.consoleLog(dataset_id +' - Performing initial sync');
+            // Dataset has never been synced before - do initial sync
+            dataset.syncPending = true;
+          } else if (lastSyncCmp != null) {
+            var timeSinceLastSync = new Date().getTime() - lastSyncCmp;
+            var syncFrequency = dataset.config.sync_frequency * 1000;
+            if( timeSinceLastSync > syncFrequency ) {
+              // Time between sync loops has passed - do another sync
+              dataset.syncPending = true;
+            }
+          }
+
+          if( dataset.syncPending ) {
+            // Reset syncForced in case it was what caused the sync cycle to run.
+            dataset.syncForced = false;
+
+            // If the dataset requres syncing, run the sync loop. This may be because the sync interval has passed
+            // or because the sync_frequency has been changed or because a change was made to the dataset and the
+            // immediate_sync flag set to true
+            self.syncLoop(dataset_id);
+          }
+        }
+      }
+    }
+  },
+
+  /**
+   * Sets cloud handler for sync responsible for making network requests:
+   * For example function(params, success, failure)
+   */
+  setCloudHandler: function(cloudHandler){
+    self.cloudHandler = cloudHandler;
+  },
+
+  doCloudCall: function(params, success, failure) {
+    if(self.cloudHandler && typeof self.cloudHandler === "function" ){
+      self.cloudHandler(params, success, failure);
+    } else {
+      console.log("Missing cloud handler for sync. Please refer to documentation");
+    }
+  },
+
+  datasetMonitor: function() {
+    self.checkDatasets();
+
+    // Re-execute datasetMonitor every 500ms so we keep invoking checkDatasets();
+    setTimeout(function() {
+      self.datasetMonitor();
+    }, 500);
+  },
+  
+  /** Allow to set custom storage adapter **/
+  setStorageAdapter: function(adapter){
+    self.getStorageAdapter = adapter;
+  },
+
+  /** Allow to set custom hasing method **/
+  setHashMethod: function(method){
+    self.getHashMethod = method;
+  },
+  
+  getStorageAdapter: function(dataset_id, isSave, cb){
+    var onFail = function(msg, err){
+      var errMsg = (isSave?'save to': 'load from' ) + ' local storage failed msg: ' + msg + ' err: ' + err;
+      self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
+      self.consoleLog(errMsg);
+    };
+    Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota, backup: self.config.icloud_backup}, function(){
+      return cb(null, this);
+    });
+  },
+
+  getHashMethod: CryptoJS.SHA1,
+
+  saveDataSet: function (dataset_id, cb) {
+    self.getDataSet(dataset_id, function(dataset) {
+      self.getStorageAdapter(dataset_id, true, function(err, storage){
+        storage.save({key:"dataset_" + dataset_id, val:dataset}, function(){
+          //save success
+          if(cb) {
+            return cb();
+          }
+        });
+      });
+    });
+  },
+
+  loadDataSet: function (dataset_id, success, failure) {
+    self.getStorageAdapter(dataset_id, false, function(err, storage){
+      storage.get( "dataset_" + dataset_id, function (data){
+        if (data && data.val) {
+          var dataset = data.val;
+          if(typeof dataset === "string"){
+            dataset = JSON.parse(dataset);
+          }
+          // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
+          // the user wants sync
+          dataset.initialised = false;
+          self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
+          self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
+          if(success) {
+            return success(dataset);
+          }
+        } else {
+          // no data yet, probably first time. failure calback should handle this
+          if(failure) {
+            return failure();
+          }
+        }
+      });
+    });
+  },
+
+  clearCache: function(dataset_id, cb){
+    delete self.datasets[dataset_id];
+    self.notify_callback_map[dataset_id] = null;
+    self.getStorageAdapter(dataset_id, true, function(err, storage){
+      storage.remove("dataset_" + dataset_id, function(){
+        self.consoleLog('local cache is cleared for dataset : ' + dataset_id);
+        if(cb){
+          return cb();
+        }
+      });
+    });
+  },
+
+  updateDatasetFromLocal: function(dataset, pendingRec) {
+    var pending = dataset.pending;
+    var previousPendingUid;
+    var previousPending;
+
+    var uid = pendingRec.uid;
+    self.consoleLog('updating local dataset for uid ' + uid + ' - action = ' + pendingRec.action);
+
+    dataset.meta[uid] = dataset.meta[uid] || {};
+
+    // Creating a new record
+    if( pendingRec.action === "create" ) {
+      if( dataset.data[uid] ) {
+        self.consoleLog('dataset already exists for uid in create :: ' + JSON.stringify(dataset.data[uid]));
+
+        // We are trying to do a create using a uid which already exists
+        if (dataset.meta[uid].fromPending) {
+          // We are trying to create on top of an existing pending record
+          // Remove the previous pending record and use this one instead
+          previousPendingUid = dataset.meta[uid].pendingUid;
+          delete pending[previousPendingUid];
+        }
+      }
+      dataset.data[uid] = {};
+    }
+
+    if( pendingRec.action === "update" ) {
+      if( dataset.data[uid] ) {
+        if (dataset.meta[uid].fromPending) {
+          self.consoleLog('updating an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
+          // We are trying to update an existing pending record
+          previousPendingUid = dataset.meta[uid].pendingUid;
+          previousPending = pending[previousPendingUid];
+          if(previousPending) {
+            if(!previousPending.inFlight){
+              self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
+              // We are trying to perform an update on an existing pending record
+              // modify the original record to have the latest value and delete the pending update
+              previousPending.post = pendingRec.post;
+              previousPending.postHash = pendingRec.postHash;
+              delete pending[pendingRec.hash];
+              // Update the pending record to have the hash of the previous record as this is what is now being
+              // maintained in the pending array & is what we want in the meta record
+              pendingRec.hash = previousPendingUid;
+            } else {
+              //we are performing changes to a pending record which is inFlight. Until the status of this pending record is resolved,
+              //we should not submit this pending record to the cloud. Mark it as delayed.
+              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
+              pendingRec.delayed = true;
+              pendingRec.waiting = previousPending.hash;
+            }
+          }
+        }
+      }
+    }
+
+    if( pendingRec.action === "delete" ) {
+      if( dataset.data[uid] ) {
+        if (dataset.meta[uid].fromPending) {
+          self.consoleLog('Deleting an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
+          // We are trying to delete an existing pending record
+          previousPendingUid = dataset.meta[uid].pendingUid;
+          previousPending = pending[previousPendingUid];
+          if( previousPending ) {
+            if(!previousPending.inFlight){
+              self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
+              if( previousPending.action === "create" ) {
+                // We are trying to perform a delete on an existing pending create
+                // These cancel each other out so remove them both
+                delete pending[pendingRec.hash];
+                delete pending[previousPendingUid];
+              }
+              if( previousPending.action === "update" ) {
+                // We are trying to perform a delete on an existing pending update
+                // Use the pre value from the pending update for the delete and
+                // get rid of the pending update
+                pendingRec.pre = previousPending.pre;
+                pendingRec.preHash = previousPending.preHash;
+                pendingRec.inFlight = false;
+                delete pending[previousPendingUid];
+              }
+            } else {
+              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
+              pendingRec.delayed = true;
+              pendingRec.waiting = previousPending.hash;
+            }
+          }
+        }
+        delete dataset.data[uid];
+      }
+    }
+
+    if( dataset.data[uid] ) {
+      dataset.data[uid].data = pendingRec.post;
+      dataset.data[uid].hash = pendingRec.postHash;
+      dataset.meta[uid].fromPending = true;
+      dataset.meta[uid].pendingUid = pendingRec.hash;
+    }
+  },
+
+  updateCrashedInFlightFromNewData: function(dataset_id, dataset, newData) {
+    var updateNotifications = {
+      applied: self.notifications.REMOTE_UPDATE_APPLIED,
+      failed: self.notifications.REMOTE_UPDATE_FAILED,
+      collisions: self.notifications.COLLISION_DETECTED
+    };
+
+    var pending = dataset.pending;
+    var resolvedCrashes = {};
+    var pendingHash;
+    var pendingRec;
+
+
+    if( pending ) {
+      for( pendingHash in pending ) {
+        if( pending.hasOwnProperty(pendingHash) ) {
+          pendingRec = pending[pendingHash];
+
+          if( pendingRec.inFlight && pendingRec.crashed) {
+            self.consoleLog('updateCrashedInFlightFromNewData - Found crashed inFlight pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash );
+            if( newData && newData.updates && newData.updates.hashes) {
+
+              // Check if the updates received contain any info about the crashed in flight update
+              var crashedUpdate = newData.updates.hashes[pendingHash];
+              if( !crashedUpdate ) {
+                //TODO: review this - why we need to wait?
+                // No word on our crashed update - increment a counter to reflect another sync that did not give us
+                // any update on our crashed record.
+                if( pendingRec.crashedCount ) {
+                  pendingRec.crashedCount++;
+                }
+                else {
+                  pendingRec.crashedCount = 1;
+                }
+              }
+            }
+            else {
+              // No word on our crashed update - increment a counter to reflect another sync that did not give us
+              // any update on our crashed record.
+              if( pendingRec.crashedCount ) {
+                pendingRec.crashedCount++;
+              }
+              else {
+                pendingRec.crashedCount = 1;
+              }
+            }
+          }
+        }
+      }
+
+      for( pendingHash in pending ) {
+        if( pending.hasOwnProperty(pendingHash) ) {
+          pendingRec = pending[pendingHash];
+
+          if( pendingRec.inFlight && pendingRec.crashed) {
+            if( pendingRec.crashedCount > dataset.config.crashed_count_wait ) {
+              self.consoleLog('updateCrashedInFlightFromNewData - Crashed inflight pending record has reached crashed_count_wait limit : ' + JSON.stringify(pendingRec));
+              self.consoleLog('updateCrashedInFlightFromNewData - Retryig crashed inflight pending record');
+              pendingRec.crashed = false;
+              pendingRec.inFlight = false;
+            }
+          }
+        }
+      }
+    }
+  },
+
+  updateDelayedFromNewData: function(dataset_id, dataset, newData){
+    var pending = dataset.pending;
+    var pendingHash;
+    var pendingRec;
+    if(pending){
+      for( pendingHash in pending ){
+        if( pending.hasOwnProperty(pendingHash) ){
+          pendingRec = pending[pendingHash];
+          if( pendingRec.delayed && pendingRec.waiting ){
+            self.consoleLog('updateDelayedFromNewData - Found delayed pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash + ' :: waiting=' + pendingRec.waiting);
+            if( newData && newData.updates && newData.updates.hashes ){
+              var waitingRec = newData.updates.hashes[pendingRec.waiting];
+              if(waitingRec){
+                self.consoleLog('updateDelayedFromNewData - Waiting pending record is resolved rec=' + JSON.stringify(waitingRec));
+                pendingRec.delayed = false;
+                pendingRec.waiting = undefined;
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  updateMetaFromNewData: function(dataset_id, dataset, newData){
+    var meta = dataset.meta;
+    if(meta && newData && newData.updates && newData.updates.hashes){
+      for(var uid in meta){
+        if(meta.hasOwnProperty(uid)){
+          var metadata = meta[uid];
+          var pendingHash = metadata.pendingUid;
+          self.consoleLog("updateMetaFromNewData - Found metadata with uid = " + uid + " :: pendingHash = " + pendingHash);
+          var pendingResolved = true;
+  
+          if(pendingHash){
+            //we have current pending in meta data, see if it's resolved
+            pendingResolved = false;
+            var hashresolved = newData.updates.hashes[pendingHash];
+            if(hashresolved){
+              self.consoleLog("updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = " + JSON.stringify(hashresolved));
+              //the current pending is resolved in the cloud
+              metadata.pendingUid = undefined;
+              pendingResolved = true;
+            }
+          }
+
+          if(pendingResolved){
+            self.consoleLog("updateMetaFromNewData - both previous and current pendings are resolved for meta data with uid " + uid + ". Delete it.");
+            //all pendings are resolved, the entry can be removed from meta data
+            delete meta[uid];
+          }
+        }
+      }
+    }
+  },
+
+
+  markInFlightAsCrashed : function(dataset) {
+    var pending = dataset.pending;
+    var pendingHash;
+    var pendingRec;
+
+    if( pending ) {
+      var crashedRecords = {};
+      for( pendingHash in pending ) {
+        if( pending.hasOwnProperty(pendingHash) ) {
+          pendingRec = pending[pendingHash];
+
+          if( pendingRec.inFlight ) {
+            self.consoleLog('Marking in flight pending record as crashed : ' + pendingHash);
+            pendingRec.crashed = true;
+            crashedRecords[pendingRec.uid] = pendingRec;
+          }
+        }
+      }
+    }
+  },
+
+  consoleLog: function(msg) {
+    if( self.config.do_console_log ) {
+      console.log(msg);
+    }
+  }
+};
+
+(function() {
+  self.config = self.defaults;
+})();
+
+self.setCloudHandler(defaultCloudHandler.handler);
+
+module.exports = {
+  init: self.init,
+  manage: self.manage,
+  notify: self.notify,
+  doList: self.list,
+  getUID: self.getUID,
+  doCreate: self.create,
+  doRead: self.read,
+  doUpdate: self.update,
+  doDelete: self['delete'],
+  listCollisions: self.listCollisions,
+  removeCollision: self.removeCollision,
+  getPending : self.getPending,
+  clearPending : self.clearPending,
+  getDataset : self.getDataSet,
+  getQueryParams: self.getQueryParams,
+  setQueryParams: self.setQueryParams,
+  getMetaData: self.getMetaData,
+  setMetaData: self.setMetaData,
+  getConfig: self.getConfig,
+  setConfig: self.setConfig,
+  startSync: self.startSync,
+  stopSync: self.stopSync,
+  doSync: self.doSync,
+  forceSync: self.forceSync,
+  generateHash: self.generateHash,
+  loadDataSet: self.loadDataSet,
+  clearCache: self.clearCache,
+  setCloudHandler: self.setCloudHandler,
+  doCloudCall: self.doCloudCall,
+  setStorageAdapter: self.setStorageAdapter,
+  setHashMethod: self.setHashMethod
+};
+
+},{"../libs/generated/crypto":8,"../libs/generated/lawnchair":9,"./cloudHandler":16}],19:[function(_dereq_,module,exports){
+/*
+ * loglevel - https://github.com/pimterry/loglevel
+ *
+ * Copyright (c) 2013 Tim Perry
+ * Licensed under the MIT license.
+ */
+
+;(function (undefined) {
+    var undefinedType = "undefined";
+
+    (function (name, definition) {
+        if (typeof module !== 'undefined') {
+            module.exports = definition();
+        } else if (typeof define === 'function' && typeof define.amd === 'object') {
+            define(definition);
+        } else {
+            this[name] = definition();
+        }
+    }('log', function () {
+        var self = {};
+        var noop = function() {};
+
+        function realMethod(methodName) {
+            if (typeof console === undefinedType) {
+                return noop;
+            } else if (console[methodName] === undefined) {
+                if (console.log !== undefined) {
+                    return boundToConsole(console, 'log');
+                } else {
+                    return noop;
+                }
+            } else {
+                return boundToConsole(console, methodName);
+            }
+        }
+
+        function boundToConsole(console, methodName) {
+            var method = console[methodName];
+            if (method.bind === undefined) {
+                if (Function.prototype.bind === undefined) {
+                    return functionBindingWrapper(method, console);
+                } else {
+                    try {
+                        return Function.prototype.bind.call(console[methodName], console);
+                    } catch (e) {
+                        // In IE8 + Modernizr, the bind shim will reject the above, so we fall back to wrapping
+                        return functionBindingWrapper(method, console);
+                    }
+                }
+            } else {
+                return console[methodName].bind(console);
+            }
+        }
+
+        function functionBindingWrapper(f, context) {
+            return function() {
+                Function.prototype.apply.apply(f, [context, arguments]);
+            };
+        }
+
+        var logMethods = [
+            "trace",
+            "debug",
+            "info",
+            "warn",
+            "error"
+        ];
+
+        function replaceLoggingMethods(methodFactory) {
+            for (var ii = 0; ii < logMethods.length; ii++) {
+                self[logMethods[ii]] = methodFactory(logMethods[ii]);
+            }
+        }
+
+        function cookiesAvailable() {
+            return (typeof window !== undefinedType &&
+                    window.document !== undefined &&
+                    window.document.cookie !== undefined);
+        }
+
+        function localStorageAvailable() {
+            try {
+                return (typeof window !== undefinedType &&
+                        window.localStorage !== undefined);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function persistLevelIfPossible(levelNum) {
+            var localStorageFail = false,
+                levelName;
+
+            for (var key in self.levels) {
+                if (self.levels.hasOwnProperty(key) && self.levels[key] === levelNum) {
+                    levelName = key;
+                    break;
+                }
+            }
+
+            if (localStorageAvailable()) {
+                /*
+                 * Setting localStorage can create a DOM 22 Exception if running in Private mode
+                 * in Safari, so even if it is available we need to catch any errors when trying
+                 * to write to it
+                 */
+                try {
+                    window.localStorage['loglevel'] = levelName;
+                } catch (e) {
+                    localStorageFail = true;
+                }
+            } else {
+                localStorageFail = true;
+            }
+
+            if (localStorageFail && cookiesAvailable()) {
+                window.document.cookie = "loglevel=" + levelName + ";";
+            }
+        }
+
+        var cookieRegex = /loglevel=([^;]+)/;
+
+        function loadPersistedLevel() {
+            var storedLevel;
+
+            if (localStorageAvailable()) {
+                storedLevel = window.localStorage['loglevel'];
+            }
+
+            if (storedLevel === undefined && cookiesAvailable()) {
+                var cookieMatch = cookieRegex.exec(window.document.cookie) || [];
+                storedLevel = cookieMatch[1];
+            }
+            
+            if (self.levels[storedLevel] === undefined) {
+                storedLevel = "WARN";
+            }
+
+            self.setLevel(self.levels[storedLevel]);
+        }
+
+        /*
+         *
+         * Public API
+         *
+         */
+
+        self.levels = { "TRACE": 0, "DEBUG": 1, "INFO": 2, "WARN": 3,
+            "ERROR": 4, "SILENT": 5};
+
+        self.setLevel = function (level) {
+            if (typeof level === "number" && level >= 0 && level <= self.levels.SILENT) {
+                persistLevelIfPossible(level);
+
+                if (level === self.levels.SILENT) {
+                    replaceLoggingMethods(function () {
+                        return noop;
+                    });
+                    return;
+                } else if (typeof console === undefinedType) {
+                    replaceLoggingMethods(function (methodName) {
+                        return function () {
+                            if (typeof console !== undefinedType) {
+                                self.setLevel(level);
+                                self[methodName].apply(self, arguments);
+                            }
+                        };
+                    });
+                    return "No console available for logging";
+                } else {
+                    replaceLoggingMethods(function (methodName) {
+                        if (level <= self.levels[methodName.toUpperCase()]) {
+                            return realMethod(methodName);
+                        } else {
+                            return noop;
+                        }
+                    });
+                }
+            } else if (typeof level === "string" && self.levels[level.toUpperCase()] !== undefined) {
+                self.setLevel(self.levels[level.toUpperCase()]);
+            } else {
+                throw "log.setLevel() called with invalid level: " + level;
+            }
+        };
+
+        self.enableAll = function() {
+            self.setLevel(self.levels.TRACE);
+        };
+
+        self.disableAll = function() {
+            self.setLevel(self.levels.SILENT);
+        };
+
+        loadPersistedLevel();
+        return self;
+    }));
+})();
+
+},{}],20:[function(_dereq_,module,exports){
 (function (global){
 /*! http://mths.be/punycode v1.2.4 by @mathias */
 ;(function(root) {
@@ -42857,7 +46913,7 @@ process.chdir = function (dir) {
 }(this));
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],9:[function(_dereq_,module,exports){
+},{}],21:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -42943,7 +46999,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],10:[function(_dereq_,module,exports){
+},{}],22:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -43030,1543 +47086,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],11:[function(_dereq_,module,exports){
+},{}],23:[function(_dereq_,module,exports){
 'use strict';
 
 exports.decode = exports.parse = _dereq_('./decode');
 exports.encode = exports.stringify = _dereq_('./encode');
 
-},{"./decode":9,"./encode":10}],12:[function(_dereq_,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-var punycode = _dereq_('punycode');
-
-exports.parse = urlParse;
-exports.resolve = urlResolve;
-exports.resolveObject = urlResolveObject;
-exports.format = urlFormat;
-
-exports.Url = Url;
-
-function Url() {
-  this.protocol = null;
-  this.slashes = null;
-  this.auth = null;
-  this.host = null;
-  this.port = null;
-  this.hostname = null;
-  this.hash = null;
-  this.search = null;
-  this.query = null;
-  this.pathname = null;
-  this.path = null;
-  this.href = null;
-}
-
-// Reference: RFC 3986, RFC 1808, RFC 2396
-
-// define these here so at least they only have to be
-// compiled once on the first module load.
-var protocolPattern = /^([a-z0-9.+-]+:)/i,
-    portPattern = /:[0-9]*$/,
-
-    // RFC 2396: characters reserved for delimiting URLs.
-    // We actually just auto-escape these.
-    delims = ['<', '>', '"', '`', ' ', '\r', '\n', '\t'],
-
-    // RFC 2396: characters not allowed for various reasons.
-    unwise = ['{', '}', '|', '\\', '^', '`'].concat(delims),
-
-    // Allowed by RFCs, but cause of XSS attacks.  Always escape these.
-    autoEscape = ['\''].concat(unwise),
-    // Characters that are never ever allowed in a hostname.
-    // Note that any invalid chars are also handled, but these
-    // are the ones that are *expected* to be seen, so we fast-path
-    // them.
-    nonHostChars = ['%', '/', '?', ';', '#'].concat(autoEscape),
-    hostEndingChars = ['/', '?', '#'],
-    hostnameMaxLen = 255,
-    hostnamePartPattern = /^[a-z0-9A-Z_-]{0,63}$/,
-    hostnamePartStart = /^([a-z0-9A-Z_-]{0,63})(.*)$/,
-    // protocols that can allow "unsafe" and "unwise" chars.
-    unsafeProtocol = {
-      'javascript': true,
-      'javascript:': true
-    },
-    // protocols that never have a hostname.
-    hostlessProtocol = {
-      'javascript': true,
-      'javascript:': true
-    },
-    // protocols that always contain a // bit.
-    slashedProtocol = {
-      'http': true,
-      'https': true,
-      'ftp': true,
-      'gopher': true,
-      'file': true,
-      'http:': true,
-      'https:': true,
-      'ftp:': true,
-      'gopher:': true,
-      'file:': true
-    },
-    querystring = _dereq_('querystring');
-
-function urlParse(url, parseQueryString, slashesDenoteHost) {
-  if (url && isObject(url) && url instanceof Url) return url;
-
-  var u = new Url;
-  u.parse(url, parseQueryString, slashesDenoteHost);
-  return u;
-}
-
-Url.prototype.parse = function(url, parseQueryString, slashesDenoteHost) {
-  if (!isString(url)) {
-    throw new TypeError("Parameter 'url' must be a string, not " + typeof url);
-  }
-
-  var rest = url;
-
-  // trim before proceeding.
-  // This is to support parse stuff like "  http://foo.com  \n"
-  rest = rest.trim();
-
-  var proto = protocolPattern.exec(rest);
-  if (proto) {
-    proto = proto[0];
-    var lowerProto = proto.toLowerCase();
-    this.protocol = lowerProto;
-    rest = rest.substr(proto.length);
-  }
-
-  // figure out if it's got a host
-  // user@server is *always* interpreted as a hostname, and url
-  // resolution will treat //foo/bar as host=foo,path=bar because that's
-  // how the browser resolves relative URLs.
-  if (slashesDenoteHost || proto || rest.match(/^\/\/[^@\/]+@[^@\/]+/)) {
-    var slashes = rest.substr(0, 2) === '//';
-    if (slashes && !(proto && hostlessProtocol[proto])) {
-      rest = rest.substr(2);
-      this.slashes = true;
-    }
-  }
-
-  if (!hostlessProtocol[proto] &&
-      (slashes || (proto && !slashedProtocol[proto]))) {
-
-    // there's a hostname.
-    // the first instance of /, ?, ;, or # ends the host.
-    //
-    // If there is an @ in the hostname, then non-host chars *are* allowed
-    // to the left of the last @ sign, unless some host-ending character
-    // comes *before* the @-sign.
-    // URLs are obnoxious.
-    //
-    // ex:
-    // http://a@b@c/ => user:a@b host:c
-    // http://a@b?@c => user:a host:c path:/?@c
-
-    // v0.12 TODO(isaacs): This is not quite how Chrome does things.
-    // Review our test case against browsers more comprehensively.
-
-    // find the first instance of any hostEndingChars
-    var hostEnd = -1;
-    for (var i = 0; i < hostEndingChars.length; i++) {
-      var hec = rest.indexOf(hostEndingChars[i]);
-      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
-        hostEnd = hec;
-    }
-
-    // at this point, either we have an explicit point where the
-    // auth portion cannot go past, or the last @ char is the decider.
-    var auth, atSign;
-    if (hostEnd === -1) {
-      // atSign can be anywhere.
-      atSign = rest.lastIndexOf('@');
-    } else {
-      // atSign must be in auth portion.
-      // http://a@b/c@d => host:b auth:a path:/c@d
-      atSign = rest.lastIndexOf('@', hostEnd);
-    }
-
-    // Now we have a portion which is definitely the auth.
-    // Pull that off.
-    if (atSign !== -1) {
-      auth = rest.slice(0, atSign);
-      rest = rest.slice(atSign + 1);
-      this.auth = decodeURIComponent(auth);
-    }
-
-    // the host is the remaining to the left of the first non-host char
-    hostEnd = -1;
-    for (var i = 0; i < nonHostChars.length; i++) {
-      var hec = rest.indexOf(nonHostChars[i]);
-      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
-        hostEnd = hec;
-    }
-    // if we still have not hit it, then the entire thing is a host.
-    if (hostEnd === -1)
-      hostEnd = rest.length;
-
-    this.host = rest.slice(0, hostEnd);
-    rest = rest.slice(hostEnd);
-
-    // pull out port.
-    this.parseHost();
-
-    // we've indicated that there is a hostname,
-    // so even if it's empty, it has to be present.
-    this.hostname = this.hostname || '';
-
-    // if hostname begins with [ and ends with ]
-    // assume that it's an IPv6 address.
-    var ipv6Hostname = this.hostname[0] === '[' &&
-        this.hostname[this.hostname.length - 1] === ']';
-
-    // validate a little.
-    if (!ipv6Hostname) {
-      var hostparts = this.hostname.split(/\./);
-      for (var i = 0, l = hostparts.length; i < l; i++) {
-        var part = hostparts[i];
-        if (!part) continue;
-        if (!part.match(hostnamePartPattern)) {
-          var newpart = '';
-          for (var j = 0, k = part.length; j < k; j++) {
-            if (part.charCodeAt(j) > 127) {
-              // we replace non-ASCII char with a temporary placeholder
-              // we need this to make sure size of hostname is not
-              // broken by replacing non-ASCII by nothing
-              newpart += 'x';
-            } else {
-              newpart += part[j];
-            }
-          }
-          // we test again with ASCII char only
-          if (!newpart.match(hostnamePartPattern)) {
-            var validParts = hostparts.slice(0, i);
-            var notHost = hostparts.slice(i + 1);
-            var bit = part.match(hostnamePartStart);
-            if (bit) {
-              validParts.push(bit[1]);
-              notHost.unshift(bit[2]);
-            }
-            if (notHost.length) {
-              rest = '/' + notHost.join('.') + rest;
-            }
-            this.hostname = validParts.join('.');
-            break;
-          }
-        }
-      }
-    }
-
-    if (this.hostname.length > hostnameMaxLen) {
-      this.hostname = '';
-    } else {
-      // hostnames are always lower case.
-      this.hostname = this.hostname.toLowerCase();
-    }
-
-    if (!ipv6Hostname) {
-      // IDNA Support: Returns a puny coded representation of "domain".
-      // It only converts the part of the domain name that
-      // has non ASCII characters. I.e. it dosent matter if
-      // you call it with a domain that already is in ASCII.
-      var domainArray = this.hostname.split('.');
-      var newOut = [];
-      for (var i = 0; i < domainArray.length; ++i) {
-        var s = domainArray[i];
-        newOut.push(s.match(/[^A-Za-z0-9_-]/) ?
-            'xn--' + punycode.encode(s) : s);
-      }
-      this.hostname = newOut.join('.');
-    }
-
-    var p = this.port ? ':' + this.port : '';
-    var h = this.hostname || '';
-    this.host = h + p;
-    this.href += this.host;
-
-    // strip [ and ] from the hostname
-    // the host field still retains them, though
-    if (ipv6Hostname) {
-      this.hostname = this.hostname.substr(1, this.hostname.length - 2);
-      if (rest[0] !== '/') {
-        rest = '/' + rest;
-      }
-    }
-  }
-
-  // now rest is set to the post-host stuff.
-  // chop off any delim chars.
-  if (!unsafeProtocol[lowerProto]) {
-
-    // First, make 100% sure that any "autoEscape" chars get
-    // escaped, even if encodeURIComponent doesn't think they
-    // need to be.
-    for (var i = 0, l = autoEscape.length; i < l; i++) {
-      var ae = autoEscape[i];
-      var esc = encodeURIComponent(ae);
-      if (esc === ae) {
-        esc = escape(ae);
-      }
-      rest = rest.split(ae).join(esc);
-    }
-  }
-
-
-  // chop off from the tail first.
-  var hash = rest.indexOf('#');
-  if (hash !== -1) {
-    // got a fragment string.
-    this.hash = rest.substr(hash);
-    rest = rest.slice(0, hash);
-  }
-  var qm = rest.indexOf('?');
-  if (qm !== -1) {
-    this.search = rest.substr(qm);
-    this.query = rest.substr(qm + 1);
-    if (parseQueryString) {
-      this.query = querystring.parse(this.query);
-    }
-    rest = rest.slice(0, qm);
-  } else if (parseQueryString) {
-    // no query string, but parseQueryString still requested
-    this.search = '';
-    this.query = {};
-  }
-  if (rest) this.pathname = rest;
-  if (slashedProtocol[lowerProto] &&
-      this.hostname && !this.pathname) {
-    this.pathname = '/';
-  }
-
-  //to support http.request
-  if (this.pathname || this.search) {
-    var p = this.pathname || '';
-    var s = this.search || '';
-    this.path = p + s;
-  }
-
-  // finally, reconstruct the href based on what has been validated.
-  this.href = this.format();
-  return this;
-};
-
-// format a parsed object into a url string
-function urlFormat(obj) {
-  // ensure it's an object, and not a string url.
-  // If it's an obj, this is a no-op.
-  // this way, you can call url_format() on strings
-  // to clean up potentially wonky urls.
-  if (isString(obj)) obj = urlParse(obj);
-  if (!(obj instanceof Url)) return Url.prototype.format.call(obj);
-  return obj.format();
-}
-
-Url.prototype.format = function() {
-  var auth = this.auth || '';
-  if (auth) {
-    auth = encodeURIComponent(auth);
-    auth = auth.replace(/%3A/i, ':');
-    auth += '@';
-  }
-
-  var protocol = this.protocol || '',
-      pathname = this.pathname || '',
-      hash = this.hash || '',
-      host = false,
-      query = '';
-
-  if (this.host) {
-    host = auth + this.host;
-  } else if (this.hostname) {
-    host = auth + (this.hostname.indexOf(':') === -1 ?
-        this.hostname :
-        '[' + this.hostname + ']');
-    if (this.port) {
-      host += ':' + this.port;
-    }
-  }
-
-  if (this.query &&
-      isObject(this.query) &&
-      Object.keys(this.query).length) {
-    query = querystring.stringify(this.query);
-  }
-
-  var search = this.search || (query && ('?' + query)) || '';
-
-  if (protocol && protocol.substr(-1) !== ':') protocol += ':';
-
-  // only the slashedProtocols get the //.  Not mailto:, xmpp:, etc.
-  // unless they had them to begin with.
-  if (this.slashes ||
-      (!protocol || slashedProtocol[protocol]) && host !== false) {
-    host = '//' + (host || '');
-    if (pathname && pathname.charAt(0) !== '/') pathname = '/' + pathname;
-  } else if (!host) {
-    host = '';
-  }
-
-  if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
-  if (search && search.charAt(0) !== '?') search = '?' + search;
-
-  pathname = pathname.replace(/[?#]/g, function(match) {
-    return encodeURIComponent(match);
-  });
-  search = search.replace('#', '%23');
-
-  return protocol + host + pathname + search + hash;
-};
-
-function urlResolve(source, relative) {
-  return urlParse(source, false, true).resolve(relative);
-}
-
-Url.prototype.resolve = function(relative) {
-  return this.resolveObject(urlParse(relative, false, true)).format();
-};
-
-function urlResolveObject(source, relative) {
-  if (!source) return relative;
-  return urlParse(source, false, true).resolveObject(relative);
-}
-
-Url.prototype.resolveObject = function(relative) {
-  if (isString(relative)) {
-    var rel = new Url();
-    rel.parse(relative, false, true);
-    relative = rel;
-  }
-
-  var result = new Url();
-  Object.keys(this).forEach(function(k) {
-    result[k] = this[k];
-  }, this);
-
-  // hash is always overridden, no matter what.
-  // even href="" will remove it.
-  result.hash = relative.hash;
-
-  // if the relative url is empty, then there's nothing left to do here.
-  if (relative.href === '') {
-    result.href = result.format();
-    return result;
-  }
-
-  // hrefs like //foo/bar always cut to the protocol.
-  if (relative.slashes && !relative.protocol) {
-    // take everything except the protocol from relative
-    Object.keys(relative).forEach(function(k) {
-      if (k !== 'protocol')
-        result[k] = relative[k];
-    });
-
-    //urlParse appends trailing / to urls like http://www.example.com
-    if (slashedProtocol[result.protocol] &&
-        result.hostname && !result.pathname) {
-      result.path = result.pathname = '/';
-    }
-
-    result.href = result.format();
-    return result;
-  }
-
-  if (relative.protocol && relative.protocol !== result.protocol) {
-    // if it's a known url protocol, then changing
-    // the protocol does weird things
-    // first, if it's not file:, then we MUST have a host,
-    // and if there was a path
-    // to begin with, then we MUST have a path.
-    // if it is file:, then the host is dropped,
-    // because that's known to be hostless.
-    // anything else is assumed to be absolute.
-    if (!slashedProtocol[relative.protocol]) {
-      Object.keys(relative).forEach(function(k) {
-        result[k] = relative[k];
-      });
-      result.href = result.format();
-      return result;
-    }
-
-    result.protocol = relative.protocol;
-    if (!relative.host && !hostlessProtocol[relative.protocol]) {
-      var relPath = (relative.pathname || '').split('/');
-      while (relPath.length && !(relative.host = relPath.shift()));
-      if (!relative.host) relative.host = '';
-      if (!relative.hostname) relative.hostname = '';
-      if (relPath[0] !== '') relPath.unshift('');
-      if (relPath.length < 2) relPath.unshift('');
-      result.pathname = relPath.join('/');
-    } else {
-      result.pathname = relative.pathname;
-    }
-    result.search = relative.search;
-    result.query = relative.query;
-    result.host = relative.host || '';
-    result.auth = relative.auth;
-    result.hostname = relative.hostname || relative.host;
-    result.port = relative.port;
-    // to support http.request
-    if (result.pathname || result.search) {
-      var p = result.pathname || '';
-      var s = result.search || '';
-      result.path = p + s;
-    }
-    result.slashes = result.slashes || relative.slashes;
-    result.href = result.format();
-    return result;
-  }
-
-  var isSourceAbs = (result.pathname && result.pathname.charAt(0) === '/'),
-      isRelAbs = (
-          relative.host ||
-          relative.pathname && relative.pathname.charAt(0) === '/'
-      ),
-      mustEndAbs = (isRelAbs || isSourceAbs ||
-                    (result.host && relative.pathname)),
-      removeAllDots = mustEndAbs,
-      srcPath = result.pathname && result.pathname.split('/') || [],
-      relPath = relative.pathname && relative.pathname.split('/') || [],
-      psychotic = result.protocol && !slashedProtocol[result.protocol];
-
-  // if the url is a non-slashed url, then relative
-  // links like ../.. should be able
-  // to crawl up to the hostname, as well.  This is strange.
-  // result.protocol has already been set by now.
-  // Later on, put the first path part into the host field.
-  if (psychotic) {
-    result.hostname = '';
-    result.port = null;
-    if (result.host) {
-      if (srcPath[0] === '') srcPath[0] = result.host;
-      else srcPath.unshift(result.host);
-    }
-    result.host = '';
-    if (relative.protocol) {
-      relative.hostname = null;
-      relative.port = null;
-      if (relative.host) {
-        if (relPath[0] === '') relPath[0] = relative.host;
-        else relPath.unshift(relative.host);
-      }
-      relative.host = null;
-    }
-    mustEndAbs = mustEndAbs && (relPath[0] === '' || srcPath[0] === '');
-  }
-
-  if (isRelAbs) {
-    // it's absolute.
-    result.host = (relative.host || relative.host === '') ?
-                  relative.host : result.host;
-    result.hostname = (relative.hostname || relative.hostname === '') ?
-                      relative.hostname : result.hostname;
-    result.search = relative.search;
-    result.query = relative.query;
-    srcPath = relPath;
-    // fall through to the dot-handling below.
-  } else if (relPath.length) {
-    // it's relative
-    // throw away the existing file, and take the new path instead.
-    if (!srcPath) srcPath = [];
-    srcPath.pop();
-    srcPath = srcPath.concat(relPath);
-    result.search = relative.search;
-    result.query = relative.query;
-  } else if (!isNullOrUndefined(relative.search)) {
-    // just pull out the search.
-    // like href='?foo'.
-    // Put this after the other two cases because it simplifies the booleans
-    if (psychotic) {
-      result.hostname = result.host = srcPath.shift();
-      //occationaly the auth can get stuck only in host
-      //this especialy happens in cases like
-      //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
-      var authInHost = result.host && result.host.indexOf('@') > 0 ?
-                       result.host.split('@') : false;
-      if (authInHost) {
-        result.auth = authInHost.shift();
-        result.host = result.hostname = authInHost.shift();
-      }
-    }
-    result.search = relative.search;
-    result.query = relative.query;
-    //to support http.request
-    if (!isNull(result.pathname) || !isNull(result.search)) {
-      result.path = (result.pathname ? result.pathname : '') +
-                    (result.search ? result.search : '');
-    }
-    result.href = result.format();
-    return result;
-  }
-
-  if (!srcPath.length) {
-    // no path at all.  easy.
-    // we've already handled the other stuff above.
-    result.pathname = null;
-    //to support http.request
-    if (result.search) {
-      result.path = '/' + result.search;
-    } else {
-      result.path = null;
-    }
-    result.href = result.format();
-    return result;
-  }
-
-  // if a url ENDs in . or .., then it must get a trailing slash.
-  // however, if it ends in anything else non-slashy,
-  // then it must NOT get a trailing slash.
-  var last = srcPath.slice(-1)[0];
-  var hasTrailingSlash = (
-      (result.host || relative.host) && (last === '.' || last === '..') ||
-      last === '');
-
-  // strip single dots, resolve double dots to parent dir
-  // if the path tries to go above the root, `up` ends up > 0
-  var up = 0;
-  for (var i = srcPath.length; i >= 0; i--) {
-    last = srcPath[i];
-    if (last == '.') {
-      srcPath.splice(i, 1);
-    } else if (last === '..') {
-      srcPath.splice(i, 1);
-      up++;
-    } else if (up) {
-      srcPath.splice(i, 1);
-      up--;
-    }
-  }
-
-  // if the path is allowed to go above the root, restore leading ..s
-  if (!mustEndAbs && !removeAllDots) {
-    for (; up--; up) {
-      srcPath.unshift('..');
-    }
-  }
-
-  if (mustEndAbs && srcPath[0] !== '' &&
-      (!srcPath[0] || srcPath[0].charAt(0) !== '/')) {
-    srcPath.unshift('');
-  }
-
-  if (hasTrailingSlash && (srcPath.join('/').substr(-1) !== '/')) {
-    srcPath.push('');
-  }
-
-  var isAbsolute = srcPath[0] === '' ||
-      (srcPath[0] && srcPath[0].charAt(0) === '/');
-
-  // put the host back
-  if (psychotic) {
-    result.hostname = result.host = isAbsolute ? '' :
-                                    srcPath.length ? srcPath.shift() : '';
-    //occationaly the auth can get stuck only in host
-    //this especialy happens in cases like
-    //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
-    var authInHost = result.host && result.host.indexOf('@') > 0 ?
-                     result.host.split('@') : false;
-    if (authInHost) {
-      result.auth = authInHost.shift();
-      result.host = result.hostname = authInHost.shift();
-    }
-  }
-
-  mustEndAbs = mustEndAbs || (result.host && srcPath.length);
-
-  if (mustEndAbs && !isAbsolute) {
-    srcPath.unshift('');
-  }
-
-  if (!srcPath.length) {
-    result.pathname = null;
-    result.path = null;
-  } else {
-    result.pathname = srcPath.join('/');
-  }
-
-  //to support request.http
-  if (!isNull(result.pathname) || !isNull(result.search)) {
-    result.path = (result.pathname ? result.pathname : '') +
-                  (result.search ? result.search : '');
-  }
-  result.auth = relative.auth || result.auth;
-  result.slashes = result.slashes || relative.slashes;
-  result.href = result.format();
-  return result;
-};
-
-Url.prototype.parseHost = function() {
-  var host = this.host;
-  var port = portPattern.exec(host);
-  if (port) {
-    port = port[0];
-    if (port !== ':') {
-      this.port = port.substr(1);
-    }
-    host = host.substr(0, host.length - port.length);
-  }
-  if (host) this.hostname = host;
-};
-
-function isString(arg) {
-  return typeof arg === "string";
-}
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-
-function isNull(arg) {
-  return arg === null;
-}
-function isNullOrUndefined(arg) {
-  return  arg == null;
-}
-
-},{"punycode":8,"querystring":11}],13:[function(_dereq_,module,exports){
-if (typeof Object.create === 'function') {
-  // implementation from standard node.js 'util' module
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    ctor.prototype = Object.create(superCtor.prototype, {
-      constructor: {
-        value: ctor,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-  };
-} else {
-  // old school shim for old browsers
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    var TempCtor = function () {}
-    TempCtor.prototype = superCtor.prototype
-    ctor.prototype = new TempCtor()
-    ctor.prototype.constructor = ctor
-  }
-}
-
-},{}],14:[function(_dereq_,module,exports){
-module.exports = function isBuffer(arg) {
-  return arg && typeof arg === 'object'
-    && typeof arg.copy === 'function'
-    && typeof arg.fill === 'function'
-    && typeof arg.readUInt8 === 'function';
-}
-},{}],15:[function(_dereq_,module,exports){
-(function (process,global){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-var formatRegExp = /%[sdj%]/g;
-exports.format = function(f) {
-  if (!isString(f)) {
-    var objects = [];
-    for (var i = 0; i < arguments.length; i++) {
-      objects.push(inspect(arguments[i]));
-    }
-    return objects.join(' ');
-  }
-
-  var i = 1;
-  var args = arguments;
-  var len = args.length;
-  var str = String(f).replace(formatRegExp, function(x) {
-    if (x === '%%') return '%';
-    if (i >= len) return x;
-    switch (x) {
-      case '%s': return String(args[i++]);
-      case '%d': return Number(args[i++]);
-      case '%j':
-        try {
-          return JSON.stringify(args[i++]);
-        } catch (_) {
-          return '[Circular]';
-        }
-      default:
-        return x;
-    }
-  });
-  for (var x = args[i]; i < len; x = args[++i]) {
-    if (isNull(x) || !isObject(x)) {
-      str += ' ' + x;
-    } else {
-      str += ' ' + inspect(x);
-    }
-  }
-  return str;
-};
-
-
-// Mark that a method should not be used.
-// Returns a modified function which warns once by default.
-// If --no-deprecation is set, then it is a no-op.
-exports.deprecate = function(fn, msg) {
-  // Allow for deprecating things in the process of starting up.
-  if (isUndefined(global.process)) {
-    return function() {
-      return exports.deprecate(fn, msg).apply(this, arguments);
-    };
-  }
-
-  if (process.noDeprecation === true) {
-    return fn;
-  }
-
-  var warned = false;
-  function deprecated() {
-    if (!warned) {
-      if (process.throwDeprecation) {
-        throw new Error(msg);
-      } else if (process.traceDeprecation) {
-        console.trace(msg);
-      } else {
-        console.error(msg);
-      }
-      warned = true;
-    }
-    return fn.apply(this, arguments);
-  }
-
-  return deprecated;
-};
-
-
-var debugs = {};
-var debugEnviron;
-exports.debuglog = function(set) {
-  if (isUndefined(debugEnviron))
-    debugEnviron = process.env.NODE_DEBUG || '';
-  set = set.toUpperCase();
-  if (!debugs[set]) {
-    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
-      var pid = process.pid;
-      debugs[set] = function() {
-        var msg = exports.format.apply(exports, arguments);
-        console.error('%s %d: %s', set, pid, msg);
-      };
-    } else {
-      debugs[set] = function() {};
-    }
-  }
-  return debugs[set];
-};
-
-
-/**
- * Echos the value of a value. Trys to print the value out
- * in the best way possible given the different types.
- *
- * @param {Object} obj The object to print out.
- * @param {Object} opts Optional options object that alters the output.
- */
-/* legacy: obj, showHidden, depth, colors*/
-function inspect(obj, opts) {
-  // default options
-  var ctx = {
-    seen: [],
-    stylize: stylizeNoColor
-  };
-  // legacy...
-  if (arguments.length >= 3) ctx.depth = arguments[2];
-  if (arguments.length >= 4) ctx.colors = arguments[3];
-  if (isBoolean(opts)) {
-    // legacy...
-    ctx.showHidden = opts;
-  } else if (opts) {
-    // got an "options" object
-    exports._extend(ctx, opts);
-  }
-  // set default options
-  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
-  if (isUndefined(ctx.depth)) ctx.depth = 2;
-  if (isUndefined(ctx.colors)) ctx.colors = false;
-  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
-  if (ctx.colors) ctx.stylize = stylizeWithColor;
-  return formatValue(ctx, obj, ctx.depth);
-}
-exports.inspect = inspect;
-
-
-// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
-inspect.colors = {
-  'bold' : [1, 22],
-  'italic' : [3, 23],
-  'underline' : [4, 24],
-  'inverse' : [7, 27],
-  'white' : [37, 39],
-  'grey' : [90, 39],
-  'black' : [30, 39],
-  'blue' : [34, 39],
-  'cyan' : [36, 39],
-  'green' : [32, 39],
-  'magenta' : [35, 39],
-  'red' : [31, 39],
-  'yellow' : [33, 39]
-};
-
-// Don't use 'blue' not visible on cmd.exe
-inspect.styles = {
-  'special': 'cyan',
-  'number': 'yellow',
-  'boolean': 'yellow',
-  'undefined': 'grey',
-  'null': 'bold',
-  'string': 'green',
-  'date': 'magenta',
-  // "name": intentionally not styling
-  'regexp': 'red'
-};
-
-
-function stylizeWithColor(str, styleType) {
-  var style = inspect.styles[styleType];
-
-  if (style) {
-    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
-           '\u001b[' + inspect.colors[style][1] + 'm';
-  } else {
-    return str;
-  }
-}
-
-
-function stylizeNoColor(str, styleType) {
-  return str;
-}
-
-
-function arrayToHash(array) {
-  var hash = {};
-
-  array.forEach(function(val, idx) {
-    hash[val] = true;
-  });
-
-  return hash;
-}
-
-
-function formatValue(ctx, value, recurseTimes) {
-  // Provide a hook for user-specified inspect functions.
-  // Check that value is an object with an inspect function on it
-  if (ctx.customInspect &&
-      value &&
-      isFunction(value.inspect) &&
-      // Filter out the util module, it's inspect function is special
-      value.inspect !== exports.inspect &&
-      // Also filter out any prototype objects using the circular check.
-      !(value.constructor && value.constructor.prototype === value)) {
-    var ret = value.inspect(recurseTimes, ctx);
-    if (!isString(ret)) {
-      ret = formatValue(ctx, ret, recurseTimes);
-    }
-    return ret;
-  }
-
-  // Primitive types cannot have properties
-  var primitive = formatPrimitive(ctx, value);
-  if (primitive) {
-    return primitive;
-  }
-
-  // Look up the keys of the object.
-  var keys = Object.keys(value);
-  var visibleKeys = arrayToHash(keys);
-
-  if (ctx.showHidden) {
-    keys = Object.getOwnPropertyNames(value);
-  }
-
-  // IE doesn't make error fields non-enumerable
-  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
-  if (isError(value)
-      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
-    return formatError(value);
-  }
-
-  // Some type of object without properties can be shortcutted.
-  if (keys.length === 0) {
-    if (isFunction(value)) {
-      var name = value.name ? ': ' + value.name : '';
-      return ctx.stylize('[Function' + name + ']', 'special');
-    }
-    if (isRegExp(value)) {
-      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
-    }
-    if (isDate(value)) {
-      return ctx.stylize(Date.prototype.toString.call(value), 'date');
-    }
-    if (isError(value)) {
-      return formatError(value);
-    }
-  }
-
-  var base = '', array = false, braces = ['{', '}'];
-
-  // Make Array say that they are Array
-  if (isArray(value)) {
-    array = true;
-    braces = ['[', ']'];
-  }
-
-  // Make functions say that they are functions
-  if (isFunction(value)) {
-    var n = value.name ? ': ' + value.name : '';
-    base = ' [Function' + n + ']';
-  }
-
-  // Make RegExps say that they are RegExps
-  if (isRegExp(value)) {
-    base = ' ' + RegExp.prototype.toString.call(value);
-  }
-
-  // Make dates with properties first say the date
-  if (isDate(value)) {
-    base = ' ' + Date.prototype.toUTCString.call(value);
-  }
-
-  // Make error with message first say the error
-  if (isError(value)) {
-    base = ' ' + formatError(value);
-  }
-
-  if (keys.length === 0 && (!array || value.length == 0)) {
-    return braces[0] + base + braces[1];
-  }
-
-  if (recurseTimes < 0) {
-    if (isRegExp(value)) {
-      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
-    } else {
-      return ctx.stylize('[Object]', 'special');
-    }
-  }
-
-  ctx.seen.push(value);
-
-  var output;
-  if (array) {
-    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
-  } else {
-    output = keys.map(function(key) {
-      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
-    });
-  }
-
-  ctx.seen.pop();
-
-  return reduceToSingleString(output, base, braces);
-}
-
-
-function formatPrimitive(ctx, value) {
-  if (isUndefined(value))
-    return ctx.stylize('undefined', 'undefined');
-  if (isString(value)) {
-    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
-                                             .replace(/'/g, "\\'")
-                                             .replace(/\\"/g, '"') + '\'';
-    return ctx.stylize(simple, 'string');
-  }
-  if (isNumber(value))
-    return ctx.stylize('' + value, 'number');
-  if (isBoolean(value))
-    return ctx.stylize('' + value, 'boolean');
-  // For some reason typeof null is "object", so special case here.
-  if (isNull(value))
-    return ctx.stylize('null', 'null');
-}
-
-
-function formatError(value) {
-  return '[' + Error.prototype.toString.call(value) + ']';
-}
-
-
-function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
-  var output = [];
-  for (var i = 0, l = value.length; i < l; ++i) {
-    if (hasOwnProperty(value, String(i))) {
-      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
-          String(i), true));
-    } else {
-      output.push('');
-    }
-  }
-  keys.forEach(function(key) {
-    if (!key.match(/^\d+$/)) {
-      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
-          key, true));
-    }
-  });
-  return output;
-}
-
-
-function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
-  var name, str, desc;
-  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
-  if (desc.get) {
-    if (desc.set) {
-      str = ctx.stylize('[Getter/Setter]', 'special');
-    } else {
-      str = ctx.stylize('[Getter]', 'special');
-    }
-  } else {
-    if (desc.set) {
-      str = ctx.stylize('[Setter]', 'special');
-    }
-  }
-  if (!hasOwnProperty(visibleKeys, key)) {
-    name = '[' + key + ']';
-  }
-  if (!str) {
-    if (ctx.seen.indexOf(desc.value) < 0) {
-      if (isNull(recurseTimes)) {
-        str = formatValue(ctx, desc.value, null);
-      } else {
-        str = formatValue(ctx, desc.value, recurseTimes - 1);
-      }
-      if (str.indexOf('\n') > -1) {
-        if (array) {
-          str = str.split('\n').map(function(line) {
-            return '  ' + line;
-          }).join('\n').substr(2);
-        } else {
-          str = '\n' + str.split('\n').map(function(line) {
-            return '   ' + line;
-          }).join('\n');
-        }
-      }
-    } else {
-      str = ctx.stylize('[Circular]', 'special');
-    }
-  }
-  if (isUndefined(name)) {
-    if (array && key.match(/^\d+$/)) {
-      return str;
-    }
-    name = JSON.stringify('' + key);
-    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
-      name = name.substr(1, name.length - 2);
-      name = ctx.stylize(name, 'name');
-    } else {
-      name = name.replace(/'/g, "\\'")
-                 .replace(/\\"/g, '"')
-                 .replace(/(^"|"$)/g, "'");
-      name = ctx.stylize(name, 'string');
-    }
-  }
-
-  return name + ': ' + str;
-}
-
-
-function reduceToSingleString(output, base, braces) {
-  var numLinesEst = 0;
-  var length = output.reduce(function(prev, cur) {
-    numLinesEst++;
-    if (cur.indexOf('\n') >= 0) numLinesEst++;
-    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
-  }, 0);
-
-  if (length > 60) {
-    return braces[0] +
-           (base === '' ? '' : base + '\n ') +
-           ' ' +
-           output.join(',\n  ') +
-           ' ' +
-           braces[1];
-  }
-
-  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
-}
-
-
-// NOTE: These type checking functions intentionally don't use `instanceof`
-// because it is fragile and can be easily faked with `Object.create()`.
-function isArray(ar) {
-  return Array.isArray(ar);
-}
-exports.isArray = isArray;
-
-function isBoolean(arg) {
-  return typeof arg === 'boolean';
-}
-exports.isBoolean = isBoolean;
-
-function isNull(arg) {
-  return arg === null;
-}
-exports.isNull = isNull;
-
-function isNullOrUndefined(arg) {
-  return arg == null;
-}
-exports.isNullOrUndefined = isNullOrUndefined;
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-exports.isNumber = isNumber;
-
-function isString(arg) {
-  return typeof arg === 'string';
-}
-exports.isString = isString;
-
-function isSymbol(arg) {
-  return typeof arg === 'symbol';
-}
-exports.isSymbol = isSymbol;
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-exports.isUndefined = isUndefined;
-
-function isRegExp(re) {
-  return isObject(re) && objectToString(re) === '[object RegExp]';
-}
-exports.isRegExp = isRegExp;
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-exports.isObject = isObject;
-
-function isDate(d) {
-  return isObject(d) && objectToString(d) === '[object Date]';
-}
-exports.isDate = isDate;
-
-function isError(e) {
-  return isObject(e) &&
-      (objectToString(e) === '[object Error]' || e instanceof Error);
-}
-exports.isError = isError;
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-exports.isFunction = isFunction;
-
-function isPrimitive(arg) {
-  return arg === null ||
-         typeof arg === 'boolean' ||
-         typeof arg === 'number' ||
-         typeof arg === 'string' ||
-         typeof arg === 'symbol' ||  // ES6 symbol
-         typeof arg === 'undefined';
-}
-exports.isPrimitive = isPrimitive;
-
-exports.isBuffer = _dereq_('./support/isBuffer');
-
-function objectToString(o) {
-  return Object.prototype.toString.call(o);
-}
-
-
-function pad(n) {
-  return n < 10 ? '0' + n.toString(10) : n.toString(10);
-}
-
-
-var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-              'Oct', 'Nov', 'Dec'];
-
-// 26 Feb 16:19:34
-function timestamp() {
-  var d = new Date();
-  var time = [pad(d.getHours()),
-              pad(d.getMinutes()),
-              pad(d.getSeconds())].join(':');
-  return [d.getDate(), months[d.getMonth()], time].join(' ');
-}
-
-
-// log is just a thin wrapper to console.log that prepends a timestamp
-exports.log = function() {
-  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
-};
-
-
-/**
- * Inherit the prototype methods from one constructor into another.
- *
- * The Function.prototype.inherits from lang.js rewritten as a standalone
- * function (not on Function.prototype). NOTE: If this file is to be loaded
- * during bootstrapping this function needs to be rewritten using some native
- * functions as prototype setup using normal JavaScript does not work as
- * expected during bootstrapping (see mirror.js in r114903).
- *
- * @param {function} ctor Constructor function which needs to inherit the
- *     prototype.
- * @param {function} superCtor Constructor function to inherit prototype from.
- */
-exports.inherits = _dereq_('inherits');
-
-exports._extend = function(origin, add) {
-  // Don't do anything if add isn't an object
-  if (!add || !isObject(add)) return origin;
-
-  var keys = Object.keys(add);
-  var i = keys.length;
-  while (i--) {
-    origin[keys[i]] = add[keys[i]];
-  }
-  return origin;
-};
-
-function hasOwnProperty(obj, prop) {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
-}
-
-}).call(this,_dereq_("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":14,"FWaASH":7,"inherits":13}],16:[function(_dereq_,module,exports){
-/*
- * loglevel - https://github.com/pimterry/loglevel
- *
- * Copyright (c) 2013 Tim Perry
- * Licensed under the MIT license.
- */
-
-;(function (undefined) {
-    var undefinedType = "undefined";
-
-    (function (name, definition) {
-        if (typeof module !== 'undefined') {
-            module.exports = definition();
-        } else if (typeof define === 'function' && typeof define.amd === 'object') {
-            define(definition);
-        } else {
-            this[name] = definition();
-        }
-    }('log', function () {
-        var self = {};
-        var noop = function() {};
-
-        function realMethod(methodName) {
-            if (typeof console === undefinedType) {
-                return noop;
-            } else if (console[methodName] === undefined) {
-                if (console.log !== undefined) {
-                    return boundToConsole(console, 'log');
-                } else {
-                    return noop;
-                }
-            } else {
-                return boundToConsole(console, methodName);
-            }
-        }
-
-        function boundToConsole(console, methodName) {
-            var method = console[methodName];
-            if (method.bind === undefined) {
-                if (Function.prototype.bind === undefined) {
-                    return functionBindingWrapper(method, console);
-                } else {
-                    try {
-                        return Function.prototype.bind.call(console[methodName], console);
-                    } catch (e) {
-                        // In IE8 + Modernizr, the bind shim will reject the above, so we fall back to wrapping
-                        return functionBindingWrapper(method, console);
-                    }
-                }
-            } else {
-                return console[methodName].bind(console);
-            }
-        }
-
-        function functionBindingWrapper(f, context) {
-            return function() {
-                Function.prototype.apply.apply(f, [context, arguments]);
-            };
-        }
-
-        var logMethods = [
-            "trace",
-            "debug",
-            "info",
-            "warn",
-            "error"
-        ];
-
-        function replaceLoggingMethods(methodFactory) {
-            for (var ii = 0; ii < logMethods.length; ii++) {
-                self[logMethods[ii]] = methodFactory(logMethods[ii]);
-            }
-        }
-
-        function cookiesAvailable() {
-            return (typeof window !== undefinedType &&
-                    window.document !== undefined &&
-                    window.document.cookie !== undefined);
-        }
-
-        function localStorageAvailable() {
-            try {
-                return (typeof window !== undefinedType &&
-                        window.localStorage !== undefined);
-            } catch (e) {
-                return false;
-            }
-        }
-
-        function persistLevelIfPossible(levelNum) {
-            var localStorageFail = false,
-                levelName;
-
-            for (var key in self.levels) {
-                if (self.levels.hasOwnProperty(key) && self.levels[key] === levelNum) {
-                    levelName = key;
-                    break;
-                }
-            }
-
-            if (localStorageAvailable()) {
-                /*
-                 * Setting localStorage can create a DOM 22 Exception if running in Private mode
-                 * in Safari, so even if it is available we need to catch any errors when trying
-                 * to write to it
-                 */
-                try {
-                    window.localStorage['loglevel'] = levelName;
-                } catch (e) {
-                    localStorageFail = true;
-                }
-            } else {
-                localStorageFail = true;
-            }
-
-            if (localStorageFail && cookiesAvailable()) {
-                window.document.cookie = "loglevel=" + levelName + ";";
-            }
-        }
-
-        var cookieRegex = /loglevel=([^;]+)/;
-
-        function loadPersistedLevel() {
-            var storedLevel;
-
-            if (localStorageAvailable()) {
-                storedLevel = window.localStorage['loglevel'];
-            }
-
-            if (storedLevel === undefined && cookiesAvailable()) {
-                var cookieMatch = cookieRegex.exec(window.document.cookie) || [];
-                storedLevel = cookieMatch[1];
-            }
-            
-            if (self.levels[storedLevel] === undefined) {
-                storedLevel = "WARN";
-            }
-
-            self.setLevel(self.levels[storedLevel]);
-        }
-
-        /*
-         *
-         * Public API
-         *
-         */
-
-        self.levels = { "TRACE": 0, "DEBUG": 1, "INFO": 2, "WARN": 3,
-            "ERROR": 4, "SILENT": 5};
-
-        self.setLevel = function (level) {
-            if (typeof level === "number" && level >= 0 && level <= self.levels.SILENT) {
-                persistLevelIfPossible(level);
-
-                if (level === self.levels.SILENT) {
-                    replaceLoggingMethods(function () {
-                        return noop;
-                    });
-                    return;
-                } else if (typeof console === undefinedType) {
-                    replaceLoggingMethods(function (methodName) {
-                        return function () {
-                            if (typeof console !== undefinedType) {
-                                self.setLevel(level);
-                                self[methodName].apply(self, arguments);
-                            }
-                        };
-                    });
-                    return "No console available for logging";
-                } else {
-                    replaceLoggingMethods(function (methodName) {
-                        if (level <= self.levels[methodName.toUpperCase()]) {
-                            return realMethod(methodName);
-                        } else {
-                            return noop;
-                        }
-                    });
-                }
-            } else if (typeof level === "string" && self.levels[level.toUpperCase()] !== undefined) {
-                self.setLevel(self.levels[level.toUpperCase()]);
-            } else {
-                throw "log.setLevel() called with invalid level: " + level;
-            }
-        };
-
-        self.enableAll = function() {
-            self.setLevel(self.levels.TRACE);
-        };
-
-        self.disableAll = function() {
-            self.setLevel(self.levels.SILENT);
-        };
-
-        loadPersistedLevel();
-        return self;
-    }));
-})();
-
-},{}],17:[function(_dereq_,module,exports){
+},{"./decode":21,"./encode":22}],24:[function(_dereq_,module,exports){
 var toString = Object.prototype.toString
 
 module.exports = function(val){
@@ -44597,7 +47123,7 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],18:[function(_dereq_,module,exports){
+},{}],25:[function(_dereq_,module,exports){
 //     Underscore.js 1.6.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -45942,7 +48468,1338 @@ module.exports = function(val){
   }
 }).call(this);
 
-},{}],19:[function(_dereq_,module,exports){
+},{}],26:[function(_dereq_,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var punycode = _dereq_('punycode');
+
+exports.parse = urlParse;
+exports.resolve = urlResolve;
+exports.resolveObject = urlResolveObject;
+exports.format = urlFormat;
+
+exports.Url = Url;
+
+function Url() {
+  this.protocol = null;
+  this.slashes = null;
+  this.auth = null;
+  this.host = null;
+  this.port = null;
+  this.hostname = null;
+  this.hash = null;
+  this.search = null;
+  this.query = null;
+  this.pathname = null;
+  this.path = null;
+  this.href = null;
+}
+
+// Reference: RFC 3986, RFC 1808, RFC 2396
+
+// define these here so at least they only have to be
+// compiled once on the first module load.
+var protocolPattern = /^([a-z0-9.+-]+:)/i,
+    portPattern = /:[0-9]*$/,
+
+    // RFC 2396: characters reserved for delimiting URLs.
+    // We actually just auto-escape these.
+    delims = ['<', '>', '"', '`', ' ', '\r', '\n', '\t'],
+
+    // RFC 2396: characters not allowed for various reasons.
+    unwise = ['{', '}', '|', '\\', '^', '`'].concat(delims),
+
+    // Allowed by RFCs, but cause of XSS attacks.  Always escape these.
+    autoEscape = ['\''].concat(unwise),
+    // Characters that are never ever allowed in a hostname.
+    // Note that any invalid chars are also handled, but these
+    // are the ones that are *expected* to be seen, so we fast-path
+    // them.
+    nonHostChars = ['%', '/', '?', ';', '#'].concat(autoEscape),
+    hostEndingChars = ['/', '?', '#'],
+    hostnameMaxLen = 255,
+    hostnamePartPattern = /^[a-z0-9A-Z_-]{0,63}$/,
+    hostnamePartStart = /^([a-z0-9A-Z_-]{0,63})(.*)$/,
+    // protocols that can allow "unsafe" and "unwise" chars.
+    unsafeProtocol = {
+      'javascript': true,
+      'javascript:': true
+    },
+    // protocols that never have a hostname.
+    hostlessProtocol = {
+      'javascript': true,
+      'javascript:': true
+    },
+    // protocols that always contain a // bit.
+    slashedProtocol = {
+      'http': true,
+      'https': true,
+      'ftp': true,
+      'gopher': true,
+      'file': true,
+      'http:': true,
+      'https:': true,
+      'ftp:': true,
+      'gopher:': true,
+      'file:': true
+    },
+    querystring = _dereq_('querystring');
+
+function urlParse(url, parseQueryString, slashesDenoteHost) {
+  if (url && isObject(url) && url instanceof Url) return url;
+
+  var u = new Url;
+  u.parse(url, parseQueryString, slashesDenoteHost);
+  return u;
+}
+
+Url.prototype.parse = function(url, parseQueryString, slashesDenoteHost) {
+  if (!isString(url)) {
+    throw new TypeError("Parameter 'url' must be a string, not " + typeof url);
+  }
+
+  var rest = url;
+
+  // trim before proceeding.
+  // This is to support parse stuff like "  http://foo.com  \n"
+  rest = rest.trim();
+
+  var proto = protocolPattern.exec(rest);
+  if (proto) {
+    proto = proto[0];
+    var lowerProto = proto.toLowerCase();
+    this.protocol = lowerProto;
+    rest = rest.substr(proto.length);
+  }
+
+  // figure out if it's got a host
+  // user@server is *always* interpreted as a hostname, and url
+  // resolution will treat //foo/bar as host=foo,path=bar because that's
+  // how the browser resolves relative URLs.
+  if (slashesDenoteHost || proto || rest.match(/^\/\/[^@\/]+@[^@\/]+/)) {
+    var slashes = rest.substr(0, 2) === '//';
+    if (slashes && !(proto && hostlessProtocol[proto])) {
+      rest = rest.substr(2);
+      this.slashes = true;
+    }
+  }
+
+  if (!hostlessProtocol[proto] &&
+      (slashes || (proto && !slashedProtocol[proto]))) {
+
+    // there's a hostname.
+    // the first instance of /, ?, ;, or # ends the host.
+    //
+    // If there is an @ in the hostname, then non-host chars *are* allowed
+    // to the left of the last @ sign, unless some host-ending character
+    // comes *before* the @-sign.
+    // URLs are obnoxious.
+    //
+    // ex:
+    // http://a@b@c/ => user:a@b host:c
+    // http://a@b?@c => user:a host:c path:/?@c
+
+    // v0.12 TODO(isaacs): This is not quite how Chrome does things.
+    // Review our test case against browsers more comprehensively.
+
+    // find the first instance of any hostEndingChars
+    var hostEnd = -1;
+    for (var i = 0; i < hostEndingChars.length; i++) {
+      var hec = rest.indexOf(hostEndingChars[i]);
+      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
+        hostEnd = hec;
+    }
+
+    // at this point, either we have an explicit point where the
+    // auth portion cannot go past, or the last @ char is the decider.
+    var auth, atSign;
+    if (hostEnd === -1) {
+      // atSign can be anywhere.
+      atSign = rest.lastIndexOf('@');
+    } else {
+      // atSign must be in auth portion.
+      // http://a@b/c@d => host:b auth:a path:/c@d
+      atSign = rest.lastIndexOf('@', hostEnd);
+    }
+
+    // Now we have a portion which is definitely the auth.
+    // Pull that off.
+    if (atSign !== -1) {
+      auth = rest.slice(0, atSign);
+      rest = rest.slice(atSign + 1);
+      this.auth = decodeURIComponent(auth);
+    }
+
+    // the host is the remaining to the left of the first non-host char
+    hostEnd = -1;
+    for (var i = 0; i < nonHostChars.length; i++) {
+      var hec = rest.indexOf(nonHostChars[i]);
+      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
+        hostEnd = hec;
+    }
+    // if we still have not hit it, then the entire thing is a host.
+    if (hostEnd === -1)
+      hostEnd = rest.length;
+
+    this.host = rest.slice(0, hostEnd);
+    rest = rest.slice(hostEnd);
+
+    // pull out port.
+    this.parseHost();
+
+    // we've indicated that there is a hostname,
+    // so even if it's empty, it has to be present.
+    this.hostname = this.hostname || '';
+
+    // if hostname begins with [ and ends with ]
+    // assume that it's an IPv6 address.
+    var ipv6Hostname = this.hostname[0] === '[' &&
+        this.hostname[this.hostname.length - 1] === ']';
+
+    // validate a little.
+    if (!ipv6Hostname) {
+      var hostparts = this.hostname.split(/\./);
+      for (var i = 0, l = hostparts.length; i < l; i++) {
+        var part = hostparts[i];
+        if (!part) continue;
+        if (!part.match(hostnamePartPattern)) {
+          var newpart = '';
+          for (var j = 0, k = part.length; j < k; j++) {
+            if (part.charCodeAt(j) > 127) {
+              // we replace non-ASCII char with a temporary placeholder
+              // we need this to make sure size of hostname is not
+              // broken by replacing non-ASCII by nothing
+              newpart += 'x';
+            } else {
+              newpart += part[j];
+            }
+          }
+          // we test again with ASCII char only
+          if (!newpart.match(hostnamePartPattern)) {
+            var validParts = hostparts.slice(0, i);
+            var notHost = hostparts.slice(i + 1);
+            var bit = part.match(hostnamePartStart);
+            if (bit) {
+              validParts.push(bit[1]);
+              notHost.unshift(bit[2]);
+            }
+            if (notHost.length) {
+              rest = '/' + notHost.join('.') + rest;
+            }
+            this.hostname = validParts.join('.');
+            break;
+          }
+        }
+      }
+    }
+
+    if (this.hostname.length > hostnameMaxLen) {
+      this.hostname = '';
+    } else {
+      // hostnames are always lower case.
+      this.hostname = this.hostname.toLowerCase();
+    }
+
+    if (!ipv6Hostname) {
+      // IDNA Support: Returns a puny coded representation of "domain".
+      // It only converts the part of the domain name that
+      // has non ASCII characters. I.e. it dosent matter if
+      // you call it with a domain that already is in ASCII.
+      var domainArray = this.hostname.split('.');
+      var newOut = [];
+      for (var i = 0; i < domainArray.length; ++i) {
+        var s = domainArray[i];
+        newOut.push(s.match(/[^A-Za-z0-9_-]/) ?
+            'xn--' + punycode.encode(s) : s);
+      }
+      this.hostname = newOut.join('.');
+    }
+
+    var p = this.port ? ':' + this.port : '';
+    var h = this.hostname || '';
+    this.host = h + p;
+    this.href += this.host;
+
+    // strip [ and ] from the hostname
+    // the host field still retains them, though
+    if (ipv6Hostname) {
+      this.hostname = this.hostname.substr(1, this.hostname.length - 2);
+      if (rest[0] !== '/') {
+        rest = '/' + rest;
+      }
+    }
+  }
+
+  // now rest is set to the post-host stuff.
+  // chop off any delim chars.
+  if (!unsafeProtocol[lowerProto]) {
+
+    // First, make 100% sure that any "autoEscape" chars get
+    // escaped, even if encodeURIComponent doesn't think they
+    // need to be.
+    for (var i = 0, l = autoEscape.length; i < l; i++) {
+      var ae = autoEscape[i];
+      var esc = encodeURIComponent(ae);
+      if (esc === ae) {
+        esc = escape(ae);
+      }
+      rest = rest.split(ae).join(esc);
+    }
+  }
+
+
+  // chop off from the tail first.
+  var hash = rest.indexOf('#');
+  if (hash !== -1) {
+    // got a fragment string.
+    this.hash = rest.substr(hash);
+    rest = rest.slice(0, hash);
+  }
+  var qm = rest.indexOf('?');
+  if (qm !== -1) {
+    this.search = rest.substr(qm);
+    this.query = rest.substr(qm + 1);
+    if (parseQueryString) {
+      this.query = querystring.parse(this.query);
+    }
+    rest = rest.slice(0, qm);
+  } else if (parseQueryString) {
+    // no query string, but parseQueryString still requested
+    this.search = '';
+    this.query = {};
+  }
+  if (rest) this.pathname = rest;
+  if (slashedProtocol[lowerProto] &&
+      this.hostname && !this.pathname) {
+    this.pathname = '/';
+  }
+
+  //to support http.request
+  if (this.pathname || this.search) {
+    var p = this.pathname || '';
+    var s = this.search || '';
+    this.path = p + s;
+  }
+
+  // finally, reconstruct the href based on what has been validated.
+  this.href = this.format();
+  return this;
+};
+
+// format a parsed object into a url string
+function urlFormat(obj) {
+  // ensure it's an object, and not a string url.
+  // If it's an obj, this is a no-op.
+  // this way, you can call url_format() on strings
+  // to clean up potentially wonky urls.
+  if (isString(obj)) obj = urlParse(obj);
+  if (!(obj instanceof Url)) return Url.prototype.format.call(obj);
+  return obj.format();
+}
+
+Url.prototype.format = function() {
+  var auth = this.auth || '';
+  if (auth) {
+    auth = encodeURIComponent(auth);
+    auth = auth.replace(/%3A/i, ':');
+    auth += '@';
+  }
+
+  var protocol = this.protocol || '',
+      pathname = this.pathname || '',
+      hash = this.hash || '',
+      host = false,
+      query = '';
+
+  if (this.host) {
+    host = auth + this.host;
+  } else if (this.hostname) {
+    host = auth + (this.hostname.indexOf(':') === -1 ?
+        this.hostname :
+        '[' + this.hostname + ']');
+    if (this.port) {
+      host += ':' + this.port;
+    }
+  }
+
+  if (this.query &&
+      isObject(this.query) &&
+      Object.keys(this.query).length) {
+    query = querystring.stringify(this.query);
+  }
+
+  var search = this.search || (query && ('?' + query)) || '';
+
+  if (protocol && protocol.substr(-1) !== ':') protocol += ':';
+
+  // only the slashedProtocols get the //.  Not mailto:, xmpp:, etc.
+  // unless they had them to begin with.
+  if (this.slashes ||
+      (!protocol || slashedProtocol[protocol]) && host !== false) {
+    host = '//' + (host || '');
+    if (pathname && pathname.charAt(0) !== '/') pathname = '/' + pathname;
+  } else if (!host) {
+    host = '';
+  }
+
+  if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
+  if (search && search.charAt(0) !== '?') search = '?' + search;
+
+  pathname = pathname.replace(/[?#]/g, function(match) {
+    return encodeURIComponent(match);
+  });
+  search = search.replace('#', '%23');
+
+  return protocol + host + pathname + search + hash;
+};
+
+function urlResolve(source, relative) {
+  return urlParse(source, false, true).resolve(relative);
+}
+
+Url.prototype.resolve = function(relative) {
+  return this.resolveObject(urlParse(relative, false, true)).format();
+};
+
+function urlResolveObject(source, relative) {
+  if (!source) return relative;
+  return urlParse(source, false, true).resolveObject(relative);
+}
+
+Url.prototype.resolveObject = function(relative) {
+  if (isString(relative)) {
+    var rel = new Url();
+    rel.parse(relative, false, true);
+    relative = rel;
+  }
+
+  var result = new Url();
+  Object.keys(this).forEach(function(k) {
+    result[k] = this[k];
+  }, this);
+
+  // hash is always overridden, no matter what.
+  // even href="" will remove it.
+  result.hash = relative.hash;
+
+  // if the relative url is empty, then there's nothing left to do here.
+  if (relative.href === '') {
+    result.href = result.format();
+    return result;
+  }
+
+  // hrefs like //foo/bar always cut to the protocol.
+  if (relative.slashes && !relative.protocol) {
+    // take everything except the protocol from relative
+    Object.keys(relative).forEach(function(k) {
+      if (k !== 'protocol')
+        result[k] = relative[k];
+    });
+
+    //urlParse appends trailing / to urls like http://www.example.com
+    if (slashedProtocol[result.protocol] &&
+        result.hostname && !result.pathname) {
+      result.path = result.pathname = '/';
+    }
+
+    result.href = result.format();
+    return result;
+  }
+
+  if (relative.protocol && relative.protocol !== result.protocol) {
+    // if it's a known url protocol, then changing
+    // the protocol does weird things
+    // first, if it's not file:, then we MUST have a host,
+    // and if there was a path
+    // to begin with, then we MUST have a path.
+    // if it is file:, then the host is dropped,
+    // because that's known to be hostless.
+    // anything else is assumed to be absolute.
+    if (!slashedProtocol[relative.protocol]) {
+      Object.keys(relative).forEach(function(k) {
+        result[k] = relative[k];
+      });
+      result.href = result.format();
+      return result;
+    }
+
+    result.protocol = relative.protocol;
+    if (!relative.host && !hostlessProtocol[relative.protocol]) {
+      var relPath = (relative.pathname || '').split('/');
+      while (relPath.length && !(relative.host = relPath.shift()));
+      if (!relative.host) relative.host = '';
+      if (!relative.hostname) relative.hostname = '';
+      if (relPath[0] !== '') relPath.unshift('');
+      if (relPath.length < 2) relPath.unshift('');
+      result.pathname = relPath.join('/');
+    } else {
+      result.pathname = relative.pathname;
+    }
+    result.search = relative.search;
+    result.query = relative.query;
+    result.host = relative.host || '';
+    result.auth = relative.auth;
+    result.hostname = relative.hostname || relative.host;
+    result.port = relative.port;
+    // to support http.request
+    if (result.pathname || result.search) {
+      var p = result.pathname || '';
+      var s = result.search || '';
+      result.path = p + s;
+    }
+    result.slashes = result.slashes || relative.slashes;
+    result.href = result.format();
+    return result;
+  }
+
+  var isSourceAbs = (result.pathname && result.pathname.charAt(0) === '/'),
+      isRelAbs = (
+          relative.host ||
+          relative.pathname && relative.pathname.charAt(0) === '/'
+      ),
+      mustEndAbs = (isRelAbs || isSourceAbs ||
+                    (result.host && relative.pathname)),
+      removeAllDots = mustEndAbs,
+      srcPath = result.pathname && result.pathname.split('/') || [],
+      relPath = relative.pathname && relative.pathname.split('/') || [],
+      psychotic = result.protocol && !slashedProtocol[result.protocol];
+
+  // if the url is a non-slashed url, then relative
+  // links like ../.. should be able
+  // to crawl up to the hostname, as well.  This is strange.
+  // result.protocol has already been set by now.
+  // Later on, put the first path part into the host field.
+  if (psychotic) {
+    result.hostname = '';
+    result.port = null;
+    if (result.host) {
+      if (srcPath[0] === '') srcPath[0] = result.host;
+      else srcPath.unshift(result.host);
+    }
+    result.host = '';
+    if (relative.protocol) {
+      relative.hostname = null;
+      relative.port = null;
+      if (relative.host) {
+        if (relPath[0] === '') relPath[0] = relative.host;
+        else relPath.unshift(relative.host);
+      }
+      relative.host = null;
+    }
+    mustEndAbs = mustEndAbs && (relPath[0] === '' || srcPath[0] === '');
+  }
+
+  if (isRelAbs) {
+    // it's absolute.
+    result.host = (relative.host || relative.host === '') ?
+                  relative.host : result.host;
+    result.hostname = (relative.hostname || relative.hostname === '') ?
+                      relative.hostname : result.hostname;
+    result.search = relative.search;
+    result.query = relative.query;
+    srcPath = relPath;
+    // fall through to the dot-handling below.
+  } else if (relPath.length) {
+    // it's relative
+    // throw away the existing file, and take the new path instead.
+    if (!srcPath) srcPath = [];
+    srcPath.pop();
+    srcPath = srcPath.concat(relPath);
+    result.search = relative.search;
+    result.query = relative.query;
+  } else if (!isNullOrUndefined(relative.search)) {
+    // just pull out the search.
+    // like href='?foo'.
+    // Put this after the other two cases because it simplifies the booleans
+    if (psychotic) {
+      result.hostname = result.host = srcPath.shift();
+      //occationaly the auth can get stuck only in host
+      //this especialy happens in cases like
+      //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
+      var authInHost = result.host && result.host.indexOf('@') > 0 ?
+                       result.host.split('@') : false;
+      if (authInHost) {
+        result.auth = authInHost.shift();
+        result.host = result.hostname = authInHost.shift();
+      }
+    }
+    result.search = relative.search;
+    result.query = relative.query;
+    //to support http.request
+    if (!isNull(result.pathname) || !isNull(result.search)) {
+      result.path = (result.pathname ? result.pathname : '') +
+                    (result.search ? result.search : '');
+    }
+    result.href = result.format();
+    return result;
+  }
+
+  if (!srcPath.length) {
+    // no path at all.  easy.
+    // we've already handled the other stuff above.
+    result.pathname = null;
+    //to support http.request
+    if (result.search) {
+      result.path = '/' + result.search;
+    } else {
+      result.path = null;
+    }
+    result.href = result.format();
+    return result;
+  }
+
+  // if a url ENDs in . or .., then it must get a trailing slash.
+  // however, if it ends in anything else non-slashy,
+  // then it must NOT get a trailing slash.
+  var last = srcPath.slice(-1)[0];
+  var hasTrailingSlash = (
+      (result.host || relative.host) && (last === '.' || last === '..') ||
+      last === '');
+
+  // strip single dots, resolve double dots to parent dir
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = srcPath.length; i >= 0; i--) {
+    last = srcPath[i];
+    if (last == '.') {
+      srcPath.splice(i, 1);
+    } else if (last === '..') {
+      srcPath.splice(i, 1);
+      up++;
+    } else if (up) {
+      srcPath.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (!mustEndAbs && !removeAllDots) {
+    for (; up--; up) {
+      srcPath.unshift('..');
+    }
+  }
+
+  if (mustEndAbs && srcPath[0] !== '' &&
+      (!srcPath[0] || srcPath[0].charAt(0) !== '/')) {
+    srcPath.unshift('');
+  }
+
+  if (hasTrailingSlash && (srcPath.join('/').substr(-1) !== '/')) {
+    srcPath.push('');
+  }
+
+  var isAbsolute = srcPath[0] === '' ||
+      (srcPath[0] && srcPath[0].charAt(0) === '/');
+
+  // put the host back
+  if (psychotic) {
+    result.hostname = result.host = isAbsolute ? '' :
+                                    srcPath.length ? srcPath.shift() : '';
+    //occationaly the auth can get stuck only in host
+    //this especialy happens in cases like
+    //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
+    var authInHost = result.host && result.host.indexOf('@') > 0 ?
+                     result.host.split('@') : false;
+    if (authInHost) {
+      result.auth = authInHost.shift();
+      result.host = result.hostname = authInHost.shift();
+    }
+  }
+
+  mustEndAbs = mustEndAbs || (result.host && srcPath.length);
+
+  if (mustEndAbs && !isAbsolute) {
+    srcPath.unshift('');
+  }
+
+  if (!srcPath.length) {
+    result.pathname = null;
+    result.path = null;
+  } else {
+    result.pathname = srcPath.join('/');
+  }
+
+  //to support request.http
+  if (!isNull(result.pathname) || !isNull(result.search)) {
+    result.path = (result.pathname ? result.pathname : '') +
+                  (result.search ? result.search : '');
+  }
+  result.auth = relative.auth || result.auth;
+  result.slashes = result.slashes || relative.slashes;
+  result.href = result.format();
+  return result;
+};
+
+Url.prototype.parseHost = function() {
+  var host = this.host;
+  var port = portPattern.exec(host);
+  if (port) {
+    port = port[0];
+    if (port !== ':') {
+      this.port = port.substr(1);
+    }
+    host = host.substr(0, host.length - port.length);
+  }
+  if (host) this.hostname = host;
+};
+
+function isString(arg) {
+  return typeof arg === "string";
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isNull(arg) {
+  return arg === null;
+}
+function isNullOrUndefined(arg) {
+  return  arg == null;
+}
+
+},{"punycode":20,"querystring":23}],27:[function(_dereq_,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],28:[function(_dereq_,module,exports){
+module.exports = function isBuffer(arg) {
+  return arg && typeof arg === 'object'
+    && typeof arg.copy === 'function'
+    && typeof arg.fill === 'function'
+    && typeof arg.readUInt8 === 'function';
+}
+},{}],29:[function(_dereq_,module,exports){
+(function (process,global){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var formatRegExp = /%[sdj%]/g;
+exports.format = function(f) {
+  if (!isString(f)) {
+    var objects = [];
+    for (var i = 0; i < arguments.length; i++) {
+      objects.push(inspect(arguments[i]));
+    }
+    return objects.join(' ');
+  }
+
+  var i = 1;
+  var args = arguments;
+  var len = args.length;
+  var str = String(f).replace(formatRegExp, function(x) {
+    if (x === '%%') return '%';
+    if (i >= len) return x;
+    switch (x) {
+      case '%s': return String(args[i++]);
+      case '%d': return Number(args[i++]);
+      case '%j':
+        try {
+          return JSON.stringify(args[i++]);
+        } catch (_) {
+          return '[Circular]';
+        }
+      default:
+        return x;
+    }
+  });
+  for (var x = args[i]; i < len; x = args[++i]) {
+    if (isNull(x) || !isObject(x)) {
+      str += ' ' + x;
+    } else {
+      str += ' ' + inspect(x);
+    }
+  }
+  return str;
+};
+
+
+// Mark that a method should not be used.
+// Returns a modified function which warns once by default.
+// If --no-deprecation is set, then it is a no-op.
+exports.deprecate = function(fn, msg) {
+  // Allow for deprecating things in the process of starting up.
+  if (isUndefined(global.process)) {
+    return function() {
+      return exports.deprecate(fn, msg).apply(this, arguments);
+    };
+  }
+
+  if (process.noDeprecation === true) {
+    return fn;
+  }
+
+  var warned = false;
+  function deprecated() {
+    if (!warned) {
+      if (process.throwDeprecation) {
+        throw new Error(msg);
+      } else if (process.traceDeprecation) {
+        console.trace(msg);
+      } else {
+        console.error(msg);
+      }
+      warned = true;
+    }
+    return fn.apply(this, arguments);
+  }
+
+  return deprecated;
+};
+
+
+var debugs = {};
+var debugEnviron;
+exports.debuglog = function(set) {
+  if (isUndefined(debugEnviron))
+    debugEnviron = process.env.NODE_DEBUG || '';
+  set = set.toUpperCase();
+  if (!debugs[set]) {
+    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
+      var pid = process.pid;
+      debugs[set] = function() {
+        var msg = exports.format.apply(exports, arguments);
+        console.error('%s %d: %s', set, pid, msg);
+      };
+    } else {
+      debugs[set] = function() {};
+    }
+  }
+  return debugs[set];
+};
+
+
+/**
+ * Echos the value of a value. Trys to print the value out
+ * in the best way possible given the different types.
+ *
+ * @param {Object} obj The object to print out.
+ * @param {Object} opts Optional options object that alters the output.
+ */
+/* legacy: obj, showHidden, depth, colors*/
+function inspect(obj, opts) {
+  // default options
+  var ctx = {
+    seen: [],
+    stylize: stylizeNoColor
+  };
+  // legacy...
+  if (arguments.length >= 3) ctx.depth = arguments[2];
+  if (arguments.length >= 4) ctx.colors = arguments[3];
+  if (isBoolean(opts)) {
+    // legacy...
+    ctx.showHidden = opts;
+  } else if (opts) {
+    // got an "options" object
+    exports._extend(ctx, opts);
+  }
+  // set default options
+  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
+  if (isUndefined(ctx.depth)) ctx.depth = 2;
+  if (isUndefined(ctx.colors)) ctx.colors = false;
+  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
+  if (ctx.colors) ctx.stylize = stylizeWithColor;
+  return formatValue(ctx, obj, ctx.depth);
+}
+exports.inspect = inspect;
+
+
+// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+inspect.colors = {
+  'bold' : [1, 22],
+  'italic' : [3, 23],
+  'underline' : [4, 24],
+  'inverse' : [7, 27],
+  'white' : [37, 39],
+  'grey' : [90, 39],
+  'black' : [30, 39],
+  'blue' : [34, 39],
+  'cyan' : [36, 39],
+  'green' : [32, 39],
+  'magenta' : [35, 39],
+  'red' : [31, 39],
+  'yellow' : [33, 39]
+};
+
+// Don't use 'blue' not visible on cmd.exe
+inspect.styles = {
+  'special': 'cyan',
+  'number': 'yellow',
+  'boolean': 'yellow',
+  'undefined': 'grey',
+  'null': 'bold',
+  'string': 'green',
+  'date': 'magenta',
+  // "name": intentionally not styling
+  'regexp': 'red'
+};
+
+
+function stylizeWithColor(str, styleType) {
+  var style = inspect.styles[styleType];
+
+  if (style) {
+    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
+           '\u001b[' + inspect.colors[style][1] + 'm';
+  } else {
+    return str;
+  }
+}
+
+
+function stylizeNoColor(str, styleType) {
+  return str;
+}
+
+
+function arrayToHash(array) {
+  var hash = {};
+
+  array.forEach(function(val, idx) {
+    hash[val] = true;
+  });
+
+  return hash;
+}
+
+
+function formatValue(ctx, value, recurseTimes) {
+  // Provide a hook for user-specified inspect functions.
+  // Check that value is an object with an inspect function on it
+  if (ctx.customInspect &&
+      value &&
+      isFunction(value.inspect) &&
+      // Filter out the util module, it's inspect function is special
+      value.inspect !== exports.inspect &&
+      // Also filter out any prototype objects using the circular check.
+      !(value.constructor && value.constructor.prototype === value)) {
+    var ret = value.inspect(recurseTimes, ctx);
+    if (!isString(ret)) {
+      ret = formatValue(ctx, ret, recurseTimes);
+    }
+    return ret;
+  }
+
+  // Primitive types cannot have properties
+  var primitive = formatPrimitive(ctx, value);
+  if (primitive) {
+    return primitive;
+  }
+
+  // Look up the keys of the object.
+  var keys = Object.keys(value);
+  var visibleKeys = arrayToHash(keys);
+
+  if (ctx.showHidden) {
+    keys = Object.getOwnPropertyNames(value);
+  }
+
+  // IE doesn't make error fields non-enumerable
+  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
+  if (isError(value)
+      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
+    return formatError(value);
+  }
+
+  // Some type of object without properties can be shortcutted.
+  if (keys.length === 0) {
+    if (isFunction(value)) {
+      var name = value.name ? ': ' + value.name : '';
+      return ctx.stylize('[Function' + name + ']', 'special');
+    }
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    }
+    if (isDate(value)) {
+      return ctx.stylize(Date.prototype.toString.call(value), 'date');
+    }
+    if (isError(value)) {
+      return formatError(value);
+    }
+  }
+
+  var base = '', array = false, braces = ['{', '}'];
+
+  // Make Array say that they are Array
+  if (isArray(value)) {
+    array = true;
+    braces = ['[', ']'];
+  }
+
+  // Make functions say that they are functions
+  if (isFunction(value)) {
+    var n = value.name ? ': ' + value.name : '';
+    base = ' [Function' + n + ']';
+  }
+
+  // Make RegExps say that they are RegExps
+  if (isRegExp(value)) {
+    base = ' ' + RegExp.prototype.toString.call(value);
+  }
+
+  // Make dates with properties first say the date
+  if (isDate(value)) {
+    base = ' ' + Date.prototype.toUTCString.call(value);
+  }
+
+  // Make error with message first say the error
+  if (isError(value)) {
+    base = ' ' + formatError(value);
+  }
+
+  if (keys.length === 0 && (!array || value.length == 0)) {
+    return braces[0] + base + braces[1];
+  }
+
+  if (recurseTimes < 0) {
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    } else {
+      return ctx.stylize('[Object]', 'special');
+    }
+  }
+
+  ctx.seen.push(value);
+
+  var output;
+  if (array) {
+    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
+  } else {
+    output = keys.map(function(key) {
+      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
+    });
+  }
+
+  ctx.seen.pop();
+
+  return reduceToSingleString(output, base, braces);
+}
+
+
+function formatPrimitive(ctx, value) {
+  if (isUndefined(value))
+    return ctx.stylize('undefined', 'undefined');
+  if (isString(value)) {
+    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
+                                             .replace(/'/g, "\\'")
+                                             .replace(/\\"/g, '"') + '\'';
+    return ctx.stylize(simple, 'string');
+  }
+  if (isNumber(value))
+    return ctx.stylize('' + value, 'number');
+  if (isBoolean(value))
+    return ctx.stylize('' + value, 'boolean');
+  // For some reason typeof null is "object", so special case here.
+  if (isNull(value))
+    return ctx.stylize('null', 'null');
+}
+
+
+function formatError(value) {
+  return '[' + Error.prototype.toString.call(value) + ']';
+}
+
+
+function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
+  var output = [];
+  for (var i = 0, l = value.length; i < l; ++i) {
+    if (hasOwnProperty(value, String(i))) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          String(i), true));
+    } else {
+      output.push('');
+    }
+  }
+  keys.forEach(function(key) {
+    if (!key.match(/^\d+$/)) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          key, true));
+    }
+  });
+  return output;
+}
+
+
+function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
+  var name, str, desc;
+  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
+  if (desc.get) {
+    if (desc.set) {
+      str = ctx.stylize('[Getter/Setter]', 'special');
+    } else {
+      str = ctx.stylize('[Getter]', 'special');
+    }
+  } else {
+    if (desc.set) {
+      str = ctx.stylize('[Setter]', 'special');
+    }
+  }
+  if (!hasOwnProperty(visibleKeys, key)) {
+    name = '[' + key + ']';
+  }
+  if (!str) {
+    if (ctx.seen.indexOf(desc.value) < 0) {
+      if (isNull(recurseTimes)) {
+        str = formatValue(ctx, desc.value, null);
+      } else {
+        str = formatValue(ctx, desc.value, recurseTimes - 1);
+      }
+      if (str.indexOf('\n') > -1) {
+        if (array) {
+          str = str.split('\n').map(function(line) {
+            return '  ' + line;
+          }).join('\n').substr(2);
+        } else {
+          str = '\n' + str.split('\n').map(function(line) {
+            return '   ' + line;
+          }).join('\n');
+        }
+      }
+    } else {
+      str = ctx.stylize('[Circular]', 'special');
+    }
+  }
+  if (isUndefined(name)) {
+    if (array && key.match(/^\d+$/)) {
+      return str;
+    }
+    name = JSON.stringify('' + key);
+    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+      name = name.substr(1, name.length - 2);
+      name = ctx.stylize(name, 'name');
+    } else {
+      name = name.replace(/'/g, "\\'")
+                 .replace(/\\"/g, '"')
+                 .replace(/(^"|"$)/g, "'");
+      name = ctx.stylize(name, 'string');
+    }
+  }
+
+  return name + ': ' + str;
+}
+
+
+function reduceToSingleString(output, base, braces) {
+  var numLinesEst = 0;
+  var length = output.reduce(function(prev, cur) {
+    numLinesEst++;
+    if (cur.indexOf('\n') >= 0) numLinesEst++;
+    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
+  }, 0);
+
+  if (length > 60) {
+    return braces[0] +
+           (base === '' ? '' : base + '\n ') +
+           ' ' +
+           output.join(',\n  ') +
+           ' ' +
+           braces[1];
+  }
+
+  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
+}
+
+
+// NOTE: These type checking functions intentionally don't use `instanceof`
+// because it is fragile and can be easily faked with `Object.create()`.
+function isArray(ar) {
+  return Array.isArray(ar);
+}
+exports.isArray = isArray;
+
+function isBoolean(arg) {
+  return typeof arg === 'boolean';
+}
+exports.isBoolean = isBoolean;
+
+function isNull(arg) {
+  return arg === null;
+}
+exports.isNull = isNull;
+
+function isNullOrUndefined(arg) {
+  return arg == null;
+}
+exports.isNullOrUndefined = isNullOrUndefined;
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+exports.isNumber = isNumber;
+
+function isString(arg) {
+  return typeof arg === 'string';
+}
+exports.isString = isString;
+
+function isSymbol(arg) {
+  return typeof arg === 'symbol';
+}
+exports.isSymbol = isSymbol;
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+exports.isUndefined = isUndefined;
+
+function isRegExp(re) {
+  return isObject(re) && objectToString(re) === '[object RegExp]';
+}
+exports.isRegExp = isRegExp;
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+exports.isObject = isObject;
+
+function isDate(d) {
+  return isObject(d) && objectToString(d) === '[object Date]';
+}
+exports.isDate = isDate;
+
+function isError(e) {
+  return isObject(e) &&
+      (objectToString(e) === '[object Error]' || e instanceof Error);
+}
+exports.isError = isError;
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+exports.isFunction = isFunction;
+
+function isPrimitive(arg) {
+  return arg === null ||
+         typeof arg === 'boolean' ||
+         typeof arg === 'number' ||
+         typeof arg === 'string' ||
+         typeof arg === 'symbol' ||  // ES6 symbol
+         typeof arg === 'undefined';
+}
+exports.isPrimitive = isPrimitive;
+
+exports.isBuffer = _dereq_('./support/isBuffer');
+
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
+
+function pad(n) {
+  return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
+
+
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+              'Oct', 'Nov', 'Dec'];
+
+// 26 Feb 16:19:34
+function timestamp() {
+  var d = new Date();
+  var time = [pad(d.getHours()),
+              pad(d.getMinutes()),
+              pad(d.getSeconds())].join(':');
+  return [d.getDate(), months[d.getMonth()], time].join(' ');
+}
+
+
+// log is just a thin wrapper to console.log that prepends a timestamp
+exports.log = function() {
+  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
+};
+
+
+/**
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * The Function.prototype.inherits from lang.js rewritten as a standalone
+ * function (not on Function.prototype). NOTE: If this file is to be loaded
+ * during bootstrapping this function needs to be rewritten using some native
+ * functions as prototype setup using normal JavaScript does not work as
+ * expected during bootstrapping (see mirror.js in r114903).
+ *
+ * @param {function} ctor Constructor function which needs to inherit the
+ *     prototype.
+ * @param {function} superCtor Constructor function to inherit prototype from.
+ */
+exports.inherits = _dereq_('inherits');
+
+exports._extend = function(origin, add) {
+  // Don't do anything if add isn't an object
+  if (!add || !isObject(add)) return origin;
+
+  var keys = Object.keys(add);
+  var i = keys.length;
+  while (i--) {
+    origin[keys[i]] = add[keys[i]];
+  }
+  return origin;
+};
+
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+}).call(this,_dereq_("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":28,"FWaASH":5,"inherits":27}],30:[function(_dereq_,module,exports){
 var constants = _dereq_("./modules/constants");
 var events = _dereq_("./modules/events");
 var logger = _dereq_("./modules/logger");
@@ -45953,13 +49810,13 @@ var api_act = _dereq_("./modules/api_act");
 var api_auth = _dereq_("./modules/api_auth");
 var api_sec = _dereq_("./modules/api_sec");
 var api_hash = _dereq_("./modules/api_hash");
-var api_sync = _dereq_("./modules/sync-cli");
 var api_mbaas = _dereq_("./modules/api_mbaas");
 var api_cloud = _dereq_("./modules/api_cloud");
 var api_push = _dereq_("./modules/api_push");
 var fhparams = _dereq_("./modules/fhparams");
 var appProps = _dereq_("./modules/appProps");
 var device = _dereq_("./modules/device");
+var syncCloudHandler = _dereq_("./modules/sync_cloud_handler");
 
 var defaultFail = function(msg, error) {
   logger.error(msg + ":" + JSON.stringify(error));
@@ -46014,10 +49871,14 @@ fh.auth = api_auth;
 fh.cloud = api_cloud;
 fh.sec = api_sec;
 fh.hash = api_hash;
-fh.sync = api_sync;
 fh.push = api_push;
 fh.ajax = fh.__ajax = ajax;
 fh.mbaas = api_mbaas;
+
+// Mount sync to fh namespace
+fh.sync = _dereq_("fh-sync-js");
+fh.sync.setCloudHandler(syncCloudHandler);
+
 fh._getDeviceId = device.getDeviceId;
 fh.fh_timeout = 60000; //keep backward compatible
 
@@ -46076,7 +49937,7 @@ fh.reset = cloud.reset;
 //So, we assign $fh to the window name space directly here. (otherwise, we have to fork the grunt browserify plugin, then fork browerify and the dependent umd module, really not worthing the effort).
 window.$fh = fh;
 module.exports = fh;
-},{"./modules/ajax":21,"./modules/api_act":22,"./modules/api_auth":23,"./modules/api_cloud":24,"./modules/api_hash":25,"./modules/api_mbaas":26,"./modules/api_push":27,"./modules/api_sec":28,"./modules/appProps":29,"./modules/constants":31,"./modules/device":34,"./modules/events":35,"./modules/fhparams":36,"./modules/logger":42,"./modules/sync-cli":50,"./modules/waitForCloud":52}],20:[function(_dereq_,module,exports){
+},{"./modules/ajax":32,"./modules/api_act":33,"./modules/api_auth":34,"./modules/api_cloud":35,"./modules/api_hash":36,"./modules/api_mbaas":37,"./modules/api_push":38,"./modules/api_sec":39,"./modules/appProps":40,"./modules/constants":42,"./modules/device":45,"./modules/events":46,"./modules/fhparams":47,"./modules/logger":53,"./modules/sync_cloud_handler":61,"./modules/waitForCloud":63,"fh-sync-js":17}],31:[function(_dereq_,module,exports){
 var urlparser = _dereq_('url');
 
 var XDomainRequestWrapper = function(xdr){
@@ -46148,7 +50009,7 @@ XDomainRequestWrapper.prototype.getResponseHeader = function(n){
 
 module.exports = XDomainRequestWrapper;
 
-},{"url":12}],21:[function(_dereq_,module,exports){
+},{"url":26}],32:[function(_dereq_,module,exports){
 //a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js.
 //it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/
 //a few small changes are made for supporting IE 8 and other features:
@@ -46558,7 +50419,7 @@ function extend(target) {
   return target
 }
 
-},{"./XDomainRequestWrapper":20,"./events":35,"./fhparams":36,"./logger":42,"type-of":17}],22:[function(_dereq_,module,exports){
+},{"./XDomainRequestWrapper":31,"./events":46,"./fhparams":47,"./logger":53,"type-of":24}],33:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -46613,7 +50474,7 @@ module.exports = function(opts, success, fail){
   });
 };
 
-},{"./ajax":21,"./appProps":29,"./fhparams":36,"./handleError":37,"./logger":42,"./waitForCloud":52,"underscore":18}],23:[function(_dereq_,module,exports){
+},{"./ajax":32,"./appProps":40,"./fhparams":47,"./handleError":48,"./logger":53,"./waitForCloud":63,"underscore":25}],34:[function(_dereq_,module,exports){
 var logger = _dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -46741,7 +50602,7 @@ auth.verify = function(cb){
 };
 
 module.exports = auth;
-},{"./ajax":21,"./appProps":29,"./checkAuth":30,"./constants":31,"./data":33,"./device":34,"./fhparams":36,"./handleError":37,"./logger":42,"./waitForCloud":52}],24:[function(_dereq_,module,exports){
+},{"./ajax":32,"./appProps":40,"./checkAuth":41,"./constants":42,"./data":44,"./device":45,"./fhparams":47,"./handleError":48,"./logger":53,"./waitForCloud":63}],35:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -46800,7 +50661,7 @@ module.exports = function(opts, success, fail){
   });
 };
 
-},{"./ajax":21,"./appProps":29,"./fhparams":36,"./handleError":37,"./logger":42,"./waitForCloud":52,"underscore":18}],25:[function(_dereq_,module,exports){
+},{"./ajax":32,"./appProps":40,"./fhparams":47,"./handleError":48,"./logger":53,"./waitForCloud":63,"underscore":25}],36:[function(_dereq_,module,exports){
 var hashImpl = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
@@ -46812,7 +50673,7 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":48}],26:[function(_dereq_,module,exports){
+},{"./security/hash":59}],37:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -46857,7 +50718,7 @@ module.exports = function(opts, success, fail){
     }
   });
 };
-},{"./ajax":21,"./appProps":29,"./constants":31,"./fhparams":36,"./handleError":37,"./logger":42,"./waitForCloud":52}],27:[function(_dereq_,module,exports){
+},{"./ajax":32,"./appProps":40,"./constants":42,"./fhparams":47,"./handleError":48,"./logger":53,"./waitForCloud":63}],38:[function(_dereq_,module,exports){
 var logger = _dereq_("./logger");
 var appProps = _dereq_("./appProps");
 var cloud = _dereq_("./waitForCloud");
@@ -46890,7 +50751,7 @@ module.exports = function (onNotification, success, fail, config) {
   });
 };
 
-},{"./appProps":29,"./logger":42,"./waitForCloud":52}],28:[function(_dereq_,module,exports){
+},{"./appProps":40,"./logger":53,"./waitForCloud":63}],39:[function(_dereq_,module,exports){
 var keygen = _dereq_("./security/aes-keygen");
 var aes = _dereq_("./security/aes-node");
 var rsa = _dereq_("./security/rsa-node");
@@ -46934,7 +50795,7 @@ module.exports = function(p, s, f){
     }
   }
 };
-},{"./security/aes-keygen":46,"./security/aes-node":47,"./security/hash":48,"./security/rsa-node":49}],29:[function(_dereq_,module,exports){
+},{"./security/aes-keygen":57,"./security/aes-node":58,"./security/hash":59,"./security/rsa-node":60}],40:[function(_dereq_,module,exports){
 var consts = _dereq_("./constants");
 var ajax = _dereq_("./ajax");
 var logger = _dereq_("./logger");
@@ -47019,7 +50880,7 @@ module.exports = {
   setAppProps: setAppProps
 };
 
-},{"./ajax":21,"./constants":31,"./logger":42,"./queryMap":44,"underscore":18}],30:[function(_dereq_,module,exports){
+},{"./ajax":32,"./constants":42,"./logger":53,"./queryMap":55,"underscore":25}],41:[function(_dereq_,module,exports){
 var logger = _dereq_("./logger");
 var queryMap = _dereq_("./queryMap");
 var fhparams = _dereq_("./fhparams");
@@ -47132,10 +50993,10 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./data":33,"./fhparams":36,"./logger":42,"./queryMap":44}],31:[function(_dereq_,module,exports){
+},{"./data":44,"./fhparams":47,"./logger":53,"./queryMap":55}],42:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.18.4",
+  "sdk_version": "2.19.0",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -47144,7 +51005,7 @@ module.exports = {
   "SESSION_TOKEN_KEY_NAME":"sessionToken"
 };
 
-},{}],32:[function(_dereq_,module,exports){
+},{}],43:[function(_dereq_,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
     var name_str = cookie_name + "=";
@@ -47169,7 +51030,7 @@ module.exports = {
   }
 };
 
-},{}],33:[function(_dereq_,module,exports){
+},{}],44:[function(_dereq_,module,exports){
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 var lawnchairext = _dereq_('./lawnchair-ext');
 var logger = _dereq_('./logger');
@@ -47235,7 +51096,7 @@ var data = {
 
 module.exports = data;
 
-},{"../../libs/generated/lawnchair":2,"./constants":31,"./lawnchair-ext":40,"./logger":42}],34:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2,"./constants":42,"./lawnchair-ext":51,"./logger":53}],45:[function(_dereq_,module,exports){
 var cookies = _dereq_("./cookies");
 var uuidModule = _dereq_("./uuid");
 var logger = _dereq_("./logger");
@@ -47253,9 +51114,9 @@ module.exports = {
     } else {
       var _mock_uuid_cookie_name = "mock_uuid";
       var uuid = cookies.readCookieValue(_mock_uuid_cookie_name);
-      if(null == uuid){
-          uuid = uuidModule.createUUID();
-          cookies.createCookie(_mock_uuid_cookie_name, uuid);
+      if(!uuid){
+        uuid = uuidModule.createUUID();
+        cookies.createCookie(_mock_uuid_cookie_name, uuid);
       }
       return uuid;
     }
@@ -47305,14 +51166,14 @@ module.exports = {
     return destination;
   }
 };
-},{"./cookies":32,"./logger":42,"./platformsMap":43,"./uuid":51}],35:[function(_dereq_,module,exports){
+},{"./cookies":43,"./logger":53,"./platformsMap":54,"./uuid":62}],46:[function(_dereq_,module,exports){
 var EventEmitter = _dereq_('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":6}],36:[function(_dereq_,module,exports){
+},{"events":7}],47:[function(_dereq_,module,exports){
 var device = _dereq_("./device");
 var sdkversion = _dereq_("./sdkversion");
 var appProps = _dereq_("./appProps");
@@ -47396,7 +51257,7 @@ module.exports = {
   "getFHHeaders": getFHHeaders
 };
 
-},{"./appProps":29,"./device":34,"./logger":42,"./sdkversion":45}],37:[function(_dereq_,module,exports){
+},{"./appProps":40,"./device":45,"./logger":53,"./sdkversion":56}],48:[function(_dereq_,module,exports){
 module.exports = function(fail, req, resStatus, error){
   var errraw;
   var statusCode = 0;
@@ -47421,7 +51282,7 @@ module.exports = function(fail, req, resStatus, error){
   }
 };
 
-},{}],38:[function(_dereq_,module,exports){
+},{}],49:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 var appProps = _dereq_("./appProps");
 
@@ -47521,7 +51382,7 @@ CloudHost.prototype.getEnv = function(){
 };
 
 module.exports = CloudHost;
-},{"./appProps":29,"./constants":31}],39:[function(_dereq_,module,exports){
+},{"./appProps":40,"./constants":42}],50:[function(_dereq_,module,exports){
 var loadScript = _dereq_("./loadScript");
 var consts = _dereq_("./constants");
 var fhparams = _dereq_("./fhparams");
@@ -47607,7 +51468,7 @@ var loadCloudProps = function(app_props, callback) {
         }
         logger.error("App init returned error : " + errormsg);
         //use the cached host if we have a copy
-        if (savedHost) {
+        if (savedHost && req.status !== 400) {
           logger.info("Using cached host: " + JSON.stringify(savedHost));
           if (callback) {
             callback(null, {
@@ -47615,7 +51476,11 @@ var loadCloudProps = function(app_props, callback) {
             });
           }
         } else {
-          logger.error("No cached host found. Init failed.");
+          if (req.status === 400) {
+            logger.error(req.responseText);
+          } else {
+            logger.error("No cached host found. Init failed.");
+          }
           handleError(function(msg, err) {
             if (callback) {
               callback({
@@ -47662,7 +51527,7 @@ module.exports = {
   "loadCloudProps": loadCloudProps
 };
 
-},{"./ajax":21,"./appProps":29,"./constants":31,"./data":33,"./events":35,"./fhparams":36,"./handleError":37,"./loadScript":41,"./logger":42,"./security/hash":48}],40:[function(_dereq_,module,exports){
+},{"./ajax":32,"./appProps":40,"./constants":42,"./data":44,"./events":46,"./fhparams":47,"./handleError":48,"./loadScript":52,"./logger":53,"./security/hash":59}],51:[function(_dereq_,module,exports){
 var fileStorageAdapter = function (app_props, hashFunc) {
   // private methods
 
@@ -47851,7 +51716,7 @@ var fileStorageAdapter = function (app_props, hashFunc) {
 module.exports = {
   fileStorageAdapter: fileStorageAdapter
 };
-},{}],41:[function(_dereq_,module,exports){
+},{}],52:[function(_dereq_,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -47874,7 +51739,7 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],42:[function(_dereq_,module,exports){
+},{}],53:[function(_dereq_,module,exports){
 var console = _dereq_('console');
 var log = _dereq_('loglevel');
 
@@ -47898,7 +51763,7 @@ log.setLevel('info');
  * Use either string or integer value
  */
 module.exports = log;
-},{"console":5,"loglevel":16}],43:[function(_dereq_,module,exports){
+},{"console":6,"loglevel":19}],54:[function(_dereq_,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -47926,7 +51791,7 @@ module.exports = [
   }
 ];
 
-},{}],44:[function(_dereq_,module,exports){
+},{}],55:[function(_dereq_,module,exports){
 module.exports = function(url) {
   var qmap = {};
   var i = url.split("?");
@@ -47942,7 +51807,7 @@ module.exports = function(url) {
   }
   return qmap;
 };
-},{}],45:[function(_dereq_,module,exports){
+},{}],56:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 
 module.exports = function() {
@@ -47955,7 +51820,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":31}],46:[function(_dereq_,module,exports){
+},{"./constants":42}],57:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -47997,7 +51862,7 @@ var aes_keygen = function(p, s, f){
 };
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":3}],47:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":3}],58:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
@@ -48043,7 +51908,7 @@ module.exports = {
   decrypt: decrypt
 };
 
-},{"../../../libs/generated/crypto":1}],48:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],59:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 
@@ -48068,7 +51933,7 @@ var hash = function(p, s, f){
 };
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],49:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],60:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
@@ -48093,1326 +51958,17 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 };
-},{"../../../libs/rsa":3}],50:[function(_dereq_,module,exports){
-var actAPI = _dereq_("./api_act");
+},{"../../../libs/rsa":3}],61:[function(_dereq_,module,exports){
 var cloudAPI = _dereq_("./api_cloud");
-var CryptoJS = _dereq_("../../libs/generated/crypto");
-var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
-var self = {
-
-  // CONFIG
-  defaults: {
-    "sync_frequency": 10,
-    // How often to synchronise data with the cloud in seconds.
-    "auto_sync_local_updates": true,
-    // Should local chages be syned to the cloud immediately, or should they wait for the next sync interval
-    "notify_client_storage_failed": true,
-    // Should a notification event be triggered when loading/saving to client storage fails
-    "notify_sync_started": true,
-    // Should a notification event be triggered when a sync cycle with the server has been started
-    "notify_sync_complete": true,
-    // Should a notification event be triggered when a sync cycle with the server has been completed
-    "notify_offline_update": true,
-    // Should a notification event be triggered when an attempt was made to update a record while offline
-    "notify_collision_detected": true,
-    // Should a notification event be triggered when an update failed due to data collision
-    "notify_remote_update_failed": true,
-    // Should a notification event be triggered when an update failed for a reason other than data collision
-    "notify_local_update_applied": true,
-    // Should a notification event be triggered when an update was applied to the local data store
-    "notify_remote_update_applied": true,
-    // Should a notification event be triggered when an update was applied to the remote data store
-    "notify_delta_received": true,
-    // Should a notification event be triggered when a delta was received from the remote data store for the dataset 
-    "notify_record_delta_received": true,
-    // Should a notification event be triggered when a delta was received from the remote data store for a record
-    "notify_sync_failed": true,
-    // Should a notification event be triggered when the sync loop failed to complete
-    "do_console_log": false,
-    // Should log statements be written to console.log
-    "crashed_count_wait" : 10,
-    // How many syncs should we check for updates on crashed in flight updates before we give up searching
-    "resend_crashed_updates" : true,
-    // If we have reached the crashed_count_wait limit, should we re-try sending the crashed in flight pending record
-    "sync_active" : true,
-    // Is the background sync with the cloud currently active
-    "storage_strategy" : "html5-filesystem",
-    // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
-    "file_system_quota" : 50 * 1024 * 1204,
-    // Amount of space to request from the HTML5 filesystem API when running in browser
-    "has_custom_sync" : null,
-    //If the app has custom cloud sync function, it should be set to true. If set to false, the default mbaas sync implementation will be used. When set to null or undefined, 
-    //a check will be performed to determine which implementation to use
-    "icloud_backup" : false //ios only. If set to true, the file will be backed by icloud
-  },
-
-  notifications: {
-    "CLIENT_STORAGE_FAILED": "client_storage_failed",
-    // loading/saving to client storage failed
-    "SYNC_STARTED": "sync_started",
-    // A sync cycle with the server has been started
-    "SYNC_COMPLETE": "sync_complete",
-    // A sync cycle with the server has been completed
-    "OFFLINE_UPDATE": "offline_update",
-    // An attempt was made to update a record while offline
-    "COLLISION_DETECTED": "collision_detected",
-    //Update Failed due to data collision
-    "REMOTE_UPDATE_FAILED": "remote_update_failed",
-    // Update Failed for a reason other than data collision
-    "REMOTE_UPDATE_APPLIED": "remote_update_applied",
-    // An update was applied to the remote data store
-    "LOCAL_UPDATE_APPLIED": "local_update_applied",
-    // An update was applied to the local data store
-    "DELTA_RECEIVED": "delta_received",
-    // A delta was received from the remote data store for the dataset 
-    "RECORD_DELTA_RECEIVED": "record_delta_received",
-    // A delta was received from the remote data store for the record 
-    "SYNC_FAILED": "sync_failed"
-    // Sync loop failed to complete
-  },
-
-  datasets: {},
-
-  // Initialise config to default values;
-  config: undefined,
-
-  //TODO: deprecate this
-  notify_callback: undefined,
-
-  notify_callback_map : {},
-
-  init_is_called: false,
-
-  //this is used to map the temp data uid (created on client) to the real uid (created in the cloud)
-  uid_map: {},
-
-  // PUBLIC FUNCTION IMPLEMENTATIONS
-  init: function(options) {
-    self.consoleLog('sync - init called');
-
-    self.config = JSON.parse(JSON.stringify(self.defaults));
-    for (var i in options) {
-      self.config[i] = options[i];
-    }
-
-    //prevent multiple monitors from created if init is called multiple times
-    if(!self.init_is_called){
-      self.init_is_called = true;
-      self.datasetMonitor();
-    }
-  },
-
-  notify: function(datasetId, callback) {
-    if(arguments.length === 1 && typeof datasetId === 'function'){
-      self.notify_callback = datasetId;
-    } else {
-      self.notify_callback_map[datasetId] = callback;
-    }
-  },
-
-  manage: function(dataset_id, opts, query_params, meta_data, cb) {
-    self.consoleLog('manage - START');
-
-    var options = opts || {};
-
-    var doManage = function(dataset) {
-      self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
-
-      var datasetConfig = self.setOptions(options);
-
-      dataset.query_params = query_params || dataset.query_params || {};
-      dataset.meta_data = meta_data || dataset.meta_data || {};
-      dataset.config = datasetConfig;
-      dataset.syncRunning = false;
-      dataset.syncPending = true;
-      dataset.initialised = true;
-      if(typeof dataset.meta === "undefined"){
-        dataset.meta = {};
-      }
-
-      self.saveDataSet(dataset_id, function() {
-
-        if( cb ) {
-          cb();
-        }
-      });
-    };
-
-    // Check if the dataset is already loaded
-    self.getDataSet(dataset_id, function(dataset) {
-      self.consoleLog('manage - dataset already loaded');
-      doManage(dataset);
-    }, function(err) {
-      self.consoleLog('manage - dataset not loaded... trying to load');
-
-      // Not already loaded, try to load from local storage
-      self.loadDataSet(dataset_id, function(dataset) {
-          self.consoleLog('manage - dataset loaded from local storage');
-
-          // Loading from local storage worked
-
-          // Fire the local update event to indicate that dataset was loaded from local storage
-          self.doNotify(dataset_id, null, self.notifications.LOCAL_UPDATE_APPLIED, "load");
-
-          // Put the dataet under the management of the sync service
-          doManage(dataset);
-        },
-        function(err) {
-          // No dataset in memory or local storage - create a new one and put it in memory
-          self.consoleLog('manage - Creating new dataset for id ' + dataset_id);
-          var dataset = {};
-          dataset.data = {};
-          dataset.pending = {};
-          dataset.meta = {};
-          self.datasets[dataset_id] = dataset;
-          doManage(dataset);
-        });
-    });
-  },
-
-  setOptions: function(options) {
-    // Make sure config is initialised
-    if( ! self.config ) {
-      self.config = JSON.parse(JSON.stringify(self.defaults));
-    }
-
-    var datasetConfig = JSON.parse(JSON.stringify(self.config));
-    var optionsIn = JSON.parse(JSON.stringify(options));
-    for (var k in optionsIn) {
-      datasetConfig[k] = optionsIn[k];
-    }
-
-    return datasetConfig;
-  },
-
-  list: function(dataset_id, success, failure) {
-    self.getDataSet(dataset_id, function(dataset) {
-      if (dataset && dataset.data) {
-        // Return a copy of the dataset so updates will not automatically make it back into the dataset
-        var res = JSON.parse(JSON.stringify(dataset.data));
-        success(res);
-      } else {
-        if(failure) {
-          failure('no_data');
-        }
-      }
-    }, function(code, msg) {
-      if(failure) {
-        failure(code, msg);
-      }
-    });
-  },
-
-  getUID: function(oldOrNewUid){
-    var uid = self.uid_map[oldOrNewUid];
-    if(uid || uid === 0){
-      return uid;
-    } else {
-      return oldOrNewUid;
-    }
-  },
-
-  create: function(dataset_id, data, success, failure) {
-    if(data == null){
-      if(failure){
-        return failure("null_data");
-      }
-    }
-    self.addPendingObj(dataset_id, null, data, "create", success, failure);
-  },
-
-  read: function(dataset_id, uid, success, failure) {
-    self.getDataSet(dataset_id, function(dataset) {
-      uid = self.getUID(uid);
-      var rec = dataset.data[uid];
-      if (!rec) {
-        failure("unknown_uid");
-      } else {
-        // Return a copy of the record so updates will not automatically make it back into the dataset
-        var res = JSON.parse(JSON.stringify(rec));
-        success(res);
-      }
-    }, function(code, msg) {
-      if(failure) {
-        failure(code, msg);
-      }
-    });
-  },
-
-  update: function(dataset_id, uid, data, success, failure) {
-    uid = self.getUID(uid);
-    self.addPendingObj(dataset_id, uid, data, "update", success, failure);
-  },
-
-  'delete': function(dataset_id, uid, success, failure) {
-    uid = self.getUID(uid);
-    self.addPendingObj(dataset_id, uid, null, "delete", success, failure);
-  },
-
-  getPending: function(dataset_id, cb) {
-    self.getDataSet(dataset_id, function(dataset) {
-      var res;
-      if( dataset ) {
-        res = dataset.pending;
-      }
-      cb(res);
-    }, function(err, datatset_id) {
-        self.consoleLog(err);
-    });
-  },
-
-  clearPending: function(dataset_id, cb) {
-    self.getDataSet(dataset_id, function(dataset) {
-      dataset.pending = {};
-      self.saveDataSet(dataset_id, cb);
-    });
-  },
-
-  listCollisions : function(dataset_id, success, failure){
-    self.getDataSet(dataset_id, function(dataset) {
-      self.doCloudCall({
-        "dataset_id": dataset_id,
-        "req": {
-          "fn": "listCollisions",
-          "meta_data" : dataset.meta_data
-        }
-      }, success, failure);
-    }, failure);
-  },
-
-  removeCollision: function(dataset_id, colissionHash, success, failure) {
-    self.getDataSet(dataset_id, function(dataset) {
-      self.doCloudCall({
-        "dataset_id" : dataset_id,
-        "req": {
-          "fn": "removeCollision",
-          "hash": colissionHash,
-          meta_data: dataset.meta_data
-        }
-      }, success, failure);
-    });
-  },
-
-
-  // PRIVATE FUNCTIONS
-  isOnline: function(callback) {
-    var online = true;
-
-    // first, check if navigator.online is available
-    if(typeof navigator.onLine !== "undefined"){
-      online = navigator.onLine;
-    }
-
-    // second, check if Phonegap is available and has online info
-    if(online){
-      //use phonegap to determin if the network is available
-      if(typeof navigator.network !== "undefined" && typeof navigator.network.connection !== "undefined"){
-        var networkType = navigator.network.connection.type;
-        if(networkType === "none" || networkType === null) {
-          online = false;
-        }
-      }
-    }
-
-    return callback(online);
-  },
-
-  doNotify: function(dataset_id, uid, code, message) {
-
-    if( self.notify_callback || self.notify_callback_map[dataset_id]) {
-      var notifyFunc = self.notify_callback_map[dataset_id] || self.notify_callback;
-      if ( self.config['notify_' + code] ) {
-        var notification = {
-          "dataset_id" : dataset_id,
-          "uid" : uid,
-          "code" : code,
-          "message" : message
-        };
-        // make sure user doesn't block
-        setTimeout(function () {
-          notifyFunc(notification);
-        }, 0);
-      }
-    }
-  },
-
-  getDataSet: function(dataset_id, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      success(dataset);
-    } else {
-      if(failure){
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
-    }
-  },
-
-  getQueryParams: function(dataset_id, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      success(dataset.query_params);
-    } else {
-      if(failure){
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
-    }
-  },
-
-  setQueryParams: function(dataset_id, queryParams, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      dataset.query_params = queryParams;
-      self.saveDataSet(dataset_id);
-      if( success ) {
-        success(dataset.query_params);
-      }
-    } else {
-      if ( failure ) {
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
-    }
-  },
-
-  getMetaData: function(dataset_id, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      success(dataset.meta_data);
-    } else {
-      if(failure){
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
-    }
-  },
-
-  setMetaData: function(dataset_id, metaData, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      dataset.meta_data = metaData;
-      self.saveDataSet(dataset_id);
-      if( success ) {
-        success(dataset.meta_data);
-      }
-    } else {
-      if( failure ) {
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
-    }
-  },
-
-  getConfig: function(dataset_id, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      success(dataset.config);
-    } else {
-      if(failure){
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
-    }
-  },
-
-  setConfig: function(dataset_id, config, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      var fullConfig = self.setOptions(config);
-      dataset.config = fullConfig;
-      self.saveDataSet(dataset_id);
-      if( success ) {
-        success(dataset.config);
-      }
-    } else {
-      if( failure ) {
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
-    }
-  },
-
-  stopSync: function(dataset_id, success, failure) {
-    self.setConfig(dataset_id, {"sync_active" : false}, function() {
-      if( success ) {
-        success();
-      }
-    }, failure);
-  },
-
-  startSync: function(dataset_id, success, failure) {
-    self.setConfig(dataset_id, {"sync_active" : true}, function() {
-      if( success ) {
-        success();
-      }
-    }, failure);
-  },
-
-  doSync: function(dataset_id, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      dataset.syncPending = true;
-      self.saveDataSet(dataset_id);
-      if( success ) {
-        success();
-      }
-    } else {
-      if( failure ) {
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
-    }
-  },
-
-  forceSync: function(dataset_id, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      dataset.syncForced = true;
-      self.saveDataSet(dataset_id);
-      if( success ) {
-        success();
-      }
-    } else {
-      if( failure ) {
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
-    }
-  },
-
-  sortObject : function(object) {
-    if (typeof object !== "object" || object === null) {
-      return object;
-    }
-
-    var result = [];
-
-    Object.keys(object).sort().forEach(function(key) {
-      result.push({
-        key: key,
-        value: self.sortObject(object[key])
-      });
-    });
-
-    return result;
-  },
-
-  sortedStringify : function(obj) {
-
-    var str = '';
-
-    try {
-      str = JSON.stringify(self.sortObject(obj));
-    } catch (e) {
-      console.error('Error stringifying sorted object:' + e);
-    }
-
-    return str;
-  },
-
-  generateHash: function(object) {
-    var hash = CryptoJS.SHA1(self.sortedStringify(object));
-    return hash.toString();
-  },
-
-  addPendingObj: function(dataset_id, uid, data, action, success, failure) {
-    self.isOnline(function (online) {
-      if (!online) {
-        self.doNotify(dataset_id, uid, self.notifications.OFFLINE_UPDATE, action);
-      }
-    });
-
-    function storePendingObject(obj) {
-      obj.hash = obj.hash || self.generateHash(obj);
-
-      self.getDataSet(dataset_id, function(dataset) {
-
-        dataset.pending[obj.hash] = obj;
-
-        self.updateDatasetFromLocal(dataset, obj);
-
-        if(self.config.auto_sync_local_updates) {
-          dataset.syncPending = true;
-        }
-        self.saveDataSet(dataset_id);
-        self.doNotify(dataset_id, uid, self.notifications.LOCAL_UPDATE_APPLIED, action);
-
-        success(obj);
-      }, function(code, msg) {
-        if(failure) {
-          failure(code, msg);
-        }
-      });
-    }
-
-    var pendingObj = {};
-    pendingObj.inFlight = false;
-    pendingObj.action = action;
-    pendingObj.post = JSON.parse(JSON.stringify(data));
-    pendingObj.postHash = self.generateHash(pendingObj.post);
-    pendingObj.timestamp = new Date().getTime();
-    if( "create" === action ) {
-      //this hash value will be returned later on when the cloud returns updates. We can then link the old uid
-      //with new uid
-      pendingObj.hash = self.generateHash(pendingObj);
-      pendingObj.uid = pendingObj.hash;
-      storePendingObject(pendingObj);
-    } else {
-      self.read(dataset_id, uid, function(rec) {
-        pendingObj.uid = uid;
-        pendingObj.pre = rec.data;
-        pendingObj.preHash = self.generateHash(rec.data);
-        storePendingObject(pendingObj);
-      }, function(code, msg) {
-        if(failure){
-          failure(code, msg);
-        }
-      });
-    }
-  },
-
-  syncLoop: function(dataset_id) {
-    self.getDataSet(dataset_id, function(dataSet) {
-    
-      // The sync loop is currently active
-      dataSet.syncPending = false;
-      dataSet.syncRunning = true;
-      dataSet.syncLoopStart = new Date().getTime();
-      self.doNotify(dataset_id, null, self.notifications.SYNC_STARTED, null);
-
-      self.isOnline(function(online) {
-        if (!online) {
-          self.syncComplete(dataset_id, "offline", self.notifications.SYNC_FAILED);
-        } else {
-          self.checkHasCustomSync(dataset_id, function() {
-
-            var syncLoopParams = {};
-            syncLoopParams.fn = 'sync';
-            syncLoopParams.dataset_id = dataset_id;
-            syncLoopParams.query_params = dataSet.query_params;
-            syncLoopParams.config = dataSet.config;
-            syncLoopParams.meta_data = dataSet.meta_data;
-            //var datasetHash = self.generateLocalDatasetHash(dataSet);
-            syncLoopParams.dataset_hash = dataSet.hash;
-            syncLoopParams.acknowledgements = dataSet.acknowledgements || [];
-
-            var pending = dataSet.pending;
-            var pendingArray = [];
-            for(var i in pending ) {
-              // Mark the pending records we are about to submit as inflight and add them to the array for submission
-              // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
-              // Don't add delayed records
-              if( !pending[i].inFlight && !pending[i].crashed && !pending[i].delayed) {
-                pending[i].inFlight = true;
-                pending[i].inFlightDate = new Date().getTime();
-                pendingArray.push(pending[i]);
-              }
-            }
-            syncLoopParams.pending = pendingArray;
-
-            if( pendingArray.length > 0 ) {
-              self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));
-            }
-            self.doCloudCall({
-              'dataset_id': dataset_id,
-              'req': syncLoopParams
-            }, function(res) {
-              var rec;
-
-              function processUpdates(updates, notification, acknowledgements) {
-                if( updates ) {
-                  for (var up in updates) {
-                    rec = updates[up];
-                    acknowledgements.push(rec);
-                    if( dataSet.pending[up] && dataSet.pending[up].inFlight) {
-                      delete dataSet.pending[up];
-                      self.doNotify(dataset_id, rec.uid, notification, rec);
-                    }
-                  }
-                }
-              }
-
-              // Check to see if any previously crashed inflight records can now be resolved
-              self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
-
-              //Check to see if any delayed pending records can now be set to ready
-              self.updateDelayedFromNewData(dataset_id, dataSet, res);
-
-              //Check meta data as well to make sure it contains the correct info
-              self.updateMetaFromNewData(dataset_id, dataSet, res);
-
-
-              if (res.updates) {
-                var acknowledgements = [];
-                self.checkUidChanges(dataSet, res.updates.applied);
-                processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
-                processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);
-                processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);
-                dataSet.acknowledgements = acknowledgements;
-              }
-
-              if (res.hash && res.hash !== dataSet.hash) {
-                self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
-                // Different hash value returned - Sync individual records
-                self.syncRecords(dataset_id);
-              } else {
-                self.consoleLog("Local dataset up to date");
-                self.syncComplete(dataset_id,  "online", self.notifications.SYNC_COMPLETE);
-              }
-            }, function(msg, err) {
-              // The AJAX call failed to complete succesfully, so the state of the current pending updates is unknown
-              // Mark them as "crashed". The next time a syncLoop completets successfully, we will review the crashed
-              // records to see if we can determine their current state.
-              self.markInFlightAsCrashed(dataSet);
-              self.consoleLog("syncLoop failed : msg=" + msg + " :: err = " + err);
-              self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
-            });
-          });
-        }
-      });
-    });
-  },
-
-  syncRecords: function(dataset_id) {
-
-    self.getDataSet(dataset_id, function(dataSet) {
-
-      var localDataSet = dataSet.data || {};
-
-      var clientRecs = {};
-      for (var i in localDataSet) {
-        var uid = i;
-        var hash = localDataSet[i].hash;
-        clientRecs[uid] = hash;
-      }
-
-      var syncRecParams = {};
-
-      syncRecParams.fn = 'syncRecords';
-      syncRecParams.dataset_id = dataset_id;
-      syncRecParams.query_params = dataSet.query_params;
-      syncRecParams.clientRecs = clientRecs;
-
-      self.consoleLog("syncRecParams :: " + JSON.stringify(syncRecParams));
-
-      self.doCloudCall({
-        'dataset_id': dataset_id,
-        'req': syncRecParams
-      }, function(res) {
-        self.consoleLog('syncRecords Res before applying pending changes :: ' + JSON.stringify(res));
-        self.applyPendingChangesToRecords(dataSet, res);
-        self.consoleLog('syncRecords Res after apply pending changes :: ' + JSON.stringify(res));
-
-        var i;
-
-        if (res.create) {
-          for (i in res.create) {
-            localDataSet[i] = {"hash" : res.create[i].hash, "data" : res.create[i].data};
-            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
-          }
-        }
-        
-        if (res.update) {
-          for (i in res.update) {
-            localDataSet[i].hash = res.update[i].hash;
-            localDataSet[i].data = res.update[i].data;
-            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
-          }
-        }
-        if (res['delete']) {
-          for (i in res['delete']) {
-            delete localDataSet[i];
-            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "delete");
-          }
-        }
-
-        self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'partial dataset');
-
-        dataSet.data = localDataSet;
-        if(res.hash) {
-          dataSet.hash = res.hash;
-        }
-        self.syncComplete(dataset_id, "online", self.notifications.SYNC_COMPLETE);
-      }, function(msg, err) {
-        self.consoleLog("syncRecords failed : msg=" + msg + " :: err=" + err);
-        self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
-      });
-    });
-  },
-
-  syncComplete: function(dataset_id, status, notification) {
-
-    self.getDataSet(dataset_id, function(dataset) {
-      dataset.syncRunning = false;
-      dataset.syncLoopEnd = new Date().getTime();
-      self.saveDataSet(dataset_id);
-      self.doNotify(dataset_id, dataset.hash, notification, status);
-    });
-  },
-
-  applyPendingChangesToRecords: function(dataset, records){
-    var pendings = dataset.pending;
-    for(var pendingUid in pendings){
-      if(pendings.hasOwnProperty(pendingUid)){
-        var pendingObj = pendings[pendingUid];
-        var uid = pendingObj.uid;
-        //if the records contain any thing about the data records that are currently in pendings,
-        //it means there are local changes that haven't been applied to the cloud yet,
-        //so update the pre value of each pending record to relect the latest status from cloud
-        //and remove them from the response
-        if(records.create){
-          var creates = records.create;
-          if(creates && creates[uid]){
-            delete creates[uid];
-          }
-        }
-        if(records.update){
-          var updates = records.update;
-          if(updates && updates[uid]){
-            delete updates[uid];
-          }
-        }
-        if(records['delete']){
-          var deletes = records['delete'];
-          if(deletes && deletes[uid]){
-            delete deletes[uid];
-          }
-        }
-      }
-    }
-  },
-
-  checkUidChanges: function(dataset, appliedUpdates){
-    if(appliedUpdates){
-      var new_uids = {};
-      var changeUidsCount = 0;
-      for(var update in appliedUpdates){
-        if(appliedUpdates.hasOwnProperty(update)){
-          var applied_update = appliedUpdates[update];
-          var action = applied_update.action;
-          if(action && action === 'create'){
-            //we are receving the results of creations, at this point, we will have the old uid(the hash) and the real uid generated by the cloud
-            var newUid = applied_update.uid;
-            var oldUid = applied_update.hash;
-            changeUidsCount++;
-            //remember the mapping
-            self.uid_map[oldUid] = newUid;
-            new_uids[oldUid] = newUid;
-            //update the data uid in the dataset
-            var record = dataset.data[oldUid];
-            if(record){
-              dataset.data[newUid] = record;
-              delete dataset.data[oldUid];
-            }
-
-            //update the old uid in meta data
-            var metaData = dataset.meta[oldUid];
-            if(metaData) {
-              dataset.meta[newUid] = metaData;
-              delete dataset.meta[oldUid];
-            }
-          }
-        }
-      }
-      if(changeUidsCount > 0){
-        //we need to check all existing pendingRecords and update their UIDs if they are still the old values
-        for(var pending in dataset.pending){
-          if(dataset.pending.hasOwnProperty(pending)){
-            var pendingObj = dataset.pending[pending];
-            var pendingRecordUid = pendingObj.uid;
-            if(new_uids[pendingRecordUid]){
-              pendingObj.uid = new_uids[pendingRecordUid];
-            }
-          }
-        }
-      }
-    }
-  },
-
-  checkDatasets: function() {
-    for( var dataset_id in self.datasets ) {
-      if( self.datasets.hasOwnProperty(dataset_id) ) {
-        var dataset = self.datasets[dataset_id];
-        if(dataset && !dataset.syncRunning && (dataset.config.sync_active || dataset.syncForced)) {
-          // Check to see if it is time for the sync loop to run again
-          var lastSyncStart = dataset.syncLoopStart;
-          var lastSyncCmp = dataset.syncLoopEnd;
-          if(dataset.syncForced){
-            dataset.syncPending = true;
-          } else if( lastSyncStart == null ) {
-            self.consoleLog(dataset_id +' - Performing initial sync');
-            // Dataset has never been synced before - do initial sync
-            dataset.syncPending = true;
-          } else if (lastSyncCmp != null) {
-            var timeSinceLastSync = new Date().getTime() - lastSyncCmp;
-            var syncFrequency = dataset.config.sync_frequency * 1000;
-            if( timeSinceLastSync > syncFrequency ) {
-              // Time between sync loops has passed - do another sync
-              dataset.syncPending = true;
-            }
-          }
-
-          if( dataset.syncPending ) {
-            // Reset syncForced in case it was what caused the sync cycle to run.
-            dataset.syncForced = false;
-
-            // If the dataset requres syncing, run the sync loop. This may be because the sync interval has passed
-            // or because the sync_frequency has been changed or because a change was made to the dataset and the
-            // immediate_sync flag set to true
-            self.syncLoop(dataset_id);
-          }
-        }
-      }
-    }
-  },
-
-  checkHasCustomSync : function(dataset_id, cb) {
-    var dataset = self.datasets[dataset_id];
-    if(dataset && dataset.config){
-      self.consoleLog("dataset.config.has_custom_sync = " + dataset.config.has_custom_sync);
-      if(dataset.config.has_custom_sync != null) {
-        return cb();
-      }
-      self.consoleLog('starting check has custom sync');
-
-      actAPI({
-        'act' : dataset_id,
-        'req': {
-          'fn': 'sync'
-        }
-      }, function(res) {
-        //if the custom sync is defined in the cloud, this call should success.
-        //if failed, we think this the custom sync is not defined
-        self.consoleLog('check has_custom_sync - success - ', res);
-        dataset.config.has_custom_sync = true;
-        return cb();
-      }, function(msg,err) {
-        self.consoleLog('check has_custom_sync - failure - ', err);
-        if(err.status && err.status === 500){
-          //if we receive 500, it could be that there is an error occured due to missing parameters or similar,
-          //but the endpoint is defined.
-          self.consoleLog('check has_custom_sync - failed with 500, endpoint does exists');
-          dataset.config.has_custom_sync = true;
-        } else {
-          dataset.config.has_custom_sync = false;
-        }
-        return cb();
-      });
-    } else {
-      return cb();
-    }
-  },
-
-  doCloudCall: function(params, success, failure) {
-    var callbackCalled = false;
-    try {
-      var hasCustomSync = false;
-      var dataset = self.datasets[params.dataset_id];
-      if(dataset && dataset.config){
-        hasCustomSync = dataset.config.has_custom_sync;
-      }
-      if( hasCustomSync === true ) {
-        actAPI({
-          'act' : params.dataset_id,
-          'req' : params.req
-        }, function(res) {
-          callbackCalled = true;
-          success(res);
-        }, function(msg, err) {
-          callbackCalled = true;
-          failure(msg, err);
-        });      
-      } else {
-        cloudAPI({
-          'path' : '/mbaas/sync/' + params.dataset_id,
-          'method' : 'post',
-          'data' : params.req
-        }, function(res) {
-          callbackCalled = true;
-          success(res);
-        }, function(msg, err) {
-          callbackCalled = true;
-          failure(msg, err);
-        });
-      }
-    }
-    catch (e) {
-      var msg = 'Exception in doCloudCall - ' + e;
-      self.consoleLog(msg);
-      // only call the failure callback if success/failure hasn't been called already
-      // This will prevent exceptions thrown in the success/failure callback resulting in that fn being called again
-      // i.e. only let the caller known about exceptions up to the point of the ajax call being made.
-      if (!callbackCalled) {
-        failure(msg, e);
-      }
-    }
-  },
-
-  datasetMonitor: function() {
-    self.checkDatasets();
-
-    // Re-execute datasetMonitor every 500ms so we keep invoking checkDatasets();
-    setTimeout(function() {
-      self.datasetMonitor();
-    }, 500);
-  },
-
-  getStorageAdapter: function(dataset_id, isSave, cb){
-    var onFail = function(msg, err){
-      var errMsg = (isSave?'save to': 'load from' ) + ' local storage failed msg: ' + msg + ' err: ' + err;
-      self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
-      self.consoleLog(errMsg);
-    };
-    Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota, backup: self.config.icloud_backup}, function(){
-      return cb(null, this);
-    });
-  },
-
-  saveDataSet: function (dataset_id, cb) {
-    self.getDataSet(dataset_id, function(dataset) {
-      self.getStorageAdapter(dataset_id, true, function(err, storage){
-        storage.save({key:"dataset_" + dataset_id, val:dataset}, function(){
-          //save success
-          if(cb) {
-            return cb();
-          }
-        });
-      });
-    });
-  },
-
-  loadDataSet: function (dataset_id, success, failure) {
-    self.getStorageAdapter(dataset_id, false, function(err, storage){
-      storage.get( "dataset_" + dataset_id, function (data){
-        if (data && data.val) {
-          var dataset = data.val;
-          if(typeof dataset === "string"){
-            dataset = JSON.parse(dataset);
-          }
-          // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
-          // the user wants sync
-          dataset.initialised = false;
-          self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
-          self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
-          if(success) {
-            return success(dataset);
-          }
-        } else {
-          // no data yet, probably first time. failure calback should handle this
-          if(failure) {
-            return failure();
-          }
-        }
-      });
-    });
-  },
-
-  clearCache: function(dataset_id, cb){
-    delete self.datasets[dataset_id];
-    self.notify_callback_map[dataset_id] = null;
-    self.getStorageAdapter(dataset_id, true, function(err, storage){
-      storage.remove("dataset_" + dataset_id, function(){
-        self.consoleLog('local cache is cleared for dataset : ' + dataset_id);
-        if(cb){
-          return cb();
-        }
-      });
-    });
-  },
-
-  updateDatasetFromLocal: function(dataset, pendingRec) {
-    var pending = dataset.pending;
-    var previousPendingUid;
-    var previousPending;
-
-    var uid = pendingRec.uid;
-    self.consoleLog('updating local dataset for uid ' + uid + ' - action = ' + pendingRec.action);
-
-    dataset.meta[uid] = dataset.meta[uid] || {};
-
-    // Creating a new record
-    if( pendingRec.action === "create" ) {
-      if( dataset.data[uid] ) {
-        self.consoleLog('dataset already exists for uid in create :: ' + JSON.stringify(dataset.data[uid]));
-
-        // We are trying to do a create using a uid which already exists
-        if (dataset.meta[uid].fromPending) {
-          // We are trying to create on top of an existing pending record
-          // Remove the previous pending record and use this one instead
-          previousPendingUid = dataset.meta[uid].pendingUid;
-          delete pending[previousPendingUid];
-        }
-      }
-      dataset.data[uid] = {};
-    }
-
-    if( pendingRec.action === "update" ) {
-      if( dataset.data[uid] ) {
-        if (dataset.meta[uid].fromPending) {
-          self.consoleLog('updating an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
-          // We are trying to update an existing pending record
-          previousPendingUid = dataset.meta[uid].pendingUid;
-          previousPending = pending[previousPendingUid];
-          if(previousPending) {
-            if(!previousPending.inFlight){
-              self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
-              // We are trying to perform an update on an existing pending record
-              // modify the original record to have the latest value and delete the pending update
-              previousPending.post = pendingRec.post;
-              previousPending.postHash = pendingRec.postHash;
-              delete pending[pendingRec.hash];
-              // Update the pending record to have the hash of the previous record as this is what is now being
-              // maintained in the pending array & is what we want in the meta record
-              pendingRec.hash = previousPendingUid;
-            } else {
-              //we are performing changes to a pending record which is inFlight. Until the status of this pending record is resolved,
-              //we should not submit this pending record to the cloud. Mark it as delayed.
-              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
-              pendingRec.delayed = true;
-              pendingRec.waiting = previousPending.hash;
-            }
-          }
-        }
-      }
-    }
-
-    if( pendingRec.action === "delete" ) {
-      if( dataset.data[uid] ) {
-        if (dataset.meta[uid].fromPending) {
-          self.consoleLog('Deleting an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
-          // We are trying to delete an existing pending record
-          previousPendingUid = dataset.meta[uid].pendingUid;
-          previousPending = pending[previousPendingUid];
-          if( previousPending ) {
-            if(!previousPending.inFlight){
-              self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
-              if( previousPending.action === "create" ) {
-                // We are trying to perform a delete on an existing pending create
-                // These cancel each other out so remove them both
-                delete pending[pendingRec.hash];
-                delete pending[previousPendingUid];
-              }
-              if( previousPending.action === "update" ) {
-                // We are trying to perform a delete on an existing pending update
-                // Use the pre value from the pending update for the delete and
-                // get rid of the pending update
-                pendingRec.pre = previousPending.pre;
-                pendingRec.preHash = previousPending.preHash;
-                pendingRec.inFlight = false;
-                delete pending[previousPendingUid];
-              }
-            } else {
-              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
-              pendingRec.delayed = true;
-              pendingRec.waiting = previousPending.hash;
-            }
-          }
-        }
-        delete dataset.data[uid];
-      }
-    }
-
-    if( dataset.data[uid] ) {
-      dataset.data[uid].data = pendingRec.post;
-      dataset.data[uid].hash = pendingRec.postHash;
-      dataset.meta[uid].fromPending = true;
-      dataset.meta[uid].pendingUid = pendingRec.hash;
-    }
-  },
-
-  updateCrashedInFlightFromNewData: function(dataset_id, dataset, newData) {
-    var updateNotifications = {
-      applied: self.notifications.REMOTE_UPDATE_APPLIED,
-      failed: self.notifications.REMOTE_UPDATE_FAILED,
-      collisions: self.notifications.COLLISION_DETECTED
-    };
-
-    var pending = dataset.pending;
-    var resolvedCrashes = {};
-    var pendingHash;
-    var pendingRec;
-
-
-    if( pending ) {
-      for( pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          pendingRec = pending[pendingHash];
-
-          if( pendingRec.inFlight && pendingRec.crashed) {
-            self.consoleLog('updateCrashedInFlightFromNewData - Found crashed inFlight pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash );
-            if( newData && newData.updates && newData.updates.hashes) {
-
-              // Check if the updates received contain any info about the crashed in flight update
-              var crashedUpdate = newData.updates.hashes[pendingHash];
-              if( !crashedUpdate ) {
-                //TODO: review this - why we need to wait?
-                // No word on our crashed update - increment a counter to reflect another sync that did not give us
-                // any update on our crashed record.
-                if( pendingRec.crashedCount ) {
-                  pendingRec.crashedCount++;
-                }
-                else {
-                  pendingRec.crashedCount = 1;
-                }
-              }
-            }
-            else {
-              // No word on our crashed update - increment a counter to reflect another sync that did not give us
-              // any update on our crashed record.
-              if( pendingRec.crashedCount ) {
-                pendingRec.crashedCount++;
-              }
-              else {
-                pendingRec.crashedCount = 1;
-              }
-            }
-          }
-        }
-      }
-
-      for( pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          pendingRec = pending[pendingHash];
-
-          if( pendingRec.inFlight && pendingRec.crashed) {
-            if( pendingRec.crashedCount > dataset.config.crashed_count_wait ) {
-              self.consoleLog('updateCrashedInFlightFromNewData - Crashed inflight pending record has reached crashed_count_wait limit : ' + JSON.stringify(pendingRec));
-              self.consoleLog('updateCrashedInFlightFromNewData - Retryig crashed inflight pending record');
-              pendingRec.crashed = false;
-              pendingRec.inFlight = false;
-            }
-          }
-        }
-      }
-    }
-  },
-
-  updateDelayedFromNewData: function(dataset_id, dataset, newData){
-    var pending = dataset.pending;
-    var pendingHash;
-    var pendingRec;
-    if(pending){
-      for( pendingHash in pending ){
-        if( pending.hasOwnProperty(pendingHash) ){
-          pendingRec = pending[pendingHash];
-          if( pendingRec.delayed && pendingRec.waiting ){
-            self.consoleLog('updateDelayedFromNewData - Found delayed pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash + ' :: waiting=' + pendingRec.waiting);
-            if( newData && newData.updates && newData.updates.hashes ){
-              var waitingRec = newData.updates.hashes[pendingRec.waiting];
-              if(waitingRec){
-                self.consoleLog('updateDelayedFromNewData - Waiting pending record is resolved rec=' + JSON.stringify(waitingRec));
-                pendingRec.delayed = false;
-                pendingRec.waiting = undefined;
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-
-  updateMetaFromNewData: function(dataset_id, dataset, newData){
-    var meta = dataset.meta;
-    if(meta && newData && newData.updates && newData.updates.hashes){
-      for(var uid in meta){
-        if(meta.hasOwnProperty(uid)){
-          var metadata = meta[uid];
-          var pendingHash = metadata.pendingUid;
-          self.consoleLog("updateMetaFromNewData - Found metadata with uid = " + uid + " :: pendingHash = " + pendingHash);
-          var pendingResolved = true;
-  
-          if(pendingHash){
-            //we have current pending in meta data, see if it's resolved
-            pendingResolved = false;
-            var hashresolved = newData.updates.hashes[pendingHash];
-            if(hashresolved){
-              self.consoleLog("updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = " + JSON.stringify(hashresolved));
-              //the current pending is resolved in the cloud
-              metadata.pendingUid = undefined;
-              pendingResolved = true;
-            }
-          }
-
-          if(pendingResolved){
-            self.consoleLog("updateMetaFromNewData - both previous and current pendings are resolved for meta data with uid " + uid + ". Delete it.");
-            //all pendings are resolved, the entry can be removed from meta data
-            delete meta[uid];
-          }
-        }
-      }
-    }
-  },
-
-
-  markInFlightAsCrashed : function(dataset) {
-    var pending = dataset.pending;
-    var pendingHash;
-    var pendingRec;
-
-    if( pending ) {
-      var crashedRecords = {};
-      for( pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          pendingRec = pending[pendingHash];
-
-          if( pendingRec.inFlight ) {
-            self.consoleLog('Marking in flight pending record as crashed : ' + pendingHash);
-            pendingRec.crashed = true;
-            crashedRecords[pendingRec.uid] = pendingRec;
-          }
-        }
-      }
-    }
-  },
-
-  consoleLog: function(msg) {
-    if( self.config.do_console_log ) {
-      console.log(msg);
-    }
-  }
+module.exports = function (params, success, failure) {
+    cloudAPI({
+        'path': '/mbaas/sync/' + params.dataset_id,
+        'method': 'post',
+        'data': params.req
+    }, success, failure);
 };
-
-(function() {
-  self.config = self.defaults;
-  //Initialse the sync service with default config
-  //self.init({});
-})();
-
-module.exports = {
-  init: self.init,
-  manage: self.manage,
-  notify: self.notify,
-  doList: self.list,
-  getUID: self.getUID,
-  doCreate: self.create,
-  doRead: self.read,
-  doUpdate: self.update,
-  doDelete: self['delete'],
-  listCollisions: self.listCollisions,
-  removeCollision: self.removeCollision,
-  getPending : self.getPending,
-  clearPending : self.clearPending,
-  getDataset : self.getDataSet,
-  getQueryParams: self.getQueryParams,
-  setQueryParams: self.setQueryParams,
-  getMetaData: self.getMetaData,
-  setMetaData: self.setMetaData,
-  getConfig: self.getConfig,
-  setConfig: self.setConfig,
-  startSync: self.startSync,
-  stopSync: self.stopSync,
-  doSync: self.doSync,
-  forceSync: self.forceSync,
-  generateHash: self.generateHash,
-  loadDataSet: self.loadDataSet,
-  checkHasCustomSync: self.checkHasCustomSync,
-  clearCache: self.clearCache,
-  doCloudCall: self.doCloudCall
-};
-
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":22,"./api_cloud":24}],51:[function(_dereq_,module,exports){
+},{"./api_cloud":35}],62:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -49429,7 +51985,7 @@ module.exports = {
   }
 };
 
-},{}],52:[function(_dereq_,module,exports){
+},{}],63:[function(_dereq_,module,exports){
 var initializer = _dereq_("./initializer");
 var events = _dereq_("./events");
 var CloudHost = _dereq_("./hosts");
@@ -49537,8 +52093,8 @@ module.exports = {
   getInitError: getInitError,
   reset: reset
 };
-},{"./appProps":29,"./constants":31,"./data":33,"./events":35,"./fhparams":36,"./hosts":38,"./initializer":39,"./logger":42}]},{},[19])
-(19)
+},{"./appProps":40,"./constants":42,"./data":44,"./events":46,"./fhparams":47,"./hosts":49,"./initializer":50,"./logger":53}]},{},[30])
+(30)
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],10:[function(require,module,exports){
