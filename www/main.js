@@ -1,6 +1,6 @@
-(function(){function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s}return e})()({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 /**
- * @license AngularJS v1.6.9
+ * @license AngularJS v1.6.10
  * (c) 2010-2018 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -442,7 +442,7 @@ function shallowClearAndCopy(src, dst) {
  *
  */
 angular.module('ngResource', ['ng']).
-  info({ angularVersion: '1.6.9' }).
+  info({ angularVersion: '1.6.10' }).
   provider('$resource', function ResourceProvider() {
     var PROTOCOL_AND_IPV6_REGEX = /^https?:\/\/\[[^\]]*][^/]*/;
 
@@ -863,7 +863,7 @@ module.exports = 'ngResource';
 
 },{"./angular-resource":1}],3:[function(require,module,exports){
 /**
- * @license AngularJS v1.6.9
+ * @license AngularJS v1.6.10
  * (c) 2010-2018 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -919,7 +919,7 @@ var noop;
 /* global -ngRouteModule */
 var ngRouteModule = angular.
   module('ngRoute', []).
-  info({ angularVersion: '1.6.9' }).
+  info({ angularVersion: '1.6.10' }).
   provider('$route', $RouteProvider).
   // Ensure `$route` will be instantiated in time to capture the initial `$locationChangeSuccess`
   // event (unless explicitly disabled). This is necessary in case `ngView` is included in an
@@ -1501,7 +1501,7 @@ function $RouteProvider() {
               // interpolate modifies newParams, only query params are left
               $location.search(newParams);
             } else {
-              throw $routeMinErr('norout', 'Tried updating route when with no current route');
+              throw $routeMinErr('norout', 'Tried updating route with no current route');
             }
           }
         };
@@ -2093,7 +2093,7 @@ module.exports = 'ngRoute';
 
 },{"./angular-route":3}],5:[function(require,module,exports){
 /**
- * @license AngularJS v1.6.9
+ * @license AngularJS v1.6.10
  * (c) 2010-2018 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -2114,6 +2114,7 @@ var $sanitizeMinErr = angular.$$minErr('$sanitize');
 var bind;
 var extend;
 var forEach;
+var isArray;
 var isDefined;
 var lowercase;
 var noop;
@@ -2244,9 +2245,11 @@ var htmlSanitizeWriter;
  * Creates and configures {@link $sanitize} instance.
  */
 function $SanitizeProvider() {
+  var hasBeenInstantiated = false;
   var svgEnabled = false;
 
   this.$get = ['$$sanitizeUri', function($$sanitizeUri) {
+    hasBeenInstantiated = true;
     if (svgEnabled) {
       extend(validElements, svgElements);
     }
@@ -2287,7 +2290,7 @@ function $SanitizeProvider() {
    * </div>
    *
    * @param {boolean=} flag Enable or disable SVG support in the sanitizer.
-   * @returns {boolean|ng.$sanitizeProvider} Returns the currently configured value if called
+   * @returns {boolean|$sanitizeProvider} Returns the currently configured value if called
    *    without an argument or self for chaining otherwise.
    */
   this.enableSvg = function(enableSvg) {
@@ -2299,6 +2302,105 @@ function $SanitizeProvider() {
     }
   };
 
+
+  /**
+   * @ngdoc method
+   * @name $sanitizeProvider#addValidElements
+   * @kind function
+   *
+   * @description
+   * Extends the built-in lists of valid HTML/SVG elements, i.e. elements that are considered safe
+   * and are not stripped off during sanitization. You can extend the following lists of elements:
+   *
+   * - `htmlElements`: A list of elements (tag names) to extend the current list of safe HTML
+   *   elements. HTML elements considered safe will not be removed during sanitization. All other
+   *   elements will be stripped off.
+   *
+   * - `htmlVoidElements`: This is similar to `htmlElements`, but marks the elements as
+   *   "void elements" (similar to HTML
+   *   [void elements](https://rawgit.com/w3c/html/html5.1-2/single-page.html#void-elements)). These
+   *   elements have no end tag and cannot have content.
+   *
+   * - `svgElements`: This is similar to `htmlElements`, but for SVG elements. This list is only
+   *   taken into account if SVG is {@link ngSanitize.$sanitizeProvider#enableSvg enabled} for
+   *   `$sanitize`.
+   *
+   * <div class="alert alert-info">
+   *   This method must be called during the {@link angular.Module#config config} phase. Once the
+   *   `$sanitize` service has been instantiated, this method has no effect.
+   * </div>
+   *
+   * <div class="alert alert-warning">
+   *   Keep in mind that extending the built-in lists of elements may expose your app to XSS or
+   *   other vulnerabilities. Be very mindful of the elements you add.
+   * </div>
+   *
+   * @param {Array<String>|Object} elements - A list of valid HTML elements or an object with one or
+   *   more of the following properties:
+   *   - **htmlElements** - `{Array<String>}` - A list of elements to extend the current list of
+   *     HTML elements.
+   *   - **htmlVoidElements** - `{Array<String>}` - A list of elements to extend the current list of
+   *     void HTML elements; i.e. elements that do not have an end tag.
+   *   - **svgElements** - `{Array<String>}` - A list of elements to extend the current list of SVG
+   *     elements. The list of SVG elements is only taken into account if SVG is
+   *     {@link ngSanitize.$sanitizeProvider#enableSvg enabled} for `$sanitize`.
+   *
+   * Passing an array (`[...]`) is equivalent to passing `{htmlElements: [...]}`.
+   *
+   * @return {$sanitizeProvider} Returns self for chaining.
+   */
+  this.addValidElements = function(elements) {
+    if (!hasBeenInstantiated) {
+      if (isArray(elements)) {
+        elements = {htmlElements: elements};
+      }
+
+      addElementsTo(svgElements, elements.svgElements);
+      addElementsTo(voidElements, elements.htmlVoidElements);
+      addElementsTo(validElements, elements.htmlVoidElements);
+      addElementsTo(validElements, elements.htmlElements);
+    }
+
+    return this;
+  };
+
+
+  /**
+   * @ngdoc method
+   * @name $sanitizeProvider#addValidAttrs
+   * @kind function
+   *
+   * @description
+   * Extends the built-in list of valid attributes, i.e. attributes that are considered safe and are
+   * not stripped off during sanitization.
+   *
+   * **Note**:
+   * The new attributes will not be treated as URI attributes, which means their values will not be
+   * sanitized as URIs using `$compileProvider`'s
+   * {@link ng.$compileProvider#aHrefSanitizationWhitelist aHrefSanitizationWhitelist} and
+   * {@link ng.$compileProvider#imgSrcSanitizationWhitelist imgSrcSanitizationWhitelist}.
+   *
+   * <div class="alert alert-info">
+   *   This method must be called during the {@link angular.Module#config config} phase. Once the
+   *   `$sanitize` service has been instantiated, this method has no effect.
+   * </div>
+   *
+   * <div class="alert alert-warning">
+   *   Keep in mind that extending the built-in list of attributes may expose your app to XSS or
+   *   other vulnerabilities. Be very mindful of the attributes you add.
+   * </div>
+   *
+   * @param {Array<String>} attrs - A list of valid attributes.
+   *
+   * @returns {$sanitizeProvider} Returns self for chaining.
+   */
+  this.addValidAttrs = function(attrs) {
+    if (!hasBeenInstantiated) {
+      extend(validAttrs, arrayToMap(attrs, true));
+    }
+    return this;
+  };
+
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // Private stuff
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2306,6 +2408,7 @@ function $SanitizeProvider() {
   bind = angular.bind;
   extend = angular.extend;
   forEach = angular.forEach;
+  isArray = angular.isArray;
   isDefined = angular.isDefined;
   lowercase = angular.lowercase;
   noop = angular.noop;
@@ -2330,23 +2433,23 @@ function $SanitizeProvider() {
 
   // Safe Void Elements - HTML5
   // http://dev.w3.org/html5/spec/Overview.html#void-elements
-  var voidElements = toMap('area,br,col,hr,img,wbr');
+  var voidElements = stringToMap('area,br,col,hr,img,wbr');
 
   // Elements that you can, intentionally, leave open (and which close themselves)
   // http://dev.w3.org/html5/spec/Overview.html#optional-tags
-  var optionalEndTagBlockElements = toMap('colgroup,dd,dt,li,p,tbody,td,tfoot,th,thead,tr'),
-      optionalEndTagInlineElements = toMap('rp,rt'),
+  var optionalEndTagBlockElements = stringToMap('colgroup,dd,dt,li,p,tbody,td,tfoot,th,thead,tr'),
+      optionalEndTagInlineElements = stringToMap('rp,rt'),
       optionalEndTagElements = extend({},
                                               optionalEndTagInlineElements,
                                               optionalEndTagBlockElements);
 
   // Safe Block Elements - HTML5
-  var blockElements = extend({}, optionalEndTagBlockElements, toMap('address,article,' +
+  var blockElements = extend({}, optionalEndTagBlockElements, stringToMap('address,article,' +
           'aside,blockquote,caption,center,del,dir,div,dl,figure,figcaption,footer,h1,h2,h3,h4,h5,' +
           'h6,header,hgroup,hr,ins,map,menu,nav,ol,pre,section,table,ul'));
 
   // Inline Elements - HTML5
-  var inlineElements = extend({}, optionalEndTagInlineElements, toMap('a,abbr,acronym,b,' +
+  var inlineElements = extend({}, optionalEndTagInlineElements, stringToMap('a,abbr,acronym,b,' +
           'bdi,bdo,big,br,cite,code,del,dfn,em,font,i,img,ins,kbd,label,map,mark,q,ruby,rp,rt,s,' +
           'samp,small,span,strike,strong,sub,sup,time,tt,u,var'));
 
@@ -2354,12 +2457,12 @@ function $SanitizeProvider() {
   // https://wiki.whatwg.org/wiki/Sanitization_rules#svg_Elements
   // Note: the elements animate,animateColor,animateMotion,animateTransform,set are intentionally omitted.
   // They can potentially allow for arbitrary javascript to be executed. See #11290
-  var svgElements = toMap('circle,defs,desc,ellipse,font-face,font-face-name,font-face-src,g,glyph,' +
+  var svgElements = stringToMap('circle,defs,desc,ellipse,font-face,font-face-name,font-face-src,g,glyph,' +
           'hkern,image,linearGradient,line,marker,metadata,missing-glyph,mpath,path,polygon,polyline,' +
           'radialGradient,rect,stop,svg,switch,text,title,tspan');
 
   // Blocked Elements (will be stripped)
-  var blockedElements = toMap('script,style');
+  var blockedElements = stringToMap('script,style');
 
   var validElements = extend({},
                                      voidElements,
@@ -2368,9 +2471,9 @@ function $SanitizeProvider() {
                                      optionalEndTagElements);
 
   //Attributes that have href and hence need to be sanitized
-  var uriAttrs = toMap('background,cite,href,longdesc,src,xlink:href,xml:base');
+  var uriAttrs = stringToMap('background,cite,href,longdesc,src,xlink:href,xml:base');
 
-  var htmlAttrs = toMap('abbr,align,alt,axis,bgcolor,border,cellpadding,cellspacing,class,clear,' +
+  var htmlAttrs = stringToMap('abbr,align,alt,axis,bgcolor,border,cellpadding,cellspacing,class,clear,' +
       'color,cols,colspan,compact,coords,dir,face,headers,height,hreflang,hspace,' +
       'ismap,lang,language,nohref,nowrap,rel,rev,rows,rowspan,rules,' +
       'scope,scrolling,shape,size,span,start,summary,tabindex,target,title,type,' +
@@ -2378,7 +2481,7 @@ function $SanitizeProvider() {
 
   // SVG attributes (without "id" and "name" attributes)
   // https://wiki.whatwg.org/wiki/Sanitization_rules#svg_Attributes
-  var svgAttrs = toMap('accent-height,accumulate,additive,alphabetic,arabic-form,ascent,' +
+  var svgAttrs = stringToMap('accent-height,accumulate,additive,alphabetic,arabic-form,ascent,' +
       'baseProfile,bbox,begin,by,calcMode,cap-height,class,color,color-rendering,content,' +
       'cx,cy,d,dx,dy,descent,display,dur,end,fill,fill-rule,font-family,font-size,font-stretch,' +
       'font-style,font-variant,font-weight,from,fx,fy,g1,g2,glyph-name,gradientUnits,hanging,' +
@@ -2399,12 +2502,22 @@ function $SanitizeProvider() {
                                   svgAttrs,
                                   htmlAttrs);
 
-  function toMap(str, lowercaseKeys) {
-    var obj = {}, items = str.split(','), i;
+  function stringToMap(str, lowercaseKeys) {
+    return arrayToMap(str.split(','), lowercaseKeys);
+  }
+
+  function arrayToMap(items, lowercaseKeys) {
+    var obj = {}, i;
     for (i = 0; i < items.length; i++) {
       obj[lowercaseKeys ? lowercase(items[i]) : items[i]] = true;
     }
     return obj;
+  }
+
+  function addElementsTo(elementsMap, newElements) {
+    if (newElements && newElements.length) {
+      extend(elementsMap, arrayToMap(newElements));
+    }
   }
 
   /**
@@ -2693,7 +2806,7 @@ function sanitizeText(chars) {
 // define ngSanitize module and register $sanitize service
 angular.module('ngSanitize', [])
   .provider('$sanitize', $SanitizeProvider)
-  .info({ angularVersion: '1.6.9' });
+  .info({ angularVersion: '1.6.10' });
 
 /**
  * @ngdoc filter
@@ -2900,7 +3013,7 @@ module.exports = 'ngSanitize';
 
 },{"./angular-sanitize":5}],7:[function(require,module,exports){
 /**
- * @license AngularJS v1.6.9
+ * @license AngularJS v1.6.10
  * (c) 2010-2018 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -2988,6 +3101,11 @@ function isValidObjectMaxDepth(maxDepth) {
 
 function minErr(module, ErrorConstructor) {
   ErrorConstructor = ErrorConstructor || Error;
+
+  var url = 'https://errors.angularjs.org/1.6.10/';
+  var regex = url.replace('.', '\\.') + '[\\s\\S]*';
+  var errRegExp = new RegExp(regex, 'g');
+
   return function() {
     var code = arguments[0],
       template = arguments[1],
@@ -2997,18 +3115,22 @@ function minErr(module, ErrorConstructor) {
       }),
       paramPrefix, i;
 
+    // A minErr message has two parts: the message itself and the url that contains the
+    // encoded message.
+    // The message's parameters can contain other error messages which also include error urls.
+    // To prevent the messages from getting too long, we strip the error urls from the parameters.
+
     message += template.replace(/\{\d+\}/g, function(match) {
       var index = +match.slice(1, -1);
 
       if (index < templateArgs.length) {
-        return templateArgs[index];
+        return templateArgs[index].replace(errRegExp, '');
       }
 
       return match;
     });
 
-    message += '\nhttp://errors.angularjs.org/1.6.9/' +
-      (module ? module + '/' : '') + code;
+    message += '\n' + url + (module ? module + '/' : '') + code;
 
     for (i = 0, paramPrefix = '?'; i < templateArgs.length; i++, paramPrefix = '&') {
       message += paramPrefix + 'p' + i + '=' + encodeURIComponent(templateArgs[i]);
@@ -3093,6 +3215,7 @@ function minErr(module, ErrorConstructor) {
   fromJson,
   convertTimezoneToLocal,
   timezoneToOffset,
+  addDateMinutes,
   startingTag,
   tryDecodeURIComponent,
   parseKeyValue,
@@ -4402,7 +4525,7 @@ function convertTimezoneToLocal(date, timezone, reverse) {
  */
 function startingTag(element) {
   element = jqLite(element).clone().empty();
-  var elemHtml = jqLite('<div>').append(element).html();
+  var elemHtml = jqLite('<div></div>').append(element).html();
   try {
     return element[0].nodeType === NODE_TYPE_TEXT ? lowercase(elemHtml) :
         elemHtml.
@@ -5697,11 +5820,11 @@ function toDebugString(obj, maxDepth) {
 var version = {
   // These placeholder strings will be replaced by grunt's `build` task.
   // They need to be double- or single-quoted.
-  full: '1.6.9',
+  full: '1.6.10',
   major: 1,
   minor: 6,
-  dot: 9,
-  codeName: 'fiery-basilisk'
+  dot: 10,
+  codeName: 'crystalline-persuasion'
 };
 
 
@@ -5847,7 +5970,7 @@ function publishExternalAPI(angular) {
       });
     }
   ])
-  .info({ angularVersion: '1.6.9' });
+  .info({ angularVersion: '1.6.10' });
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -5904,7 +6027,8 @@ function publishExternalAPI(angular) {
  *
  * - [`addClass()`](http://api.jquery.com/addClass/) - Does not support a function as first argument
  * - [`after()`](http://api.jquery.com/after/)
- * - [`append()`](http://api.jquery.com/append/)
+ * - [`append()`](http://api.jquery.com/append/) - Contrary to jQuery, this doesn't clone elements
+ *   so will not work correctly when invoked on a jqLite object containing more than one DOM node
  * - [`attr()`](http://api.jquery.com/attr/) - Does not support functions as parameters
  * - [`bind()`](http://api.jquery.com/bind/) (_deprecated_, use [`on()`](http://api.jquery.com/on/)) - Does not support namespaces, selectors or eventData
  * - [`children()`](http://api.jquery.com/children/) - Does not support selectors
@@ -10555,9 +10679,10 @@ function $TemplateCacheProvider() {
  * $sce#getTrustedResourceUrl $sce.getTrustedResourceUrl}.
  *
  *
- * #### `replace` (*DEPRECATED*)
- *
- * `replace` will be removed in next major release - i.e. v2.0).
+ * #### `replace`
+ * <div class="alert alert-danger">
+ * **Note:** `replace` is deprecated in AngularJS and has been removed in the new Angular (v2+).
+ * </div>
  *
  * Specifies what the template should replace. Defaults to `false`.
  *
@@ -11007,6 +11132,59 @@ function $TemplateCacheProvider() {
    compiled again. This is an undesired effect and can lead to misbehaving directives, performance issues,
    and memory leaks. Refer to the Compiler Guide {@link guide/compiler#double-compilation-and-how-to-avoid-it
    section on double compilation} for an in-depth explanation and ways to avoid it.
+
+ * @knownIssue
+
+   ### Issues with `replace: true`
+ *
+ * <div class="alert alert-danger">
+ *   **Note**: {@link $compile#-replace- `replace: true`} is deprecated and not recommended to use,
+ *   mainly due to the issues listed here. It has been completely removed in the new Angular.
+ * </div>
+ *
+ * #### Attribute values are not merged
+ *
+ * When a `replace` directive encounters the same attribute on the original and the replace node,
+ * it will simply deduplicate the attribute and join the values with a space or with a `;` in case of
+ * the `style` attribute.
+ * ```html
+ * Original Node: <span class="original" style="color: red;"></span>
+ * Replace Template: <span class="replaced" style="background: blue;"></span>
+ * Result: <span class="original replaced" style="color: red; background: blue;"></span>
+ * ```
+ *
+ * That means attributes that contain AngularJS expressions will not be merged correctly, e.g.
+ * {@link ngShow} or {@link ngClass} will cause a {@link $parse} error:
+ *
+ * ```html
+ * Original Node: <span ng-class="{'something': something}" ng-show="!condition"></span>
+ * Replace Template: <span ng-class="{'else': else}" ng-show="otherCondition"></span>
+ * Result: <span ng-class="{'something': something} {'else': else}" ng-show="!condition otherCondition"></span>
+ * ```
+ *
+ * See issue [#5695](https://github.com/angular/angular.js/issues/5695).
+ *
+ * #### Directives are not deduplicated before compilation
+ *
+ * When the original node and the replace template declare the same directive(s), they will be
+ * {@link guide/compiler#double-compilation-and-how-to-avoid-it compiled twice} because the compiler
+ * does not deduplicate them. In many cases, this is not noticable, but e.g. {@link ngModel} will
+ * attach `$formatters` and `$parsers` twice.
+ *
+ * See issue [#2573](https://github.com/angular/angular.js/issues/2573).
+ *
+ * #### `transclude: element` in the replace template root can have
+ * unexpected effects
+ *
+ * When the replace template has a directive at the root node that uses
+ * {@link $compile#-transclude- `transclude: element`}, e.g.
+ * {@link ngIf} or {@link ngRepeat}, the DOM structure or scope inheritance can be incorrect.
+ * See the following issues:
+ *
+ * - Incorrect scope on replaced element:
+ * [#9837](https://github.com/angular/angular.js/issues/9837)
+ * - Different DOM between `template` and `templateUrl`:
+ * [#10612](https://github.com/angular/angular.js/issues/14326)
  *
  */
 
@@ -11038,11 +11216,13 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
   var bindingCache = createMap();
 
   function parseIsolateBindings(scope, directiveName, isController) {
-    var LOCAL_REGEXP = /^\s*([@&<]|=(\*?))(\??)\s*([\w$]*)\s*$/;
+    var LOCAL_REGEXP = /^([@&<]|=(\*?))(\??)\s*([\w$]*)$/;
 
     var bindings = createMap();
 
     forEach(scope, function(definition, scopeName) {
+      definition = definition.trim();
+
       if (definition in bindingCache) {
         bindings[scopeName] = bindingCache[definition];
         return;
@@ -11612,19 +11792,15 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
         }
         // We must run this hook in an apply since the $$postDigest runs outside apply
         $rootScope.$apply(function() {
-          var errors = [];
           for (var i = 0, ii = onChangesQueue.length; i < ii; ++i) {
             try {
               onChangesQueue[i]();
             } catch (e) {
-              errors.push(e);
+              $exceptionHandler(e);
             }
           }
           // Reset the queue to trigger a new schedule next time there is a change
           onChangesQueue = undefined;
-          if (errors.length) {
-            throw errors;
-          }
         });
       } finally {
         onChangesTtl++;
@@ -11770,7 +11946,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
         if ((nodeName === 'a' && (key === 'href' || key === 'xlinkHref')) ||
             (nodeName === 'img' && key === 'src')) {
           // sanitize a[href] and img[src] values
-          this[key] = value = $$sanitizeUri(value, key === 'src');
+          this[key] = value = (value == null) ? value : $$sanitizeUri(value, key === 'src');
         } else if (nodeName === 'img' && key === 'srcset' && isDefined(value)) {
           // sanitize img[srcset] values
           var result = '';
@@ -11808,7 +11984,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
         }
 
         if (writeAttr !== false) {
-          if (value === null || isUndefined(value)) {
+          if (value == null) {
             this.$$element.removeAttr(attrName);
           } else {
             if (SIMPLE_ATTR_NAME.test(attrName)) {
@@ -11992,7 +12168,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
           // for call to the link function.
           // Note: This will already clone the nodes...
           $linkNode = jqLite(
-            wrapTemplate(namespace, jqLite('<div>').append($compileNodes).html())
+            wrapTemplate(namespace, jqLite('<div></div>').append($compileNodes).html())
           );
         } else if (cloneConnectFn) {
           // important!!: we must call our jqLite.clone() since the jQuery one is trying to be smart
@@ -14178,7 +14354,7 @@ function $HttpParamSerializerProvider() {
    * * `{'foo': {'bar':'baz'}}` results in `foo=%7B%22bar%22%3A%22baz%22%7D` (stringified and encoded representation of an object)
    *
    * Note that serializer will sort the request parameters alphabetically.
-   * */
+   */
 
   this.$get = function() {
     return function ngParamSerializer(params) {
@@ -14245,7 +14421,7 @@ function $HttpParamSerializerJQLikeProvider() {
    * });
    * ```
    *
-   * */
+   */
   this.$get = function() {
     return function jQueryLikeParamSerializer(params) {
       if (!params) return '';
@@ -14402,7 +14578,7 @@ function isSuccess(status) {
  *
  * @description
  * Use `$httpProvider` to change the default behavior of the {@link ng.$http $http} service.
- * */
+ */
 function $HttpProvider() {
   /**
    * @ngdoc property
@@ -14456,7 +14632,7 @@ function $HttpProvider() {
    * - **`defaults.xsrfHeaderName`** - {string} - Name of HTTP header to populate with the
    * XSRF token. Defaults value is `'X-XSRF-TOKEN'`.
    *
-   **/
+   */
   var defaults = this.defaults = {
     // transform incoming response data
     transformResponse: [defaultHttpResponseTransform],
@@ -14503,7 +14679,7 @@ function $HttpProvider() {
    *
    * @returns {boolean|Object} If a value is specified, returns the $httpProvider for chaining.
    *    otherwise, returns the current configured value.
-   **/
+   */
   this.useApplyAsync = function(value) {
     if (isDefined(value)) {
       useApplyAsync = !!value;
@@ -14524,8 +14700,50 @@ function $HttpProvider() {
    * array, on request, but reverse order, on response.
    *
    * {@link ng.$http#interceptors Interceptors detailed info}
-   **/
+   */
   var interceptorFactories = this.interceptors = [];
+
+  /**
+   * @ngdoc property
+   * @name $httpProvider#xsrfWhitelistedOrigins
+   * @description
+   *
+   * Array containing URLs whose origins are trusted to receive the XSRF token. See the
+   * {@link ng.$http#security-considerations Security Considerations} sections for more details on
+   * XSRF.
+   *
+   * **Note:** An "origin" consists of the [URI scheme](https://en.wikipedia.org/wiki/URI_scheme),
+   * the [hostname](https://en.wikipedia.org/wiki/Hostname) and the
+   * [port number](https://en.wikipedia.org/wiki/Port_(computer_networking). For `http:` and
+   * `https:`, the port number can be omitted if using th default ports (80 and 443 respectively).
+   * Examples: `http://example.com`, `https://api.example.com:9876`
+   *
+   * <div class="alert alert-warning">
+   *   It is not possible to whitelist specific URLs/paths. The `path`, `query` and `fragment` parts
+   *   of a URL will be ignored. For example, `https://foo.com/path/bar?query=baz#fragment` will be
+   *   treated as `https://foo.com`, meaning that **all** requests to URLs starting with
+   *   `https://foo.com/` will include the XSRF token.
+   * </div>
+   *
+   * @example
+   *
+   * ```js
+   * // App served from `https://example.com/`.
+   * angular.
+   *   module('xsrfWhitelistedOriginsExample', []).
+   *   config(['$httpProvider', function($httpProvider) {
+   *     $httpProvider.xsrfWhitelistedOrigins.push('https://api.example.com');
+   *   }]).
+   *   run(['$http', function($http) {
+   *     // The XSRF token will be sent.
+   *     $http.get('https://api.example.com/preferences').then(...);
+   *
+   *     // The XSRF token will NOT be sent.
+   *     $http.get('https://stats.example.com/activity').then(...);
+   *   }]);
+   * ```
+   */
+  var xsrfWhitelistedOrigins = this.xsrfWhitelistedOrigins = [];
 
   this.$get = ['$browser', '$httpBackend', '$$cookieReader', '$cacheFactory', '$rootScope', '$q', '$injector', '$sce',
       function($browser, $httpBackend, $$cookieReader, $cacheFactory, $rootScope, $q, $injector, $sce) {
@@ -14549,6 +14767,11 @@ function $HttpProvider() {
       reversedInterceptors.unshift(isString(interceptorFactory)
           ? $injector.get(interceptorFactory) : $injector.invoke(interceptorFactory));
     });
+
+    /**
+     * A function to check request URLs against a list of allowed origins.
+     */
+    var urlIsAllowedOrigin = urlIsAllowedOriginFactory(xsrfWhitelistedOrigins);
 
     /**
      * @ngdoc service
@@ -14578,7 +14801,9 @@ function $HttpProvider() {
      *
      * ## General usage
      * The `$http` service is a function which takes a single argument — a {@link $http#usage configuration object} —
-     * that is used to generate an HTTP request and returns  a {@link ng.$q promise}.
+     * that is used to generate an HTTP request and returns  a {@link ng.$q promise} that is
+     * resolved (request success) or rejected (request failure) with a
+     * {@link ng.$http#$http-returns response} object.
      *
      * ```js
      *   // Simple GET request example:
@@ -14593,24 +14818,6 @@ function $HttpProvider() {
      *       // or server returns response with an error status.
      *     });
      * ```
-     *
-     * The response object has these properties:
-     *
-     *   - **data** – `{string|Object}` – The response body transformed with the transform
-     *     functions.
-     *   - **status** – `{number}` – HTTP status code of the response.
-     *   - **headers** – `{function([headerName])}` – Header getter function.
-     *   - **config** – `{Object}` – The configuration object that was used to generate the request.
-     *   - **statusText** – `{string}` – HTTP status text of the response.
-     *   - **xhrStatus** – `{string}` – Status of the XMLHttpRequest (`complete`, `error`, `timeout` or `abort`).
-     *
-     * A response status code between 200 and 299 is considered a success status and will result in
-     * the success callback being called. Any response status code outside of that range is
-     * considered an error status and will result in the error callback being called.
-     * Also, status codes less than -1 are normalized to zero. -1 usually means the request was
-     * aborted, e.g. using a `config.timeout`.
-     * Note that if the response is a redirect, XMLHttpRequest will transparently follow it, meaning
-     * that the outcome (success or error) will be determined by the final response status code.
      *
      *
      * ## Shortcut methods
@@ -14922,25 +15129,42 @@ function $HttpProvider() {
      * which the attacker can trick an authenticated user into unknowingly executing actions on your
      * website. AngularJS provides a mechanism to counter XSRF. When performing XHR requests, the
      * $http service reads a token from a cookie (by default, `XSRF-TOKEN`) and sets it as an HTTP
-     * header (`X-XSRF-TOKEN`). Since only JavaScript that runs on your domain could read the
-     * cookie, your server can be assured that the XHR came from JavaScript running on your domain.
-     * The header will not be set for cross-domain requests.
+     * header (by default `X-XSRF-TOKEN`). Since only JavaScript that runs on your domain could read
+     * the cookie, your server can be assured that the XHR came from JavaScript running on your
+     * domain.
      *
      * To take advantage of this, your server needs to set a token in a JavaScript readable session
      * cookie called `XSRF-TOKEN` on the first HTTP GET request. On subsequent XHR requests the
-     * server can verify that the cookie matches `X-XSRF-TOKEN` HTTP header, and therefore be sure
-     * that only JavaScript running on your domain could have sent the request. The token must be
-     * unique for each user and must be verifiable by the server (to prevent the JavaScript from
+     * server can verify that the cookie matches the `X-XSRF-TOKEN` HTTP header, and therefore be
+     * sure that only JavaScript running on your domain could have sent the request. The token must
+     * be unique for each user and must be verifiable by the server (to prevent the JavaScript from
      * making up its own tokens). We recommend that the token is a digest of your site's
      * authentication cookie with a [salt](https://en.wikipedia.org/wiki/Salt_(cryptography&#41;)
      * for added security.
      *
-     * The name of the headers can be specified using the xsrfHeaderName and xsrfCookieName
-     * properties of either $httpProvider.defaults at config-time, $http.defaults at run-time,
-     * or the per-request config object.
+     * The header will &mdash; by default &mdash; **not** be set for cross-domain requests. This
+     * prevents unauthorized servers (e.g. malicious or compromised 3rd-party APIs) from gaining
+     * access to your users' XSRF tokens and exposing them to Cross Site Request Forgery. If you
+     * want to, you can whitelist additional origins to also receive the XSRF token, by adding them
+     * to {@link ng.$httpProvider#xsrfWhitelistedOrigins xsrfWhitelistedOrigins}. This might be
+     * useful, for example, if your application, served from `example.com`, needs to access your API
+     * at `api.example.com`.
+     * See {@link ng.$httpProvider#xsrfWhitelistedOrigins $httpProvider.xsrfWhitelistedOrigins} for
+     * more details.
+     *
+     * <div class="alert alert-danger">
+     *   **Warning**<br />
+     *   Only whitelist origins that you have control over and make sure you understand the
+     *   implications of doing so.
+     * </div>
+     *
+     * The name of the cookie and the header can be specified using the `xsrfCookieName` and
+     * `xsrfHeaderName` properties of either `$httpProvider.defaults` at config-time,
+     * `$http.defaults` at run-time, or the per-request config object.
      *
      * In order to prevent collisions in environments where multiple AngularJS apps share the
-     * same domain or subdomain, we recommend that each application uses unique cookie name.
+     * same domain or subdomain, we recommend that each application uses a unique cookie name.
+     *
      *
      * @param {object} config Object describing the request to be made and how it should be
      *    processed. The object has following properties:
@@ -14986,14 +15210,44 @@ function $HttpProvider() {
      *      See {@link $http#caching $http Caching} for more information.
      *    - **timeout** – `{number|Promise}` – timeout in milliseconds, or {@link ng.$q promise}
      *      that should abort the request when resolved.
+     *
+     *      A numerical timeout or a promise returned from {@link ng.$timeout $timeout}, will set
+     *      the `xhrStatus` in the {@link $http#$http-returns response} to "timeout", and any other
+     *      resolved promise will set it to "abort", following standard XMLHttpRequest behavior.
+     *
      *    - **withCredentials** - `{boolean}` - whether to set the `withCredentials` flag on the
      *      XHR object. See [requests with credentials](https://developer.mozilla.org/docs/Web/HTTP/Access_control_CORS#Requests_with_credentials)
      *      for more information.
      *    - **responseType** - `{string}` - see
      *      [XMLHttpRequest.responseType](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#xmlhttprequest-responsetype).
      *
-     * @returns {HttpPromise} Returns a {@link ng.$q `Promise}` that will be resolved to a response object
-     *                        when the request succeeds or fails.
+     * @returns {HttpPromise} A {@link ng.$q `Promise}` that will be resolved (request success)
+     *   or rejected (request failure) with a response object.
+     *
+     *   The response object has these properties:
+     *
+     *   - **data** – `{string|Object}` – The response body transformed with
+     *     the transform functions.
+     *   - **status** – `{number}` – HTTP status code of the response.
+     *   - **headers** – `{function([headerName])}` – Header getter function.
+     *   - **config** – `{Object}` – The configuration object that was used
+     *     to generate the request.
+     *   - **statusText** – `{string}` – HTTP status text of the response.
+     *   - **xhrStatus** – `{string}` – Status of the XMLHttpRequest
+     *     (`complete`, `error`, `timeout` or `abort`).
+     *
+     *
+     *   A response status code between 200 and 299 is considered a success status
+     *   and will result in the success callback being called. Any response status
+     *   code outside of that range is considered an error status and will result
+     *   in the error callback being called.
+     *   Also, status codes less than -1 are normalized to zero. -1 usually means
+     *   the request was aborted, e.g. using a `config.timeout`. More information
+     *   about the status might be available in the `xhrStatus` property.
+     *
+     *   Note that if the response is a redirect, XMLHttpRequest will transparently
+     *   follow it, meaning that the outcome (success or error) will be determined
+     *   by the final response status code.
      *
      *
      * @property {Array.<Object>} pendingRequests Array of config objects for currently pending
@@ -15243,8 +15497,9 @@ function $HttpProvider() {
      *
      * @param {string|TrustedObject} url Absolute or relative URL of the resource that is being requested;
      *                                   or an object created by a call to `$sce.trustAsResourceUrl(url)`.
-     * @param {Object=} config Optional configuration object. See https://docs.angularjs.org/api/ng/service/$http#usage
-     * @returns {HttpPromise} Future object
+     * @param {Object=} config Optional configuration object. See {@link ng.$http#$http-arguments `$http()` arguments}.
+     * @returns {HttpPromise}  A Promise that will be resolved or rejected with a response object.
+     * See {@link ng.$http#$http-returns `$http()` return value}.
      */
 
     /**
@@ -15256,8 +15511,9 @@ function $HttpProvider() {
      *
      * @param {string|TrustedObject} url Absolute or relative URL of the resource that is being requested;
      *                                   or an object created by a call to `$sce.trustAsResourceUrl(url)`.
-     * @param {Object=} config Optional configuration object. See https://docs.angularjs.org/api/ng/service/$http#usage
-     * @returns {HttpPromise} Future object
+     * @param {Object=} config Optional configuration object. See {@link ng.$http#$http-arguments `$http()` arguments}.
+     * @returns {HttpPromise}  A Promise that will be resolved or rejected with a response object.
+     * See {@link ng.$http#$http-returns `$http()` return value}.
      */
 
     /**
@@ -15269,8 +15525,9 @@ function $HttpProvider() {
      *
      * @param {string|TrustedObject} url Absolute or relative URL of the resource that is being requested;
      *                                   or an object created by a call to `$sce.trustAsResourceUrl(url)`.
-     * @param {Object=} config Optional configuration object. See https://docs.angularjs.org/api/ng/service/$http#usage
-     * @returns {HttpPromise} Future object
+     * @param {Object=} config Optional configuration object. See {@link ng.$http#$http-arguments `$http()` arguments}.
+     * @returns {HttpPromise}  A Promise that will be resolved or rejected with a response object.
+     * See {@link ng.$http#$http-returns `$http()` return value}.
      */
 
     /**
@@ -15311,8 +15568,9 @@ function $HttpProvider() {
      *
      * @param {string|TrustedObject} url Absolute or relative URL of the resource that is being requested;
      *                                   or an object created by a call to `$sce.trustAsResourceUrl(url)`.
-     * @param {Object=} config Optional configuration object. See https://docs.angularjs.org/api/ng/service/$http#usage
-     * @returns {HttpPromise} Future object
+     * @param {Object=} config Optional configuration object. See {@link ng.$http#$http-arguments `$http()` arguments}.
+     * @returns {HttpPromise}  A Promise that will be resolved or rejected with a response object.
+     * See {@link ng.$http#$http-returns `$http()` return value}.
      */
     createShortMethods('get', 'delete', 'head', 'jsonp');
 
@@ -15325,8 +15583,9 @@ function $HttpProvider() {
      *
      * @param {string} url Relative or absolute URL specifying the destination of the request
      * @param {*} data Request content
-     * @param {Object=} config Optional configuration object. See https://docs.angularjs.org/api/ng/service/$http#usage
-     * @returns {HttpPromise} Future object
+     * @param {Object=} config Optional configuration object. See {@link ng.$http#$http-arguments `$http()` arguments}.
+     * @returns {HttpPromise}  A Promise that will be resolved or rejected with a response object.
+     * See {@link ng.$http#$http-returns `$http()` return value}.
      */
 
     /**
@@ -15338,8 +15597,9 @@ function $HttpProvider() {
      *
      * @param {string} url Relative or absolute URL specifying the destination of the request
      * @param {*} data Request content
-     * @param {Object=} config Optional configuration object. See https://docs.angularjs.org/api/ng/service/$http#usage
-     * @returns {HttpPromise} Future object
+     * @param {Object=} config Optional configuration object. See {@link ng.$http#$http-arguments `$http()` arguments}.
+     * @returns {HttpPromise}  A Promise that will be resolved or rejected with a response object.
+     * See {@link ng.$http#$http-returns `$http()` return value}.
      */
 
      /**
@@ -15351,8 +15611,9 @@ function $HttpProvider() {
       *
       * @param {string} url Relative or absolute URL specifying the destination of the request
       * @param {*} data Request content
-      * @param {Object=} config Optional configuration object. See https://docs.angularjs.org/api/ng/service/$http#usage
-      * @returns {HttpPromise} Future object
+      * @param {Object=} config Optional configuration object. See {@link ng.$http#$http-arguments `$http()` arguments}.
+      * @returns {HttpPromise}  A Promise that will be resolved or rejected with a response object.
+      * See {@link ng.$http#$http-returns `$http()` return value}.
       */
     createShortMethodsWithData('post', 'put', 'patch');
 
@@ -15463,7 +15724,7 @@ function $HttpProvider() {
       // if we won't have the response in cache, set the xsrf headers and
       // send the request to the backend
       if (isUndefined(cachedResp)) {
-        var xsrfValue = urlIsSameOrigin(config.url)
+        var xsrfValue = urlIsAllowedOrigin(config.url)
             ? $$cookieReader()[config.xsrfCookieName || defaults.xsrfCookieName]
             : undefined;
         if (xsrfValue) {
@@ -15661,6 +15922,7 @@ function createHttpBackend($browser, createXhr, $browserDefer, callbacks, rawDoc
     } else {
 
       var xhr = createXhr(method, url);
+      var abortedByTimeout = false;
 
       xhr.open(method, url, true);
       forEach(headers, function(value, key) {
@@ -15701,7 +15963,7 @@ function createHttpBackend($browser, createXhr, $browserDefer, callbacks, rawDoc
       };
 
       var requestAborted = function() {
-        completeRequest(callback, -1, null, null, '', 'abort');
+        completeRequest(callback, -1, null, null, '', abortedByTimeout ? 'timeout' : 'abort');
       };
 
       var requestTimeout = function() {
@@ -15711,11 +15973,11 @@ function createHttpBackend($browser, createXhr, $browserDefer, callbacks, rawDoc
       };
 
       xhr.onerror = requestError;
-      xhr.onabort = requestAborted;
       xhr.ontimeout = requestTimeout;
+      xhr.onabort = requestAborted;
 
       forEach(eventHandlers, function(value, key) {
-          xhr.addEventListener(key, value);
+        xhr.addEventListener(key, value);
       });
 
       forEach(uploadEventHandlers, function(value, key) {
@@ -15746,14 +16008,26 @@ function createHttpBackend($browser, createXhr, $browserDefer, callbacks, rawDoc
       xhr.send(isUndefined(post) ? null : post);
     }
 
+    // Since we are using xhr.abort() when a request times out, we have to set a flag that
+    // indicates to requestAborted if the request timed out or was aborted.
+    //
+    // http.timeout = numerical timeout   timeout
+    // http.timeout = $timeout            timeout
+    // http.timeout = promise             abort
+    // xhr.abort()                        abort (The xhr object is normally inaccessible, but
+    //                                    can be exposed with the xhrFactory)
     if (timeout > 0) {
-      var timeoutId = $browserDefer(timeoutRequest, timeout);
+      var timeoutId = $browserDefer(function() {
+        timeoutRequest('timeout');
+      }, timeout);
     } else if (isPromiseLike(timeout)) {
-      timeout.then(timeoutRequest);
+      timeout.then(function() {
+        timeoutRequest(isDefined(timeout.$$timeoutId) ? 'timeout' : 'abort');
+      });
     }
 
-
-    function timeoutRequest() {
+    function timeoutRequest(reason) {
+      abortedByTimeout = reason === 'timeout';
       if (jsonpDone) {
         jsonpDone();
       }
@@ -16204,132 +16478,132 @@ function $IntervalProvider() {
     var intervals = {};
 
 
-     /**
-      * @ngdoc service
-      * @name $interval
-      *
-      * @description
-      * AngularJS's wrapper for `window.setInterval`. The `fn` function is executed every `delay`
-      * milliseconds.
-      *
-      * The return value of registering an interval function is a promise. This promise will be
-      * notified upon each tick of the interval, and will be resolved after `count` iterations, or
-      * run indefinitely if `count` is not defined. The value of the notification will be the
-      * number of iterations that have run.
-      * To cancel an interval, call `$interval.cancel(promise)`.
-      *
-      * In tests you can use {@link ngMock.$interval#flush `$interval.flush(millis)`} to
-      * move forward by `millis` milliseconds and trigger any functions scheduled to run in that
-      * time.
-      *
-      * <div class="alert alert-warning">
-      * **Note**: Intervals created by this service must be explicitly destroyed when you are finished
-      * with them.  In particular they are not automatically destroyed when a controller's scope or a
-      * directive's element are destroyed.
-      * You should take this into consideration and make sure to always cancel the interval at the
-      * appropriate moment.  See the example below for more details on how and when to do this.
-      * </div>
-      *
-      * @param {function()} fn A function that should be called repeatedly. If no additional arguments
-      *   are passed (see below), the function is called with the current iteration count.
-      * @param {number} delay Number of milliseconds between each function call.
-      * @param {number=} [count=0] Number of times to repeat. If not set, or 0, will repeat
-      *   indefinitely.
-      * @param {boolean=} [invokeApply=true] If set to `false` skips model dirty checking, otherwise
-      *   will invoke `fn` within the {@link ng.$rootScope.Scope#$apply $apply} block.
-      * @param {...*=} Pass additional parameters to the executed function.
-      * @returns {promise} A promise which will be notified on each iteration. It will resolve once all iterations of the interval complete.
-      *
-      * @example
-      * <example module="intervalExample" name="interval-service">
-      * <file name="index.html">
-      *   <script>
-      *     angular.module('intervalExample', [])
-      *       .controller('ExampleController', ['$scope', '$interval',
-      *         function($scope, $interval) {
-      *           $scope.format = 'M/d/yy h:mm:ss a';
-      *           $scope.blood_1 = 100;
-      *           $scope.blood_2 = 120;
-      *
-      *           var stop;
-      *           $scope.fight = function() {
-      *             // Don't start a new fight if we are already fighting
-      *             if ( angular.isDefined(stop) ) return;
-      *
-      *             stop = $interval(function() {
-      *               if ($scope.blood_1 > 0 && $scope.blood_2 > 0) {
-      *                 $scope.blood_1 = $scope.blood_1 - 3;
-      *                 $scope.blood_2 = $scope.blood_2 - 4;
-      *               } else {
-      *                 $scope.stopFight();
-      *               }
-      *             }, 100);
-      *           };
-      *
-      *           $scope.stopFight = function() {
-      *             if (angular.isDefined(stop)) {
-      *               $interval.cancel(stop);
-      *               stop = undefined;
-      *             }
-      *           };
-      *
-      *           $scope.resetFight = function() {
-      *             $scope.blood_1 = 100;
-      *             $scope.blood_2 = 120;
-      *           };
-      *
-      *           $scope.$on('$destroy', function() {
-      *             // Make sure that the interval is destroyed too
-      *             $scope.stopFight();
-      *           });
-      *         }])
-      *       // Register the 'myCurrentTime' directive factory method.
-      *       // We inject $interval and dateFilter service since the factory method is DI.
-      *       .directive('myCurrentTime', ['$interval', 'dateFilter',
-      *         function($interval, dateFilter) {
-      *           // return the directive link function. (compile function not needed)
-      *           return function(scope, element, attrs) {
-      *             var format,  // date format
-      *                 stopTime; // so that we can cancel the time updates
-      *
-      *             // used to update the UI
-      *             function updateTime() {
-      *               element.text(dateFilter(new Date(), format));
-      *             }
-      *
-      *             // watch the expression, and update the UI on change.
-      *             scope.$watch(attrs.myCurrentTime, function(value) {
-      *               format = value;
-      *               updateTime();
-      *             });
-      *
-      *             stopTime = $interval(updateTime, 1000);
-      *
-      *             // listen on DOM destroy (removal) event, and cancel the next UI update
-      *             // to prevent updating time after the DOM element was removed.
-      *             element.on('$destroy', function() {
-      *               $interval.cancel(stopTime);
-      *             });
-      *           }
-      *         }]);
-      *   </script>
-      *
-      *   <div>
-      *     <div ng-controller="ExampleController">
-      *       <label>Date format: <input ng-model="format"></label> <hr/>
-      *       Current time is: <span my-current-time="format"></span>
-      *       <hr/>
-      *       Blood 1 : <font color='red'>{{blood_1}}</font>
-      *       Blood 2 : <font color='red'>{{blood_2}}</font>
-      *       <button type="button" data-ng-click="fight()">Fight</button>
-      *       <button type="button" data-ng-click="stopFight()">StopFight</button>
-      *       <button type="button" data-ng-click="resetFight()">resetFight</button>
-      *     </div>
-      *   </div>
-      *
-      * </file>
-      * </example>
-      */
+    /**
+     * @ngdoc service
+     * @name $interval
+     *
+     * @description
+     * AngularJS's wrapper for `window.setInterval`. The `fn` function is executed every `delay`
+     * milliseconds.
+     *
+     * The return value of registering an interval function is a promise. This promise will be
+     * notified upon each tick of the interval, and will be resolved after `count` iterations, or
+     * run indefinitely if `count` is not defined. The value of the notification will be the
+     * number of iterations that have run.
+     * To cancel an interval, call `$interval.cancel(promise)`.
+     *
+     * In tests you can use {@link ngMock.$interval#flush `$interval.flush(millis)`} to
+     * move forward by `millis` milliseconds and trigger any functions scheduled to run in that
+     * time.
+     *
+     * <div class="alert alert-warning">
+     * **Note**: Intervals created by this service must be explicitly destroyed when you are finished
+     * with them.  In particular they are not automatically destroyed when a controller's scope or a
+     * directive's element are destroyed.
+     * You should take this into consideration and make sure to always cancel the interval at the
+     * appropriate moment.  See the example below for more details on how and when to do this.
+     * </div>
+     *
+     * @param {function()} fn A function that should be called repeatedly. If no additional arguments
+     *   are passed (see below), the function is called with the current iteration count.
+     * @param {number} delay Number of milliseconds between each function call.
+     * @param {number=} [count=0] Number of times to repeat. If not set, or 0, will repeat
+     *   indefinitely.
+     * @param {boolean=} [invokeApply=true] If set to `false` skips model dirty checking, otherwise
+     *   will invoke `fn` within the {@link ng.$rootScope.Scope#$apply $apply} block.
+     * @param {...*=} Pass additional parameters to the executed function.
+     * @returns {promise} A promise which will be notified on each iteration. It will resolve once all iterations of the interval complete.
+     *
+     * @example
+     * <example module="intervalExample" name="interval-service">
+     * <file name="index.html">
+     *   <script>
+     *     angular.module('intervalExample', [])
+     *       .controller('ExampleController', ['$scope', '$interval',
+     *         function($scope, $interval) {
+     *           $scope.format = 'M/d/yy h:mm:ss a';
+     *           $scope.blood_1 = 100;
+     *           $scope.blood_2 = 120;
+     *
+     *           var stop;
+     *           $scope.fight = function() {
+     *             // Don't start a new fight if we are already fighting
+     *             if ( angular.isDefined(stop) ) return;
+     *
+     *             stop = $interval(function() {
+     *               if ($scope.blood_1 > 0 && $scope.blood_2 > 0) {
+     *                 $scope.blood_1 = $scope.blood_1 - 3;
+     *                 $scope.blood_2 = $scope.blood_2 - 4;
+     *               } else {
+     *                 $scope.stopFight();
+     *               }
+     *             }, 100);
+     *           };
+     *
+     *           $scope.stopFight = function() {
+     *             if (angular.isDefined(stop)) {
+     *               $interval.cancel(stop);
+     *               stop = undefined;
+     *             }
+     *           };
+     *
+     *           $scope.resetFight = function() {
+     *             $scope.blood_1 = 100;
+     *             $scope.blood_2 = 120;
+     *           };
+     *
+     *           $scope.$on('$destroy', function() {
+     *             // Make sure that the interval is destroyed too
+     *             $scope.stopFight();
+     *           });
+     *         }])
+     *       // Register the 'myCurrentTime' directive factory method.
+     *       // We inject $interval and dateFilter service since the factory method is DI.
+     *       .directive('myCurrentTime', ['$interval', 'dateFilter',
+     *         function($interval, dateFilter) {
+     *           // return the directive link function. (compile function not needed)
+     *           return function(scope, element, attrs) {
+     *             var format,  // date format
+     *                 stopTime; // so that we can cancel the time updates
+     *
+     *             // used to update the UI
+     *             function updateTime() {
+     *               element.text(dateFilter(new Date(), format));
+     *             }
+     *
+     *             // watch the expression, and update the UI on change.
+     *             scope.$watch(attrs.myCurrentTime, function(value) {
+     *               format = value;
+     *               updateTime();
+     *             });
+     *
+     *             stopTime = $interval(updateTime, 1000);
+     *
+     *             // listen on DOM destroy (removal) event, and cancel the next UI update
+     *             // to prevent updating time after the DOM element was removed.
+     *             element.on('$destroy', function() {
+     *               $interval.cancel(stopTime);
+     *             });
+     *           }
+     *         }]);
+     *   </script>
+     *
+     *   <div>
+     *     <div ng-controller="ExampleController">
+     *       <label>Date format: <input ng-model="format"></label> <hr/>
+     *       Current time is: <span my-current-time="format"></span>
+     *       <hr/>
+     *       Blood 1 : <font color='red'>{{blood_1}}</font>
+     *       Blood 2 : <font color='red'>{{blood_2}}</font>
+     *       <button type="button" data-ng-click="fight()">Fight</button>
+     *       <button type="button" data-ng-click="stopFight()">StopFight</button>
+     *       <button type="button" data-ng-click="resetFight()">resetFight</button>
+     *     </div>
+     *   </div>
+     *
+     * </file>
+     * </example>
+     */
     function interval(fn, delay, count, invokeApply) {
       var hasParams = arguments.length > 4,
           args = hasParams ? sliceArgs(arguments, 4) : [],
@@ -16374,16 +16648,16 @@ function $IntervalProvider() {
     }
 
 
-     /**
-      * @ngdoc method
-      * @name $interval#cancel
-      *
-      * @description
-      * Cancels a task associated with the `promise`.
-      *
-      * @param {Promise=} promise returned by the `$interval` function.
-      * @returns {boolean} Returns `true` if the task was successfully canceled.
-      */
+    /**
+     * @ngdoc method
+     * @name $interval#cancel
+     *
+     * @description
+     * Cancels a task associated with the `promise`.
+     *
+     * @param {Promise=} promise returned by the `$interval` function.
+     * @returns {boolean} Returns `true` if the task was successfully canceled.
+     */
     interval.cancel = function(promise) {
       if (promise && promise.$$intervalId in intervals) {
         // Interval cancels should not report as unhandled promise.
@@ -20519,6 +20793,7 @@ function $RootScopeProvider() {
       this.$$watchersCount = 0;
       this.$id = nextUid();
       this.$$ChildScope = null;
+      this.$$suspended = false;
     }
     ChildScope.prototype = parent;
     return ChildScope;
@@ -20606,6 +20881,7 @@ function $RootScopeProvider() {
                      this.$$childHead = this.$$childTail = null;
       this.$root = this;
       this.$$destroyed = false;
+      this.$$suspended = false;
       this.$$listeners = {};
       this.$$listenerCount = {};
       this.$$watchersCount = 0;
@@ -21260,7 +21536,7 @@ function $RootScopeProvider() {
 
           traverseScopesLoop:
           do { // "traverse the scopes" loop
-            if ((watchers = current.$$watchers)) {
+            if ((watchers = !current.$$suspended && current.$$watchers)) {
               // process our watches
               watchers.$$digestWatchIndex = watchers.length;
               while (watchers.$$digestWatchIndex--) {
@@ -21304,7 +21580,9 @@ function $RootScopeProvider() {
             // Insanity Warning: scope depth-first traversal
             // yes, this code is a bit crazy, but it works and we have tests to prove it!
             // this piece should be kept in sync with the traversal in $broadcast
-            if (!(next = ((current.$$watchersCount && current.$$childHead) ||
+            // (though it differs due to having the extra check for $$suspended and does not
+            // check $$listenerCount)
+            if (!(next = ((!current.$$suspended && current.$$watchersCount && current.$$childHead) ||
                 (current !== target && current.$$nextSibling)))) {
               while (current !== target && !(next = current.$$nextSibling)) {
                 current = current.$parent;
@@ -21341,6 +21619,95 @@ function $RootScopeProvider() {
         $browser.$$checkUrlChange();
       },
 
+      /**
+       * @ngdoc method
+       * @name $rootScope.Scope#$suspend
+       * @kind function
+       *
+       * @description
+       * Suspend watchers of this scope subtree so that they will not be invoked during digest.
+       *
+       * This can be used to optimize your application when you know that running those watchers
+       * is redundant.
+       *
+       * **Warning**
+       *
+       * Suspending scopes from the digest cycle can have unwanted and difficult to debug results.
+       * Only use this approach if you are confident that you know what you are doing and have
+       * ample tests to ensure that bindings get updated as you expect.
+       *
+       * Some of the things to consider are:
+       *
+       * * Any external event on a directive/component will not trigger a digest while the hosting
+       *   scope is suspended - even if the event handler calls `$apply()` or `$rootScope.$digest()`.
+       * * Transcluded content exists on a scope that inherits from outside a directive but exists
+       *   as a child of the directive's containing scope. If the containing scope is suspended the
+       *   transcluded scope will also be suspended, even if the scope from which the transcluded
+       *   scope inherits is not suspended.
+       * * Multiple directives trying to manage the suspended status of a scope can confuse each other:
+       *    * A call to `$suspend()` on an already suspended scope is a no-op.
+       *    * A call to `$resume()` on a non-suspended scope is a no-op.
+       *    * If two directives suspend a scope, then one of them resumes the scope, the scope will no
+       *      longer be suspended. This could result in the other directive believing a scope to be
+       *      suspended when it is not.
+       * * If a parent scope is suspended then all its descendants will be also excluded from future
+       *   digests whether or not they have been suspended themselves. Note that this also applies to
+       *   isolate child scopes.
+       * * Calling `$digest()` directly on a descendant of a suspended scope will still run the watchers
+       *   for that scope and its descendants. When digesting we only check whether the current scope is
+       *   locally suspended, rather than checking whether it has a suspended ancestor.
+       * * Calling `$resume()` on a scope that has a suspended ancestor will not cause the scope to be
+       *   included in future digests until all its ancestors have been resumed.
+       * * Resolved promises, e.g. from explicit `$q` deferreds and `$http` calls, trigger `$apply()`
+       *   against the `$rootScope` and so will still trigger a global digest even if the promise was
+       *   initiated by a component that lives on a suspended scope.
+       */
+      $suspend: function() {
+        this.$$suspended = true;
+      },
+
+      /**
+       * @ngdoc method
+       * @name $rootScope.Scope#$isSuspended
+       * @kind function
+       *
+       * @description
+       * Call this method to determine if this scope has been explicitly suspended. It will not
+       * tell you whether an ancestor has been suspended.
+       * To determine if this scope will be excluded from a digest triggered at the $rootScope,
+       * for example, you must check all its ancestors:
+       *
+       * ```
+       * function isExcludedFromDigest(scope) {
+       *   while(scope) {
+       *     if (scope.$isSuspended()) return true;
+       *     scope = scope.$parent;
+       *   }
+       *   return false;
+       * ```
+       *
+       * Be aware that a scope may not be included in digests if it has a suspended ancestor,
+       * even if `$isSuspended()` returns false.
+       *
+       * @returns true if the current scope has been suspended.
+       */
+      $isSuspended: function() {
+        return this.$$suspended;
+      },
+
+      /**
+       * @ngdoc method
+       * @name $rootScope.Scope#$resume
+       * @kind function
+       *
+       * @description
+       * Resume watchers of this scope subtree in case it was suspended.
+       *
+       * See {@link $rootScope.Scope#$suspend} for information about the dangers of using this approach.
+       */
+      $resume: function() {
+        this.$$suspended = false;
+      },
 
       /**
        * @ngdoc event
@@ -21776,7 +22143,8 @@ function $RootScopeProvider() {
           // Insanity Warning: scope depth-first traversal
           // yes, this code is a bit crazy, but it works and we have tests to prove it!
           // this piece should be kept in sync with the traversal in $digest
-          // (though it differs due to having the extra check for $$listenerCount)
+          // (though it differs due to having the extra check for $$listenerCount and
+          // does not check $$suspended)
           if (!(next = ((current.$$listenerCount[name] && current.$$childHead) ||
               (current !== target && current.$$nextSibling)))) {
             while (current !== target && !(next = current.$$nextSibling)) {
@@ -23420,35 +23788,35 @@ function $TimeoutProvider() {
     var deferreds = {};
 
 
-     /**
-      * @ngdoc service
-      * @name $timeout
-      *
-      * @description
-      * AngularJS's wrapper for `window.setTimeout`. The `fn` function is wrapped into a try/catch
-      * block and delegates any exceptions to
-      * {@link ng.$exceptionHandler $exceptionHandler} service.
-      *
-      * The return value of calling `$timeout` is a promise, which will be resolved when
-      * the delay has passed and the timeout function, if provided, is executed.
-      *
-      * To cancel a timeout request, call `$timeout.cancel(promise)`.
-      *
-      * In tests you can use {@link ngMock.$timeout `$timeout.flush()`} to
-      * synchronously flush the queue of deferred functions.
-      *
-      * If you only want a promise that will be resolved after some specified delay
-      * then you can call `$timeout` without the `fn` function.
-      *
-      * @param {function()=} fn A function, whose execution should be delayed.
-      * @param {number=} [delay=0] Delay in milliseconds.
-      * @param {boolean=} [invokeApply=true] If set to `false` skips model dirty checking, otherwise
-      *   will invoke `fn` within the {@link ng.$rootScope.Scope#$apply $apply} block.
-      * @param {...*=} Pass additional parameters to the executed function.
-      * @returns {Promise} Promise that will be resolved when the timeout is reached. The promise
-      *   will be resolved with the return value of the `fn` function.
-      *
-      */
+    /**
+     * @ngdoc service
+     * @name $timeout
+     *
+     * @description
+     * AngularJS's wrapper for `window.setTimeout`. The `fn` function is wrapped into a try/catch
+     * block and delegates any exceptions to
+     * {@link ng.$exceptionHandler $exceptionHandler} service.
+     *
+     * The return value of calling `$timeout` is a promise, which will be resolved when
+     * the delay has passed and the timeout function, if provided, is executed.
+     *
+     * To cancel a timeout request, call `$timeout.cancel(promise)`.
+     *
+     * In tests you can use {@link ngMock.$timeout `$timeout.flush()`} to
+     * synchronously flush the queue of deferred functions.
+     *
+     * If you only want a promise that will be resolved after some specified delay
+     * then you can call `$timeout` without the `fn` function.
+     *
+     * @param {function()=} fn A function, whose execution should be delayed.
+     * @param {number=} [delay=0] Delay in milliseconds.
+     * @param {boolean=} [invokeApply=true] If set to `false` skips model dirty checking, otherwise
+     *   will invoke `fn` within the {@link ng.$rootScope.Scope#$apply $apply} block.
+     * @param {...*=} Pass additional parameters to the executed function.
+     * @returns {Promise} Promise that will be resolved when the timeout is reached. The promise
+     *   will be resolved with the return value of the `fn` function.
+     *
+     */
     function timeout(fn, delay, invokeApply) {
       if (!isFunction(fn)) {
         invokeApply = delay;
@@ -23482,18 +23850,18 @@ function $TimeoutProvider() {
     }
 
 
-     /**
-      * @ngdoc method
-      * @name $timeout#cancel
-      *
-      * @description
-      * Cancels a task associated with the `promise`. As a result of this, the promise will be
-      * resolved with a rejection.
-      *
-      * @param {Promise=} promise Promise returned by the `$timeout` function.
-      * @returns {boolean} Returns `true` if the task hasn't executed yet and was successfully
-      *   canceled.
-      */
+    /**
+     * @ngdoc method
+     * @name $timeout#cancel
+     *
+     * @description
+     * Cancels a task associated with the `promise`. As a result of this, the promise will be
+     * resolved with a rejection.
+     *
+     * @param {Promise=} promise Promise returned by the `$timeout` function.
+     * @returns {boolean} Returns `true` if the task hasn't executed yet and was successfully
+     *   canceled.
+     */
     timeout.cancel = function(promise) {
       if (promise && promise.$$timeoutId in deferreds) {
         // Timeout cancels should not report an unhandled promise.
@@ -23549,7 +23917,8 @@ var originUrl = urlResolve(window.location.href);
  *   http://james.padolsey.com/javascript/parsing-urls-with-the-dom/
  *
  * @kind function
- * @param {string} url The URL to be parsed.
+ * @param {string|object} url The URL to be parsed. If `url` is not a string, it will be returned
+ *     unchanged.
  * @description Normalizes and parses a URL.
  * @returns {object} Returns the normalized URL as a dictionary.
  *
@@ -23566,6 +23935,8 @@ var originUrl = urlResolve(window.location.href);
  *
  */
 function urlResolve(url) {
+  if (!isString(url)) return url;
+
   var href = url;
 
   // Support: IE 9-11 only
@@ -23594,16 +23965,61 @@ function urlResolve(url) {
 }
 
 /**
- * Parse a request URL and determine whether this is a same-origin request as the application document.
+ * Parse a request URL and determine whether this is a same-origin request as the application
+ * document.
  *
  * @param {string|object} requestUrl The url of the request as a string that will be resolved
  * or a parsed URL object.
  * @returns {boolean} Whether the request is for the same origin as the application document.
  */
 function urlIsSameOrigin(requestUrl) {
-  var parsed = (isString(requestUrl)) ? urlResolve(requestUrl) : requestUrl;
-  return (parsed.protocol === originUrl.protocol &&
-          parsed.host === originUrl.host);
+  return urlsAreSameOrigin(requestUrl, originUrl);
+}
+
+/**
+ * Create a function that can check a URL's origin against a list of allowed/whitelisted origins.
+ * The current location's origin is implicitly trusted.
+ *
+ * @param {string[]} whitelistedOriginUrls - A list of URLs (strings), whose origins are trusted.
+ *
+ * @returns {Function} - A function that receives a URL (string or parsed URL object) and returns
+ *     whether it is of an allowed origin.
+ */
+function urlIsAllowedOriginFactory(whitelistedOriginUrls) {
+  var parsedAllowedOriginUrls = [originUrl].concat(whitelistedOriginUrls.map(urlResolve));
+
+  /**
+   * Check whether the specified URL (string or parsed URL object) has an origin that is allowed
+   * based on a list of whitelisted-origin URLs. The current location's origin is implicitly
+   * trusted.
+   *
+   * @param {string|Object} requestUrl - The URL to be checked (provided as a string that will be
+   *     resolved or a parsed URL object).
+   *
+   * @returns {boolean} - Whether the specified URL is of an allowed origin.
+   */
+  return function urlIsAllowedOrigin(requestUrl) {
+    var parsedUrl = urlResolve(requestUrl);
+    return parsedAllowedOriginUrls.some(urlsAreSameOrigin.bind(null, parsedUrl));
+  };
+}
+
+/**
+ * Determine if two URLs share the same origin.
+ *
+ * @param {string|Object} url1 - First URL to compare as a string or a normalized URL in the form of
+ *     a dictionary object returned by `urlResolve()`.
+ * @param {string|object} url2 - Second URL to compare as a string or a normalized URL in the form
+ *     of a dictionary object returned by `urlResolve()`.
+ *
+ * @returns {boolean} - True if both URLs have the same origin, and false otherwise.
+ */
+function urlsAreSameOrigin(url1, url2) {
+  url1 = urlResolve(url1);
+  url2 = urlResolve(url2);
+
+  return (url1.protocol === url2.protocol &&
+          url1.host === url2.host);
 }
 
 /**
@@ -27862,6 +28278,33 @@ var inputType = {
    * @description
    * HTML radio button.
    *
+   * **Note:**<br>
+   * All inputs controlled by {@link ngModel ngModel} (including those of type `radio`) will use the
+   * value of their `name` attribute to determine the property under which their
+   * {@link ngModel.NgModelController NgModelController} will be published on the parent
+   * {@link form.FormController FormController}. Thus, if you use the same `name` for multiple
+   * inputs of a form (e.g. a group of radio inputs), only _one_ `NgModelController` will be
+   * published on the parent `FormController` under that name. The rest of the controllers will
+   * continue to work as expected, but you won't be able to access them as properties on the parent
+   * `FormController`.
+   *
+   * <div class="alert alert-info">
+   *   <p>
+   *     In plain HTML forms, the `name` attribute is used to identify groups of radio inputs, so
+   *     that the browser can manage their state (checked/unchecked) based on the state of other
+   *     inputs in the same group.
+   *   </p>
+   *   <p>
+   *     In AngularJS forms, this is not necessary. The input's state will be updated based on the
+   *     value of the underlying model data.
+   *   </p>
+   * </div>
+   *
+   * <div class="alert alert-success">
+   *   If you omit the `name` attribute on a radio input, `ngModel` will automatically assign it a
+   *   unique name.
+   * </div>
+   *
    * @param {string} ngModel Assignable AngularJS expression to data-bind to.
    * @param {string} value The value to which the `ngModel` expression should be set when selected.
    *    Note that `value` only supports `string` values, i.e. the scope model needs to be a string,
@@ -28130,6 +28573,16 @@ function baseInputType(scope, element, attr, ctrl, $sniffer, $browser) {
       composing = true;
     });
 
+    // Support: IE9+
+    element.on('compositionupdate', function(ev) {
+      // End composition when ev.data is empty string on 'compositionupdate' event.
+      // When the input de-focusses (e.g. by clicking away), IE triggers 'compositionupdate'
+      // instead of 'compositionend'.
+      if (isUndefined(ev.data) || ev.data === '') {
+        composing = false;
+      }
+    });
+
     element.on('compositionend', function() {
       composing = false;
       listener();
@@ -28313,21 +28766,18 @@ function createDateInputType(type, regexp, parseDate, format) {
   return function dynamicDateInputType(scope, element, attr, ctrl, $sniffer, $browser, $filter) {
     badInputChecker(scope, element, attr, ctrl);
     baseInputType(scope, element, attr, ctrl, $sniffer, $browser);
-    var timezone = ctrl && ctrl.$options.getOption('timezone');
     var previousDate;
+    var previousTimezone;
 
     ctrl.$$parserName = type;
     ctrl.$parsers.push(function(value) {
       if (ctrl.$isEmpty(value)) return null;
+
       if (regexp.test(value)) {
         // Note: We cannot read ctrl.$modelValue, as there might be a different
         // parser/formatter in the processing chain so that the model
         // contains some different data format!
-        var parsedDate = parseDate(value, previousDate);
-        if (timezone) {
-          parsedDate = convertTimezoneToLocal(parsedDate, timezone);
-        }
-        return parsedDate;
+        return parseDateAndConvertTimeZoneToLocal(value, previousDate);
       }
       return undefined;
     });
@@ -28338,12 +28788,15 @@ function createDateInputType(type, regexp, parseDate, format) {
       }
       if (isValidDate(value)) {
         previousDate = value;
-        if (previousDate && timezone) {
+        var timezone = ctrl.$options.getOption('timezone');
+        if (timezone) {
+          previousTimezone = timezone;
           previousDate = convertTimezoneToLocal(previousDate, timezone, true);
         }
         return $filter('date')(value, format, timezone);
       } else {
         previousDate = null;
+        previousTimezone = null;
         return '';
       }
     });
@@ -28376,7 +28829,24 @@ function createDateInputType(type, regexp, parseDate, format) {
     }
 
     function parseObservedDateValue(val) {
-      return isDefined(val) && !isDate(val) ? parseDate(val) || undefined : val;
+      return isDefined(val) && !isDate(val) ? parseDateAndConvertTimeZoneToLocal(val) || undefined : val;
+    }
+
+    function parseDateAndConvertTimeZoneToLocal(value, previousDate) {
+      var timezone = ctrl.$options.getOption('timezone');
+
+      if (previousTimezone && previousTimezone !== timezone) {
+        // If the timezone has changed, adjust the previousDate to the default timezone
+        // so that the new date is converted with the correct timezone offset
+        previousDate = addDateMinutes(previousDate, timezoneToOffset(previousTimezone));
+      }
+
+      var parsedDate = parseDate(value, previousDate);
+
+      if (!isNaN(parsedDate) && timezone) {
+        parsedDate = convertTimezoneToLocal(parsedDate, timezone);
+      }
+      return parsedDate;
     }
   };
 }
@@ -29723,6 +30193,12 @@ var ngClassDirective = classDirective('', true);
  * This directive can be applied only within the scope of an
  * {@link ng.directive:ngRepeat ngRepeat}.
  *
+ * @animations
+ * | Animation                        | Occurs                              |
+ * |----------------------------------|-------------------------------------|
+ * | {@link ng.$animate#addClass addClass}       | just before the class is applied to the element   |
+ * | {@link ng.$animate#removeClass removeClass} | just before the class is removed from the element |
+ *
  * @element ANY
  * @param {expression} ngClassOdd {@link guide/expression Expression} to eval. The result
  *   of the evaluation can be a string representing space delimited class names or an array.
@@ -29755,6 +30231,62 @@ var ngClassDirective = classDirective('', true);
        });
      </file>
    </example>
+ *
+ * <hr />
+ * @example
+ * An example on how to implement animations using `ngClassOdd`:
+ *
+   <example module="ngAnimate" deps="angular-animate.js" animations="true" name="ng-class-odd-animate">
+     <file name="index.html">
+       <div ng-init="items=['Item 3', 'Item 2', 'Item 1', 'Item 0']">
+         <button ng-click="items.unshift('Item ' + items.length)">Add item</button>
+         <hr />
+         <table>
+           <tr ng-repeat="item in items" ng-class-odd="'odd'">
+             <td>{{ item }}</td>
+           </tr>
+         </table>
+       </div>
+     </file>
+     <file name="style.css">
+       .odd {
+         background: rgba(255, 255, 0, 0.25);
+       }
+
+       .odd-add, .odd-remove {
+         transition: 1.5s;
+       }
+     </file>
+     <file name="protractor.js" type="protractor">
+       it('should add new entries to the beginning of the list', function() {
+         var button = element(by.buttonText('Add item'));
+         var rows = element.all(by.repeater('item in items'));
+
+         expect(rows.count()).toBe(4);
+         expect(rows.get(0).getText()).toBe('Item 3');
+         expect(rows.get(1).getText()).toBe('Item 2');
+
+         button.click();
+
+         expect(rows.count()).toBe(5);
+         expect(rows.get(0).getText()).toBe('Item 4');
+         expect(rows.get(1).getText()).toBe('Item 3');
+       });
+
+       it('should add odd class to odd entries', function() {
+         var button = element(by.buttonText('Add item'));
+         var rows = element.all(by.repeater('item in items'));
+
+         expect(rows.get(0).getAttribute('class')).toMatch(/odd/);
+         expect(rows.get(1).getAttribute('class')).not.toMatch(/odd/);
+
+         button.click();
+
+         expect(rows.get(0).getAttribute('class')).toMatch(/odd/);
+         expect(rows.get(1).getAttribute('class')).not.toMatch(/odd/);
+       });
+     </file>
+   </example>
  */
 var ngClassOddDirective = classDirective('Odd', 0);
 
@@ -29770,6 +30302,12 @@ var ngClassOddDirective = classDirective('Odd', 0);
  *
  * This directive can be applied only within the scope of an
  * {@link ng.directive:ngRepeat ngRepeat}.
+ *
+ * @animations
+ * | Animation                        | Occurs                              |
+ * |----------------------------------|-------------------------------------|
+ * | {@link ng.$animate#addClass addClass}       | just before the class is applied to the element   |
+ * | {@link ng.$animate#removeClass removeClass} | just before the class is removed from the element |
  *
  * @element ANY
  * @param {expression} ngClassEven {@link guide/expression Expression} to eval. The
@@ -29800,6 +30338,62 @@ var ngClassOddDirective = classDirective('Odd', 0);
            toMatch(/odd/);
          expect(element(by.repeater('name in names').row(1).column('name')).getAttribute('class')).
            toMatch(/even/);
+       });
+     </file>
+   </example>
+ *
+ * <hr />
+ * @example
+ * An example on how to implement animations using `ngClassEven`:
+ *
+   <example module="ngAnimate" deps="angular-animate.js" animations="true" name="ng-class-even-animate">
+     <file name="index.html">
+       <div ng-init="items=['Item 3', 'Item 2', 'Item 1', 'Item 0']">
+         <button ng-click="items.unshift('Item ' + items.length)">Add item</button>
+         <hr />
+         <table>
+           <tr ng-repeat="item in items" ng-class-even="'even'">
+             <td>{{ item }}</td>
+           </tr>
+         </table>
+       </div>
+     </file>
+     <file name="style.css">
+       .even {
+         background: rgba(255, 255, 0, 0.25);
+       }
+
+       .even-add, .even-remove {
+         transition: 1.5s;
+       }
+     </file>
+     <file name="protractor.js" type="protractor">
+       it('should add new entries to the beginning of the list', function() {
+         var button = element(by.buttonText('Add item'));
+         var rows = element.all(by.repeater('item in items'));
+
+         expect(rows.count()).toBe(4);
+         expect(rows.get(0).getText()).toBe('Item 3');
+         expect(rows.get(1).getText()).toBe('Item 2');
+
+         button.click();
+
+         expect(rows.count()).toBe(5);
+         expect(rows.get(0).getText()).toBe('Item 4');
+         expect(rows.get(1).getText()).toBe('Item 3');
+       });
+
+       it('should add even class to even entries', function() {
+         var button = element(by.buttonText('Add item'));
+         var rows = element.all(by.repeater('item in items'));
+
+         expect(rows.get(0).getAttribute('class')).not.toMatch(/even/);
+         expect(rows.get(1).getAttribute('class')).toMatch(/even/);
+
+         button.click();
+
+         expect(rows.get(0).getAttribute('class')).not.toMatch(/even/);
+         expect(rows.get(1).getAttribute('class')).toMatch(/even/);
        });
      </file>
    </example>
@@ -33174,6 +33768,8 @@ defaultModelOptions = new ModelOptions({
  *     continental US time zone abbreviations, but for general use, use a time zone offset, for
  *     example, `'+0430'` (4 hours, 30 minutes east of the Greenwich meridian)
  *     If not specified, the timezone of the browser will be used.
+ *     Note that changing the timezone will have no effect on the current date, and is only applied after
+ *     the next input / model change.
  *
  */
 var ngModelOptionsDirective = function() {
@@ -35039,6 +35635,25 @@ var NG_HIDE_IN_PROGRESS_CLASS = 'ng-hide-animate';
       });
     </file>
   </example>
+ *
+ * @knownIssue
+ *
+ * ### Flickering when using ngShow to toggle between elements
+ *
+ * When using {@link ngShow} and / or {@link ngHide} to toggle between elements, it can
+ * happen that both the element to show and the element to hide are visible for a very short time.
+ *
+ * This usually happens when the {@link ngAnimate ngAnimate module} is included, but no actual animations
+ * are defined for {@link ngShow} / {@link ngHide}. Internet Explorer is affected more often than
+ * other browsers.
+ *
+ * There are several way to mitigate this problem:
+ *
+ * - {@link guide/animations#how-to-selectively-enable-disable-and-skip-animations Disable animations on the affected elements}.
+ * - Use {@link ngIf} or {@link ngSwitch} instead of {@link ngShow} / {@link ngHide}.
+ * - Use the special CSS selector `ng-hide.ng-hide-animate` to set `{display: none}` or similar on the affected elements.
+ * - Use `ng-class="{'ng-hide': expression}` instead of instead of {@link ngShow} / {@link ngHide}.
+ * - Define an animation on the affected elements.
  */
 var ngShowDirective = ['$animate', function($animate) {
   return {
@@ -35239,6 +35854,25 @@ var ngShowDirective = ['$animate', function($animate) {
       });
     </file>
   </example>
+ *
+ * @knownIssue
+ *
+ * ### Flickering when using ngHide to toggle between elements
+ *
+ * When using {@link ngShow} and / or {@link ngHide} to toggle between elements, it can
+ * happen that both the element to show and the element to hide are visible for a very short time.
+ *
+ * This usually happens when the {@link ngAnimate ngAnimate module} is included, but no actual animations
+ * are defined for {@link ngShow} / {@link ngHide}. Internet Explorer is affected more often than
+ * other browsers.
+ *
+ * There are several way to mitigate this problem:
+ *
+ * - {@link guide/animations#how-to-selectively-enable-disable-and-skip-animations Disable animations on the affected elements}.
+ * - Use {@link ngIf} or {@link ngSwitch} instead of {@link ngShow} / {@link ngHide}.
+ * - Use the special CSS selector `ng-hide.ng-hide-animate` to set `{display: none}` or similar on the affected elements.
+ * - Use `ng-class="{'ng-hide': expression}` instead of instead of {@link ngShow} / {@link ngHide}.
+ * - Define an animation on the affected elements.
  */
 var ngHideDirective = ['$animate', function($animate) {
   return {
@@ -43180,72 +43814,7 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":29}],5:[function(_dereq_,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
-
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            var source = ev.source;
-            if ((source === window || source === null) && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-}
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-
-},{}],6:[function(_dereq_,module,exports){
+},{"util/":15}],5:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -43334,7 +43903,7 @@ function assert(expression) {
 }
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"assert":4,"util":29}],7:[function(_dereq_,module,exports){
+},{"assert":4,"util":15}],6:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -43637,7 +44206,2093 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
+},{}],7:[function(_dereq_,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            var source = ev.source;
+            if ((source === window || source === null) && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
 },{}],8:[function(_dereq_,module,exports){
+(function (global){
+/*! http://mths.be/punycode v1.2.4 by @mathias */
+;(function(root) {
+
+	/** Detect free variables */
+	var freeExports = typeof exports == 'object' && exports;
+	var freeModule = typeof module == 'object' && module &&
+		module.exports == freeExports && module;
+	var freeGlobal = typeof global == 'object' && global;
+	if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal) {
+		root = freeGlobal;
+	}
+
+	/**
+	 * The `punycode` object.
+	 * @name punycode
+	 * @type Object
+	 */
+	var punycode,
+
+	/** Highest positive signed 32-bit float value */
+	maxInt = 2147483647, // aka. 0x7FFFFFFF or 2^31-1
+
+	/** Bootstring parameters */
+	base = 36,
+	tMin = 1,
+	tMax = 26,
+	skew = 38,
+	damp = 700,
+	initialBias = 72,
+	initialN = 128, // 0x80
+	delimiter = '-', // '\x2D'
+
+	/** Regular expressions */
+	regexPunycode = /^xn--/,
+	regexNonASCII = /[^ -~]/, // unprintable ASCII chars + non-ASCII chars
+	regexSeparators = /\x2E|\u3002|\uFF0E|\uFF61/g, // RFC 3490 separators
+
+	/** Error messages */
+	errors = {
+		'overflow': 'Overflow: input needs wider integers to process',
+		'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
+		'invalid-input': 'Invalid input'
+	},
+
+	/** Convenience shortcuts */
+	baseMinusTMin = base - tMin,
+	floor = Math.floor,
+	stringFromCharCode = String.fromCharCode,
+
+	/** Temporary variable */
+	key;
+
+	/*--------------------------------------------------------------------------*/
+
+	/**
+	 * A generic error utility function.
+	 * @private
+	 * @param {String} type The error type.
+	 * @returns {Error} Throws a `RangeError` with the applicable error message.
+	 */
+	function error(type) {
+		throw RangeError(errors[type]);
+	}
+
+	/**
+	 * A generic `Array#map` utility function.
+	 * @private
+	 * @param {Array} array The array to iterate over.
+	 * @param {Function} callback The function that gets called for every array
+	 * item.
+	 * @returns {Array} A new array of values returned by the callback function.
+	 */
+	function map(array, fn) {
+		var length = array.length;
+		while (length--) {
+			array[length] = fn(array[length]);
+		}
+		return array;
+	}
+
+	/**
+	 * A simple `Array#map`-like wrapper to work with domain name strings.
+	 * @private
+	 * @param {String} domain The domain name.
+	 * @param {Function} callback The function that gets called for every
+	 * character.
+	 * @returns {Array} A new string of characters returned by the callback
+	 * function.
+	 */
+	function mapDomain(string, fn) {
+		return map(string.split(regexSeparators), fn).join('.');
+	}
+
+	/**
+	 * Creates an array containing the numeric code points of each Unicode
+	 * character in the string. While JavaScript uses UCS-2 internally,
+	 * this function will convert a pair of surrogate halves (each of which
+	 * UCS-2 exposes as separate characters) into a single code point,
+	 * matching UTF-16.
+	 * @see `punycode.ucs2.encode`
+	 * @see <http://mathiasbynens.be/notes/javascript-encoding>
+	 * @memberOf punycode.ucs2
+	 * @name decode
+	 * @param {String} string The Unicode input string (UCS-2).
+	 * @returns {Array} The new array of code points.
+	 */
+	function ucs2decode(string) {
+		var output = [],
+		    counter = 0,
+		    length = string.length,
+		    value,
+		    extra;
+		while (counter < length) {
+			value = string.charCodeAt(counter++);
+			if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
+				// high surrogate, and there is a next character
+				extra = string.charCodeAt(counter++);
+				if ((extra & 0xFC00) == 0xDC00) { // low surrogate
+					output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
+				} else {
+					// unmatched surrogate; only append this code unit, in case the next
+					// code unit is the high surrogate of a surrogate pair
+					output.push(value);
+					counter--;
+				}
+			} else {
+				output.push(value);
+			}
+		}
+		return output;
+	}
+
+	/**
+	 * Creates a string based on an array of numeric code points.
+	 * @see `punycode.ucs2.decode`
+	 * @memberOf punycode.ucs2
+	 * @name encode
+	 * @param {Array} codePoints The array of numeric code points.
+	 * @returns {String} The new Unicode string (UCS-2).
+	 */
+	function ucs2encode(array) {
+		return map(array, function(value) {
+			var output = '';
+			if (value > 0xFFFF) {
+				value -= 0x10000;
+				output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
+				value = 0xDC00 | value & 0x3FF;
+			}
+			output += stringFromCharCode(value);
+			return output;
+		}).join('');
+	}
+
+	/**
+	 * Converts a basic code point into a digit/integer.
+	 * @see `digitToBasic()`
+	 * @private
+	 * @param {Number} codePoint The basic numeric code point value.
+	 * @returns {Number} The numeric value of a basic code point (for use in
+	 * representing integers) in the range `0` to `base - 1`, or `base` if
+	 * the code point does not represent a value.
+	 */
+	function basicToDigit(codePoint) {
+		if (codePoint - 48 < 10) {
+			return codePoint - 22;
+		}
+		if (codePoint - 65 < 26) {
+			return codePoint - 65;
+		}
+		if (codePoint - 97 < 26) {
+			return codePoint - 97;
+		}
+		return base;
+	}
+
+	/**
+	 * Converts a digit/integer into a basic code point.
+	 * @see `basicToDigit()`
+	 * @private
+	 * @param {Number} digit The numeric value of a basic code point.
+	 * @returns {Number} The basic code point whose value (when used for
+	 * representing integers) is `digit`, which needs to be in the range
+	 * `0` to `base - 1`. If `flag` is non-zero, the uppercase form is
+	 * used; else, the lowercase form is used. The behavior is undefined
+	 * if `flag` is non-zero and `digit` has no uppercase form.
+	 */
+	function digitToBasic(digit, flag) {
+		//  0..25 map to ASCII a..z or A..Z
+		// 26..35 map to ASCII 0..9
+		return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
+	}
+
+	/**
+	 * Bias adaptation function as per section 3.4 of RFC 3492.
+	 * http://tools.ietf.org/html/rfc3492#section-3.4
+	 * @private
+	 */
+	function adapt(delta, numPoints, firstTime) {
+		var k = 0;
+		delta = firstTime ? floor(delta / damp) : delta >> 1;
+		delta += floor(delta / numPoints);
+		for (/* no initialization */; delta > baseMinusTMin * tMax >> 1; k += base) {
+			delta = floor(delta / baseMinusTMin);
+		}
+		return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
+	}
+
+	/**
+	 * Converts a Punycode string of ASCII-only symbols to a string of Unicode
+	 * symbols.
+	 * @memberOf punycode
+	 * @param {String} input The Punycode string of ASCII-only symbols.
+	 * @returns {String} The resulting string of Unicode symbols.
+	 */
+	function decode(input) {
+		// Don't use UCS-2
+		var output = [],
+		    inputLength = input.length,
+		    out,
+		    i = 0,
+		    n = initialN,
+		    bias = initialBias,
+		    basic,
+		    j,
+		    index,
+		    oldi,
+		    w,
+		    k,
+		    digit,
+		    t,
+		    /** Cached calculation results */
+		    baseMinusT;
+
+		// Handle the basic code points: let `basic` be the number of input code
+		// points before the last delimiter, or `0` if there is none, then copy
+		// the first basic code points to the output.
+
+		basic = input.lastIndexOf(delimiter);
+		if (basic < 0) {
+			basic = 0;
+		}
+
+		for (j = 0; j < basic; ++j) {
+			// if it's not a basic code point
+			if (input.charCodeAt(j) >= 0x80) {
+				error('not-basic');
+			}
+			output.push(input.charCodeAt(j));
+		}
+
+		// Main decoding loop: start just after the last delimiter if any basic code
+		// points were copied; start at the beginning otherwise.
+
+		for (index = basic > 0 ? basic + 1 : 0; index < inputLength; /* no final expression */) {
+
+			// `index` is the index of the next character to be consumed.
+			// Decode a generalized variable-length integer into `delta`,
+			// which gets added to `i`. The overflow checking is easier
+			// if we increase `i` as we go, then subtract off its starting
+			// value at the end to obtain `delta`.
+			for (oldi = i, w = 1, k = base; /* no condition */; k += base) {
+
+				if (index >= inputLength) {
+					error('invalid-input');
+				}
+
+				digit = basicToDigit(input.charCodeAt(index++));
+
+				if (digit >= base || digit > floor((maxInt - i) / w)) {
+					error('overflow');
+				}
+
+				i += digit * w;
+				t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+
+				if (digit < t) {
+					break;
+				}
+
+				baseMinusT = base - t;
+				if (w > floor(maxInt / baseMinusT)) {
+					error('overflow');
+				}
+
+				w *= baseMinusT;
+
+			}
+
+			out = output.length + 1;
+			bias = adapt(i - oldi, out, oldi == 0);
+
+			// `i` was supposed to wrap around from `out` to `0`,
+			// incrementing `n` each time, so we'll fix that now:
+			if (floor(i / out) > maxInt - n) {
+				error('overflow');
+			}
+
+			n += floor(i / out);
+			i %= out;
+
+			// Insert `n` at position `i` of the output
+			output.splice(i++, 0, n);
+
+		}
+
+		return ucs2encode(output);
+	}
+
+	/**
+	 * Converts a string of Unicode symbols to a Punycode string of ASCII-only
+	 * symbols.
+	 * @memberOf punycode
+	 * @param {String} input The string of Unicode symbols.
+	 * @returns {String} The resulting Punycode string of ASCII-only symbols.
+	 */
+	function encode(input) {
+		var n,
+		    delta,
+		    handledCPCount,
+		    basicLength,
+		    bias,
+		    j,
+		    m,
+		    q,
+		    k,
+		    t,
+		    currentValue,
+		    output = [],
+		    /** `inputLength` will hold the number of code points in `input`. */
+		    inputLength,
+		    /** Cached calculation results */
+		    handledCPCountPlusOne,
+		    baseMinusT,
+		    qMinusT;
+
+		// Convert the input in UCS-2 to Unicode
+		input = ucs2decode(input);
+
+		// Cache the length
+		inputLength = input.length;
+
+		// Initialize the state
+		n = initialN;
+		delta = 0;
+		bias = initialBias;
+
+		// Handle the basic code points
+		for (j = 0; j < inputLength; ++j) {
+			currentValue = input[j];
+			if (currentValue < 0x80) {
+				output.push(stringFromCharCode(currentValue));
+			}
+		}
+
+		handledCPCount = basicLength = output.length;
+
+		// `handledCPCount` is the number of code points that have been handled;
+		// `basicLength` is the number of basic code points.
+
+		// Finish the basic string - if it is not empty - with a delimiter
+		if (basicLength) {
+			output.push(delimiter);
+		}
+
+		// Main encoding loop:
+		while (handledCPCount < inputLength) {
+
+			// All non-basic code points < n have been handled already. Find the next
+			// larger one:
+			for (m = maxInt, j = 0; j < inputLength; ++j) {
+				currentValue = input[j];
+				if (currentValue >= n && currentValue < m) {
+					m = currentValue;
+				}
+			}
+
+			// Increase `delta` enough to advance the decoder's <n,i> state to <m,0>,
+			// but guard against overflow
+			handledCPCountPlusOne = handledCPCount + 1;
+			if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
+				error('overflow');
+			}
+
+			delta += (m - n) * handledCPCountPlusOne;
+			n = m;
+
+			for (j = 0; j < inputLength; ++j) {
+				currentValue = input[j];
+
+				if (currentValue < n && ++delta > maxInt) {
+					error('overflow');
+				}
+
+				if (currentValue == n) {
+					// Represent delta as a generalized variable-length integer
+					for (q = delta, k = base; /* no condition */; k += base) {
+						t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+						if (q < t) {
+							break;
+						}
+						qMinusT = q - t;
+						baseMinusT = base - t;
+						output.push(
+							stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0))
+						);
+						q = floor(qMinusT / baseMinusT);
+					}
+
+					output.push(stringFromCharCode(digitToBasic(q, 0)));
+					bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
+					delta = 0;
+					++handledCPCount;
+				}
+			}
+
+			++delta;
+			++n;
+
+		}
+		return output.join('');
+	}
+
+	/**
+	 * Converts a Punycode string representing a domain name to Unicode. Only the
+	 * Punycoded parts of the domain name will be converted, i.e. it doesn't
+	 * matter if you call it on a string that has already been converted to
+	 * Unicode.
+	 * @memberOf punycode
+	 * @param {String} domain The Punycode domain name to convert to Unicode.
+	 * @returns {String} The Unicode representation of the given Punycode
+	 * string.
+	 */
+	function toUnicode(domain) {
+		return mapDomain(domain, function(string) {
+			return regexPunycode.test(string)
+				? decode(string.slice(4).toLowerCase())
+				: string;
+		});
+	}
+
+	/**
+	 * Converts a Unicode string representing a domain name to Punycode. Only the
+	 * non-ASCII parts of the domain name will be converted, i.e. it doesn't
+	 * matter if you call it with a domain that's already in ASCII.
+	 * @memberOf punycode
+	 * @param {String} domain The domain name to convert, as a Unicode string.
+	 * @returns {String} The Punycode representation of the given domain name.
+	 */
+	function toASCII(domain) {
+		return mapDomain(domain, function(string) {
+			return regexNonASCII.test(string)
+				? 'xn--' + encode(string)
+				: string;
+		});
+	}
+
+	/*--------------------------------------------------------------------------*/
+
+	/** Define the public API */
+	punycode = {
+		/**
+		 * A string representing the current Punycode.js version number.
+		 * @memberOf punycode
+		 * @type String
+		 */
+		'version': '1.2.4',
+		/**
+		 * An object of methods to convert from JavaScript's internal character
+		 * representation (UCS-2) to Unicode code points, and back.
+		 * @see <http://mathiasbynens.be/notes/javascript-encoding>
+		 * @memberOf punycode
+		 * @type Object
+		 */
+		'ucs2': {
+			'decode': ucs2decode,
+			'encode': ucs2encode
+		},
+		'decode': decode,
+		'encode': encode,
+		'toASCII': toASCII,
+		'toUnicode': toUnicode
+	};
+
+	/** Expose `punycode` */
+	// Some AMD build optimizers, like r.js, check for specific condition patterns
+	// like the following:
+	if (
+		typeof define == 'function' &&
+		typeof define.amd == 'object' &&
+		define.amd
+	) {
+		define('punycode', function() {
+			return punycode;
+		});
+	} else if (freeExports && !freeExports.nodeType) {
+		if (freeModule) { // in Node.js or RingoJS v0.8.0+
+			freeModule.exports = punycode;
+		} else { // in Narwhal or RingoJS v0.7.0-
+			for (key in punycode) {
+				punycode.hasOwnProperty(key) && (freeExports[key] = punycode[key]);
+			}
+		}
+	} else { // in Rhino or a web browser
+		root.punycode = punycode;
+	}
+
+}(this));
+
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],9:[function(_dereq_,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+'use strict';
+
+// If obj.hasOwnProperty has been overridden, then calling
+// obj.hasOwnProperty(prop) will break.
+// See: https://github.com/joyent/node/issues/1707
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+module.exports = function(qs, sep, eq, options) {
+  sep = sep || '&';
+  eq = eq || '=';
+  var obj = {};
+
+  if (typeof qs !== 'string' || qs.length === 0) {
+    return obj;
+  }
+
+  var regexp = /\+/g;
+  qs = qs.split(sep);
+
+  var maxKeys = 1000;
+  if (options && typeof options.maxKeys === 'number') {
+    maxKeys = options.maxKeys;
+  }
+
+  var len = qs.length;
+  // maxKeys <= 0 means that we should not limit keys count
+  if (maxKeys > 0 && len > maxKeys) {
+    len = maxKeys;
+  }
+
+  for (var i = 0; i < len; ++i) {
+    var x = qs[i].replace(regexp, '%20'),
+        idx = x.indexOf(eq),
+        kstr, vstr, k, v;
+
+    if (idx >= 0) {
+      kstr = x.substr(0, idx);
+      vstr = x.substr(idx + 1);
+    } else {
+      kstr = x;
+      vstr = '';
+    }
+
+    k = decodeURIComponent(kstr);
+    v = decodeURIComponent(vstr);
+
+    if (!hasOwnProperty(obj, k)) {
+      obj[k] = v;
+    } else if (isArray(obj[k])) {
+      obj[k].push(v);
+    } else {
+      obj[k] = [obj[k], v];
+    }
+  }
+
+  return obj;
+};
+
+var isArray = Array.isArray || function (xs) {
+  return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+},{}],10:[function(_dereq_,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+'use strict';
+
+var stringifyPrimitive = function(v) {
+  switch (typeof v) {
+    case 'string':
+      return v;
+
+    case 'boolean':
+      return v ? 'true' : 'false';
+
+    case 'number':
+      return isFinite(v) ? v : '';
+
+    default:
+      return '';
+  }
+};
+
+module.exports = function(obj, sep, eq, name) {
+  sep = sep || '&';
+  eq = eq || '=';
+  if (obj === null) {
+    obj = undefined;
+  }
+
+  if (typeof obj === 'object') {
+    return map(objectKeys(obj), function(k) {
+      var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
+      if (isArray(obj[k])) {
+        return obj[k].map(function(v) {
+          return ks + encodeURIComponent(stringifyPrimitive(v));
+        }).join(sep);
+      } else {
+        return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
+      }
+    }).join(sep);
+
+  }
+
+  if (!name) return '';
+  return encodeURIComponent(stringifyPrimitive(name)) + eq +
+         encodeURIComponent(stringifyPrimitive(obj));
+};
+
+var isArray = Array.isArray || function (xs) {
+  return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+function map (xs, f) {
+  if (xs.map) return xs.map(f);
+  var res = [];
+  for (var i = 0; i < xs.length; i++) {
+    res.push(f(xs[i], i));
+  }
+  return res;
+}
+
+var objectKeys = Object.keys || function (obj) {
+  var res = [];
+  for (var key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
+  }
+  return res;
+};
+
+},{}],11:[function(_dereq_,module,exports){
+'use strict';
+
+exports.decode = exports.parse = _dereq_('./decode');
+exports.encode = exports.stringify = _dereq_('./encode');
+
+},{"./decode":9,"./encode":10}],12:[function(_dereq_,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var punycode = _dereq_('punycode');
+
+exports.parse = urlParse;
+exports.resolve = urlResolve;
+exports.resolveObject = urlResolveObject;
+exports.format = urlFormat;
+
+exports.Url = Url;
+
+function Url() {
+  this.protocol = null;
+  this.slashes = null;
+  this.auth = null;
+  this.host = null;
+  this.port = null;
+  this.hostname = null;
+  this.hash = null;
+  this.search = null;
+  this.query = null;
+  this.pathname = null;
+  this.path = null;
+  this.href = null;
+}
+
+// Reference: RFC 3986, RFC 1808, RFC 2396
+
+// define these here so at least they only have to be
+// compiled once on the first module load.
+var protocolPattern = /^([a-z0-9.+-]+:)/i,
+    portPattern = /:[0-9]*$/,
+
+    // RFC 2396: characters reserved for delimiting URLs.
+    // We actually just auto-escape these.
+    delims = ['<', '>', '"', '`', ' ', '\r', '\n', '\t'],
+
+    // RFC 2396: characters not allowed for various reasons.
+    unwise = ['{', '}', '|', '\\', '^', '`'].concat(delims),
+
+    // Allowed by RFCs, but cause of XSS attacks.  Always escape these.
+    autoEscape = ['\''].concat(unwise),
+    // Characters that are never ever allowed in a hostname.
+    // Note that any invalid chars are also handled, but these
+    // are the ones that are *expected* to be seen, so we fast-path
+    // them.
+    nonHostChars = ['%', '/', '?', ';', '#'].concat(autoEscape),
+    hostEndingChars = ['/', '?', '#'],
+    hostnameMaxLen = 255,
+    hostnamePartPattern = /^[a-z0-9A-Z_-]{0,63}$/,
+    hostnamePartStart = /^([a-z0-9A-Z_-]{0,63})(.*)$/,
+    // protocols that can allow "unsafe" and "unwise" chars.
+    unsafeProtocol = {
+      'javascript': true,
+      'javascript:': true
+    },
+    // protocols that never have a hostname.
+    hostlessProtocol = {
+      'javascript': true,
+      'javascript:': true
+    },
+    // protocols that always contain a // bit.
+    slashedProtocol = {
+      'http': true,
+      'https': true,
+      'ftp': true,
+      'gopher': true,
+      'file': true,
+      'http:': true,
+      'https:': true,
+      'ftp:': true,
+      'gopher:': true,
+      'file:': true
+    },
+    querystring = _dereq_('querystring');
+
+function urlParse(url, parseQueryString, slashesDenoteHost) {
+  if (url && isObject(url) && url instanceof Url) return url;
+
+  var u = new Url;
+  u.parse(url, parseQueryString, slashesDenoteHost);
+  return u;
+}
+
+Url.prototype.parse = function(url, parseQueryString, slashesDenoteHost) {
+  if (!isString(url)) {
+    throw new TypeError("Parameter 'url' must be a string, not " + typeof url);
+  }
+
+  var rest = url;
+
+  // trim before proceeding.
+  // This is to support parse stuff like "  http://foo.com  \n"
+  rest = rest.trim();
+
+  var proto = protocolPattern.exec(rest);
+  if (proto) {
+    proto = proto[0];
+    var lowerProto = proto.toLowerCase();
+    this.protocol = lowerProto;
+    rest = rest.substr(proto.length);
+  }
+
+  // figure out if it's got a host
+  // user@server is *always* interpreted as a hostname, and url
+  // resolution will treat //foo/bar as host=foo,path=bar because that's
+  // how the browser resolves relative URLs.
+  if (slashesDenoteHost || proto || rest.match(/^\/\/[^@\/]+@[^@\/]+/)) {
+    var slashes = rest.substr(0, 2) === '//';
+    if (slashes && !(proto && hostlessProtocol[proto])) {
+      rest = rest.substr(2);
+      this.slashes = true;
+    }
+  }
+
+  if (!hostlessProtocol[proto] &&
+      (slashes || (proto && !slashedProtocol[proto]))) {
+
+    // there's a hostname.
+    // the first instance of /, ?, ;, or # ends the host.
+    //
+    // If there is an @ in the hostname, then non-host chars *are* allowed
+    // to the left of the last @ sign, unless some host-ending character
+    // comes *before* the @-sign.
+    // URLs are obnoxious.
+    //
+    // ex:
+    // http://a@b@c/ => user:a@b host:c
+    // http://a@b?@c => user:a host:c path:/?@c
+
+    // v0.12 TODO(isaacs): This is not quite how Chrome does things.
+    // Review our test case against browsers more comprehensively.
+
+    // find the first instance of any hostEndingChars
+    var hostEnd = -1;
+    for (var i = 0; i < hostEndingChars.length; i++) {
+      var hec = rest.indexOf(hostEndingChars[i]);
+      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
+        hostEnd = hec;
+    }
+
+    // at this point, either we have an explicit point where the
+    // auth portion cannot go past, or the last @ char is the decider.
+    var auth, atSign;
+    if (hostEnd === -1) {
+      // atSign can be anywhere.
+      atSign = rest.lastIndexOf('@');
+    } else {
+      // atSign must be in auth portion.
+      // http://a@b/c@d => host:b auth:a path:/c@d
+      atSign = rest.lastIndexOf('@', hostEnd);
+    }
+
+    // Now we have a portion which is definitely the auth.
+    // Pull that off.
+    if (atSign !== -1) {
+      auth = rest.slice(0, atSign);
+      rest = rest.slice(atSign + 1);
+      this.auth = decodeURIComponent(auth);
+    }
+
+    // the host is the remaining to the left of the first non-host char
+    hostEnd = -1;
+    for (var i = 0; i < nonHostChars.length; i++) {
+      var hec = rest.indexOf(nonHostChars[i]);
+      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
+        hostEnd = hec;
+    }
+    // if we still have not hit it, then the entire thing is a host.
+    if (hostEnd === -1)
+      hostEnd = rest.length;
+
+    this.host = rest.slice(0, hostEnd);
+    rest = rest.slice(hostEnd);
+
+    // pull out port.
+    this.parseHost();
+
+    // we've indicated that there is a hostname,
+    // so even if it's empty, it has to be present.
+    this.hostname = this.hostname || '';
+
+    // if hostname begins with [ and ends with ]
+    // assume that it's an IPv6 address.
+    var ipv6Hostname = this.hostname[0] === '[' &&
+        this.hostname[this.hostname.length - 1] === ']';
+
+    // validate a little.
+    if (!ipv6Hostname) {
+      var hostparts = this.hostname.split(/\./);
+      for (var i = 0, l = hostparts.length; i < l; i++) {
+        var part = hostparts[i];
+        if (!part) continue;
+        if (!part.match(hostnamePartPattern)) {
+          var newpart = '';
+          for (var j = 0, k = part.length; j < k; j++) {
+            if (part.charCodeAt(j) > 127) {
+              // we replace non-ASCII char with a temporary placeholder
+              // we need this to make sure size of hostname is not
+              // broken by replacing non-ASCII by nothing
+              newpart += 'x';
+            } else {
+              newpart += part[j];
+            }
+          }
+          // we test again with ASCII char only
+          if (!newpart.match(hostnamePartPattern)) {
+            var validParts = hostparts.slice(0, i);
+            var notHost = hostparts.slice(i + 1);
+            var bit = part.match(hostnamePartStart);
+            if (bit) {
+              validParts.push(bit[1]);
+              notHost.unshift(bit[2]);
+            }
+            if (notHost.length) {
+              rest = '/' + notHost.join('.') + rest;
+            }
+            this.hostname = validParts.join('.');
+            break;
+          }
+        }
+      }
+    }
+
+    if (this.hostname.length > hostnameMaxLen) {
+      this.hostname = '';
+    } else {
+      // hostnames are always lower case.
+      this.hostname = this.hostname.toLowerCase();
+    }
+
+    if (!ipv6Hostname) {
+      // IDNA Support: Returns a puny coded representation of "domain".
+      // It only converts the part of the domain name that
+      // has non ASCII characters. I.e. it dosent matter if
+      // you call it with a domain that already is in ASCII.
+      var domainArray = this.hostname.split('.');
+      var newOut = [];
+      for (var i = 0; i < domainArray.length; ++i) {
+        var s = domainArray[i];
+        newOut.push(s.match(/[^A-Za-z0-9_-]/) ?
+            'xn--' + punycode.encode(s) : s);
+      }
+      this.hostname = newOut.join('.');
+    }
+
+    var p = this.port ? ':' + this.port : '';
+    var h = this.hostname || '';
+    this.host = h + p;
+    this.href += this.host;
+
+    // strip [ and ] from the hostname
+    // the host field still retains them, though
+    if (ipv6Hostname) {
+      this.hostname = this.hostname.substr(1, this.hostname.length - 2);
+      if (rest[0] !== '/') {
+        rest = '/' + rest;
+      }
+    }
+  }
+
+  // now rest is set to the post-host stuff.
+  // chop off any delim chars.
+  if (!unsafeProtocol[lowerProto]) {
+
+    // First, make 100% sure that any "autoEscape" chars get
+    // escaped, even if encodeURIComponent doesn't think they
+    // need to be.
+    for (var i = 0, l = autoEscape.length; i < l; i++) {
+      var ae = autoEscape[i];
+      var esc = encodeURIComponent(ae);
+      if (esc === ae) {
+        esc = escape(ae);
+      }
+      rest = rest.split(ae).join(esc);
+    }
+  }
+
+
+  // chop off from the tail first.
+  var hash = rest.indexOf('#');
+  if (hash !== -1) {
+    // got a fragment string.
+    this.hash = rest.substr(hash);
+    rest = rest.slice(0, hash);
+  }
+  var qm = rest.indexOf('?');
+  if (qm !== -1) {
+    this.search = rest.substr(qm);
+    this.query = rest.substr(qm + 1);
+    if (parseQueryString) {
+      this.query = querystring.parse(this.query);
+    }
+    rest = rest.slice(0, qm);
+  } else if (parseQueryString) {
+    // no query string, but parseQueryString still requested
+    this.search = '';
+    this.query = {};
+  }
+  if (rest) this.pathname = rest;
+  if (slashedProtocol[lowerProto] &&
+      this.hostname && !this.pathname) {
+    this.pathname = '/';
+  }
+
+  //to support http.request
+  if (this.pathname || this.search) {
+    var p = this.pathname || '';
+    var s = this.search || '';
+    this.path = p + s;
+  }
+
+  // finally, reconstruct the href based on what has been validated.
+  this.href = this.format();
+  return this;
+};
+
+// format a parsed object into a url string
+function urlFormat(obj) {
+  // ensure it's an object, and not a string url.
+  // If it's an obj, this is a no-op.
+  // this way, you can call url_format() on strings
+  // to clean up potentially wonky urls.
+  if (isString(obj)) obj = urlParse(obj);
+  if (!(obj instanceof Url)) return Url.prototype.format.call(obj);
+  return obj.format();
+}
+
+Url.prototype.format = function() {
+  var auth = this.auth || '';
+  if (auth) {
+    auth = encodeURIComponent(auth);
+    auth = auth.replace(/%3A/i, ':');
+    auth += '@';
+  }
+
+  var protocol = this.protocol || '',
+      pathname = this.pathname || '',
+      hash = this.hash || '',
+      host = false,
+      query = '';
+
+  if (this.host) {
+    host = auth + this.host;
+  } else if (this.hostname) {
+    host = auth + (this.hostname.indexOf(':') === -1 ?
+        this.hostname :
+        '[' + this.hostname + ']');
+    if (this.port) {
+      host += ':' + this.port;
+    }
+  }
+
+  if (this.query &&
+      isObject(this.query) &&
+      Object.keys(this.query).length) {
+    query = querystring.stringify(this.query);
+  }
+
+  var search = this.search || (query && ('?' + query)) || '';
+
+  if (protocol && protocol.substr(-1) !== ':') protocol += ':';
+
+  // only the slashedProtocols get the //.  Not mailto:, xmpp:, etc.
+  // unless they had them to begin with.
+  if (this.slashes ||
+      (!protocol || slashedProtocol[protocol]) && host !== false) {
+    host = '//' + (host || '');
+    if (pathname && pathname.charAt(0) !== '/') pathname = '/' + pathname;
+  } else if (!host) {
+    host = '';
+  }
+
+  if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
+  if (search && search.charAt(0) !== '?') search = '?' + search;
+
+  pathname = pathname.replace(/[?#]/g, function(match) {
+    return encodeURIComponent(match);
+  });
+  search = search.replace('#', '%23');
+
+  return protocol + host + pathname + search + hash;
+};
+
+function urlResolve(source, relative) {
+  return urlParse(source, false, true).resolve(relative);
+}
+
+Url.prototype.resolve = function(relative) {
+  return this.resolveObject(urlParse(relative, false, true)).format();
+};
+
+function urlResolveObject(source, relative) {
+  if (!source) return relative;
+  return urlParse(source, false, true).resolveObject(relative);
+}
+
+Url.prototype.resolveObject = function(relative) {
+  if (isString(relative)) {
+    var rel = new Url();
+    rel.parse(relative, false, true);
+    relative = rel;
+  }
+
+  var result = new Url();
+  Object.keys(this).forEach(function(k) {
+    result[k] = this[k];
+  }, this);
+
+  // hash is always overridden, no matter what.
+  // even href="" will remove it.
+  result.hash = relative.hash;
+
+  // if the relative url is empty, then there's nothing left to do here.
+  if (relative.href === '') {
+    result.href = result.format();
+    return result;
+  }
+
+  // hrefs like //foo/bar always cut to the protocol.
+  if (relative.slashes && !relative.protocol) {
+    // take everything except the protocol from relative
+    Object.keys(relative).forEach(function(k) {
+      if (k !== 'protocol')
+        result[k] = relative[k];
+    });
+
+    //urlParse appends trailing / to urls like http://www.example.com
+    if (slashedProtocol[result.protocol] &&
+        result.hostname && !result.pathname) {
+      result.path = result.pathname = '/';
+    }
+
+    result.href = result.format();
+    return result;
+  }
+
+  if (relative.protocol && relative.protocol !== result.protocol) {
+    // if it's a known url protocol, then changing
+    // the protocol does weird things
+    // first, if it's not file:, then we MUST have a host,
+    // and if there was a path
+    // to begin with, then we MUST have a path.
+    // if it is file:, then the host is dropped,
+    // because that's known to be hostless.
+    // anything else is assumed to be absolute.
+    if (!slashedProtocol[relative.protocol]) {
+      Object.keys(relative).forEach(function(k) {
+        result[k] = relative[k];
+      });
+      result.href = result.format();
+      return result;
+    }
+
+    result.protocol = relative.protocol;
+    if (!relative.host && !hostlessProtocol[relative.protocol]) {
+      var relPath = (relative.pathname || '').split('/');
+      while (relPath.length && !(relative.host = relPath.shift()));
+      if (!relative.host) relative.host = '';
+      if (!relative.hostname) relative.hostname = '';
+      if (relPath[0] !== '') relPath.unshift('');
+      if (relPath.length < 2) relPath.unshift('');
+      result.pathname = relPath.join('/');
+    } else {
+      result.pathname = relative.pathname;
+    }
+    result.search = relative.search;
+    result.query = relative.query;
+    result.host = relative.host || '';
+    result.auth = relative.auth;
+    result.hostname = relative.hostname || relative.host;
+    result.port = relative.port;
+    // to support http.request
+    if (result.pathname || result.search) {
+      var p = result.pathname || '';
+      var s = result.search || '';
+      result.path = p + s;
+    }
+    result.slashes = result.slashes || relative.slashes;
+    result.href = result.format();
+    return result;
+  }
+
+  var isSourceAbs = (result.pathname && result.pathname.charAt(0) === '/'),
+      isRelAbs = (
+          relative.host ||
+          relative.pathname && relative.pathname.charAt(0) === '/'
+      ),
+      mustEndAbs = (isRelAbs || isSourceAbs ||
+                    (result.host && relative.pathname)),
+      removeAllDots = mustEndAbs,
+      srcPath = result.pathname && result.pathname.split('/') || [],
+      relPath = relative.pathname && relative.pathname.split('/') || [],
+      psychotic = result.protocol && !slashedProtocol[result.protocol];
+
+  // if the url is a non-slashed url, then relative
+  // links like ../.. should be able
+  // to crawl up to the hostname, as well.  This is strange.
+  // result.protocol has already been set by now.
+  // Later on, put the first path part into the host field.
+  if (psychotic) {
+    result.hostname = '';
+    result.port = null;
+    if (result.host) {
+      if (srcPath[0] === '') srcPath[0] = result.host;
+      else srcPath.unshift(result.host);
+    }
+    result.host = '';
+    if (relative.protocol) {
+      relative.hostname = null;
+      relative.port = null;
+      if (relative.host) {
+        if (relPath[0] === '') relPath[0] = relative.host;
+        else relPath.unshift(relative.host);
+      }
+      relative.host = null;
+    }
+    mustEndAbs = mustEndAbs && (relPath[0] === '' || srcPath[0] === '');
+  }
+
+  if (isRelAbs) {
+    // it's absolute.
+    result.host = (relative.host || relative.host === '') ?
+                  relative.host : result.host;
+    result.hostname = (relative.hostname || relative.hostname === '') ?
+                      relative.hostname : result.hostname;
+    result.search = relative.search;
+    result.query = relative.query;
+    srcPath = relPath;
+    // fall through to the dot-handling below.
+  } else if (relPath.length) {
+    // it's relative
+    // throw away the existing file, and take the new path instead.
+    if (!srcPath) srcPath = [];
+    srcPath.pop();
+    srcPath = srcPath.concat(relPath);
+    result.search = relative.search;
+    result.query = relative.query;
+  } else if (!isNullOrUndefined(relative.search)) {
+    // just pull out the search.
+    // like href='?foo'.
+    // Put this after the other two cases because it simplifies the booleans
+    if (psychotic) {
+      result.hostname = result.host = srcPath.shift();
+      //occationaly the auth can get stuck only in host
+      //this especialy happens in cases like
+      //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
+      var authInHost = result.host && result.host.indexOf('@') > 0 ?
+                       result.host.split('@') : false;
+      if (authInHost) {
+        result.auth = authInHost.shift();
+        result.host = result.hostname = authInHost.shift();
+      }
+    }
+    result.search = relative.search;
+    result.query = relative.query;
+    //to support http.request
+    if (!isNull(result.pathname) || !isNull(result.search)) {
+      result.path = (result.pathname ? result.pathname : '') +
+                    (result.search ? result.search : '');
+    }
+    result.href = result.format();
+    return result;
+  }
+
+  if (!srcPath.length) {
+    // no path at all.  easy.
+    // we've already handled the other stuff above.
+    result.pathname = null;
+    //to support http.request
+    if (result.search) {
+      result.path = '/' + result.search;
+    } else {
+      result.path = null;
+    }
+    result.href = result.format();
+    return result;
+  }
+
+  // if a url ENDs in . or .., then it must get a trailing slash.
+  // however, if it ends in anything else non-slashy,
+  // then it must NOT get a trailing slash.
+  var last = srcPath.slice(-1)[0];
+  var hasTrailingSlash = (
+      (result.host || relative.host) && (last === '.' || last === '..') ||
+      last === '');
+
+  // strip single dots, resolve double dots to parent dir
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = srcPath.length; i >= 0; i--) {
+    last = srcPath[i];
+    if (last == '.') {
+      srcPath.splice(i, 1);
+    } else if (last === '..') {
+      srcPath.splice(i, 1);
+      up++;
+    } else if (up) {
+      srcPath.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (!mustEndAbs && !removeAllDots) {
+    for (; up--; up) {
+      srcPath.unshift('..');
+    }
+  }
+
+  if (mustEndAbs && srcPath[0] !== '' &&
+      (!srcPath[0] || srcPath[0].charAt(0) !== '/')) {
+    srcPath.unshift('');
+  }
+
+  if (hasTrailingSlash && (srcPath.join('/').substr(-1) !== '/')) {
+    srcPath.push('');
+  }
+
+  var isAbsolute = srcPath[0] === '' ||
+      (srcPath[0] && srcPath[0].charAt(0) === '/');
+
+  // put the host back
+  if (psychotic) {
+    result.hostname = result.host = isAbsolute ? '' :
+                                    srcPath.length ? srcPath.shift() : '';
+    //occationaly the auth can get stuck only in host
+    //this especialy happens in cases like
+    //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
+    var authInHost = result.host && result.host.indexOf('@') > 0 ?
+                     result.host.split('@') : false;
+    if (authInHost) {
+      result.auth = authInHost.shift();
+      result.host = result.hostname = authInHost.shift();
+    }
+  }
+
+  mustEndAbs = mustEndAbs || (result.host && srcPath.length);
+
+  if (mustEndAbs && !isAbsolute) {
+    srcPath.unshift('');
+  }
+
+  if (!srcPath.length) {
+    result.pathname = null;
+    result.path = null;
+  } else {
+    result.pathname = srcPath.join('/');
+  }
+
+  //to support request.http
+  if (!isNull(result.pathname) || !isNull(result.search)) {
+    result.path = (result.pathname ? result.pathname : '') +
+                  (result.search ? result.search : '');
+  }
+  result.auth = relative.auth || result.auth;
+  result.slashes = result.slashes || relative.slashes;
+  result.href = result.format();
+  return result;
+};
+
+Url.prototype.parseHost = function() {
+  var host = this.host;
+  var port = portPattern.exec(host);
+  if (port) {
+    port = port[0];
+    if (port !== ':') {
+      this.port = port.substr(1);
+    }
+    host = host.substr(0, host.length - port.length);
+  }
+  if (host) this.hostname = host;
+};
+
+function isString(arg) {
+  return typeof arg === "string";
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isNull(arg) {
+  return arg === null;
+}
+function isNullOrUndefined(arg) {
+  return  arg == null;
+}
+
+},{"punycode":8,"querystring":11}],13:[function(_dereq_,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],14:[function(_dereq_,module,exports){
+module.exports = function isBuffer(arg) {
+  return arg && typeof arg === 'object'
+    && typeof arg.copy === 'function'
+    && typeof arg.fill === 'function'
+    && typeof arg.readUInt8 === 'function';
+}
+},{}],15:[function(_dereq_,module,exports){
+(function (process,global){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var formatRegExp = /%[sdj%]/g;
+exports.format = function(f) {
+  if (!isString(f)) {
+    var objects = [];
+    for (var i = 0; i < arguments.length; i++) {
+      objects.push(inspect(arguments[i]));
+    }
+    return objects.join(' ');
+  }
+
+  var i = 1;
+  var args = arguments;
+  var len = args.length;
+  var str = String(f).replace(formatRegExp, function(x) {
+    if (x === '%%') return '%';
+    if (i >= len) return x;
+    switch (x) {
+      case '%s': return String(args[i++]);
+      case '%d': return Number(args[i++]);
+      case '%j':
+        try {
+          return JSON.stringify(args[i++]);
+        } catch (_) {
+          return '[Circular]';
+        }
+      default:
+        return x;
+    }
+  });
+  for (var x = args[i]; i < len; x = args[++i]) {
+    if (isNull(x) || !isObject(x)) {
+      str += ' ' + x;
+    } else {
+      str += ' ' + inspect(x);
+    }
+  }
+  return str;
+};
+
+
+// Mark that a method should not be used.
+// Returns a modified function which warns once by default.
+// If --no-deprecation is set, then it is a no-op.
+exports.deprecate = function(fn, msg) {
+  // Allow for deprecating things in the process of starting up.
+  if (isUndefined(global.process)) {
+    return function() {
+      return exports.deprecate(fn, msg).apply(this, arguments);
+    };
+  }
+
+  if (process.noDeprecation === true) {
+    return fn;
+  }
+
+  var warned = false;
+  function deprecated() {
+    if (!warned) {
+      if (process.throwDeprecation) {
+        throw new Error(msg);
+      } else if (process.traceDeprecation) {
+        console.trace(msg);
+      } else {
+        console.error(msg);
+      }
+      warned = true;
+    }
+    return fn.apply(this, arguments);
+  }
+
+  return deprecated;
+};
+
+
+var debugs = {};
+var debugEnviron;
+exports.debuglog = function(set) {
+  if (isUndefined(debugEnviron))
+    debugEnviron = process.env.NODE_DEBUG || '';
+  set = set.toUpperCase();
+  if (!debugs[set]) {
+    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
+      var pid = process.pid;
+      debugs[set] = function() {
+        var msg = exports.format.apply(exports, arguments);
+        console.error('%s %d: %s', set, pid, msg);
+      };
+    } else {
+      debugs[set] = function() {};
+    }
+  }
+  return debugs[set];
+};
+
+
+/**
+ * Echos the value of a value. Trys to print the value out
+ * in the best way possible given the different types.
+ *
+ * @param {Object} obj The object to print out.
+ * @param {Object} opts Optional options object that alters the output.
+ */
+/* legacy: obj, showHidden, depth, colors*/
+function inspect(obj, opts) {
+  // default options
+  var ctx = {
+    seen: [],
+    stylize: stylizeNoColor
+  };
+  // legacy...
+  if (arguments.length >= 3) ctx.depth = arguments[2];
+  if (arguments.length >= 4) ctx.colors = arguments[3];
+  if (isBoolean(opts)) {
+    // legacy...
+    ctx.showHidden = opts;
+  } else if (opts) {
+    // got an "options" object
+    exports._extend(ctx, opts);
+  }
+  // set default options
+  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
+  if (isUndefined(ctx.depth)) ctx.depth = 2;
+  if (isUndefined(ctx.colors)) ctx.colors = false;
+  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
+  if (ctx.colors) ctx.stylize = stylizeWithColor;
+  return formatValue(ctx, obj, ctx.depth);
+}
+exports.inspect = inspect;
+
+
+// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+inspect.colors = {
+  'bold' : [1, 22],
+  'italic' : [3, 23],
+  'underline' : [4, 24],
+  'inverse' : [7, 27],
+  'white' : [37, 39],
+  'grey' : [90, 39],
+  'black' : [30, 39],
+  'blue' : [34, 39],
+  'cyan' : [36, 39],
+  'green' : [32, 39],
+  'magenta' : [35, 39],
+  'red' : [31, 39],
+  'yellow' : [33, 39]
+};
+
+// Don't use 'blue' not visible on cmd.exe
+inspect.styles = {
+  'special': 'cyan',
+  'number': 'yellow',
+  'boolean': 'yellow',
+  'undefined': 'grey',
+  'null': 'bold',
+  'string': 'green',
+  'date': 'magenta',
+  // "name": intentionally not styling
+  'regexp': 'red'
+};
+
+
+function stylizeWithColor(str, styleType) {
+  var style = inspect.styles[styleType];
+
+  if (style) {
+    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
+           '\u001b[' + inspect.colors[style][1] + 'm';
+  } else {
+    return str;
+  }
+}
+
+
+function stylizeNoColor(str, styleType) {
+  return str;
+}
+
+
+function arrayToHash(array) {
+  var hash = {};
+
+  array.forEach(function(val, idx) {
+    hash[val] = true;
+  });
+
+  return hash;
+}
+
+
+function formatValue(ctx, value, recurseTimes) {
+  // Provide a hook for user-specified inspect functions.
+  // Check that value is an object with an inspect function on it
+  if (ctx.customInspect &&
+      value &&
+      isFunction(value.inspect) &&
+      // Filter out the util module, it's inspect function is special
+      value.inspect !== exports.inspect &&
+      // Also filter out any prototype objects using the circular check.
+      !(value.constructor && value.constructor.prototype === value)) {
+    var ret = value.inspect(recurseTimes, ctx);
+    if (!isString(ret)) {
+      ret = formatValue(ctx, ret, recurseTimes);
+    }
+    return ret;
+  }
+
+  // Primitive types cannot have properties
+  var primitive = formatPrimitive(ctx, value);
+  if (primitive) {
+    return primitive;
+  }
+
+  // Look up the keys of the object.
+  var keys = Object.keys(value);
+  var visibleKeys = arrayToHash(keys);
+
+  if (ctx.showHidden) {
+    keys = Object.getOwnPropertyNames(value);
+  }
+
+  // IE doesn't make error fields non-enumerable
+  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
+  if (isError(value)
+      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
+    return formatError(value);
+  }
+
+  // Some type of object without properties can be shortcutted.
+  if (keys.length === 0) {
+    if (isFunction(value)) {
+      var name = value.name ? ': ' + value.name : '';
+      return ctx.stylize('[Function' + name + ']', 'special');
+    }
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    }
+    if (isDate(value)) {
+      return ctx.stylize(Date.prototype.toString.call(value), 'date');
+    }
+    if (isError(value)) {
+      return formatError(value);
+    }
+  }
+
+  var base = '', array = false, braces = ['{', '}'];
+
+  // Make Array say that they are Array
+  if (isArray(value)) {
+    array = true;
+    braces = ['[', ']'];
+  }
+
+  // Make functions say that they are functions
+  if (isFunction(value)) {
+    var n = value.name ? ': ' + value.name : '';
+    base = ' [Function' + n + ']';
+  }
+
+  // Make RegExps say that they are RegExps
+  if (isRegExp(value)) {
+    base = ' ' + RegExp.prototype.toString.call(value);
+  }
+
+  // Make dates with properties first say the date
+  if (isDate(value)) {
+    base = ' ' + Date.prototype.toUTCString.call(value);
+  }
+
+  // Make error with message first say the error
+  if (isError(value)) {
+    base = ' ' + formatError(value);
+  }
+
+  if (keys.length === 0 && (!array || value.length == 0)) {
+    return braces[0] + base + braces[1];
+  }
+
+  if (recurseTimes < 0) {
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    } else {
+      return ctx.stylize('[Object]', 'special');
+    }
+  }
+
+  ctx.seen.push(value);
+
+  var output;
+  if (array) {
+    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
+  } else {
+    output = keys.map(function(key) {
+      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
+    });
+  }
+
+  ctx.seen.pop();
+
+  return reduceToSingleString(output, base, braces);
+}
+
+
+function formatPrimitive(ctx, value) {
+  if (isUndefined(value))
+    return ctx.stylize('undefined', 'undefined');
+  if (isString(value)) {
+    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
+                                             .replace(/'/g, "\\'")
+                                             .replace(/\\"/g, '"') + '\'';
+    return ctx.stylize(simple, 'string');
+  }
+  if (isNumber(value))
+    return ctx.stylize('' + value, 'number');
+  if (isBoolean(value))
+    return ctx.stylize('' + value, 'boolean');
+  // For some reason typeof null is "object", so special case here.
+  if (isNull(value))
+    return ctx.stylize('null', 'null');
+}
+
+
+function formatError(value) {
+  return '[' + Error.prototype.toString.call(value) + ']';
+}
+
+
+function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
+  var output = [];
+  for (var i = 0, l = value.length; i < l; ++i) {
+    if (hasOwnProperty(value, String(i))) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          String(i), true));
+    } else {
+      output.push('');
+    }
+  }
+  keys.forEach(function(key) {
+    if (!key.match(/^\d+$/)) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          key, true));
+    }
+  });
+  return output;
+}
+
+
+function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
+  var name, str, desc;
+  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
+  if (desc.get) {
+    if (desc.set) {
+      str = ctx.stylize('[Getter/Setter]', 'special');
+    } else {
+      str = ctx.stylize('[Getter]', 'special');
+    }
+  } else {
+    if (desc.set) {
+      str = ctx.stylize('[Setter]', 'special');
+    }
+  }
+  if (!hasOwnProperty(visibleKeys, key)) {
+    name = '[' + key + ']';
+  }
+  if (!str) {
+    if (ctx.seen.indexOf(desc.value) < 0) {
+      if (isNull(recurseTimes)) {
+        str = formatValue(ctx, desc.value, null);
+      } else {
+        str = formatValue(ctx, desc.value, recurseTimes - 1);
+      }
+      if (str.indexOf('\n') > -1) {
+        if (array) {
+          str = str.split('\n').map(function(line) {
+            return '  ' + line;
+          }).join('\n').substr(2);
+        } else {
+          str = '\n' + str.split('\n').map(function(line) {
+            return '   ' + line;
+          }).join('\n');
+        }
+      }
+    } else {
+      str = ctx.stylize('[Circular]', 'special');
+    }
+  }
+  if (isUndefined(name)) {
+    if (array && key.match(/^\d+$/)) {
+      return str;
+    }
+    name = JSON.stringify('' + key);
+    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+      name = name.substr(1, name.length - 2);
+      name = ctx.stylize(name, 'name');
+    } else {
+      name = name.replace(/'/g, "\\'")
+                 .replace(/\\"/g, '"')
+                 .replace(/(^"|"$)/g, "'");
+      name = ctx.stylize(name, 'string');
+    }
+  }
+
+  return name + ': ' + str;
+}
+
+
+function reduceToSingleString(output, base, braces) {
+  var numLinesEst = 0;
+  var length = output.reduce(function(prev, cur) {
+    numLinesEst++;
+    if (cur.indexOf('\n') >= 0) numLinesEst++;
+    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
+  }, 0);
+
+  if (length > 60) {
+    return braces[0] +
+           (base === '' ? '' : base + '\n ') +
+           ' ' +
+           output.join(',\n  ') +
+           ' ' +
+           braces[1];
+  }
+
+  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
+}
+
+
+// NOTE: These type checking functions intentionally don't use `instanceof`
+// because it is fragile and can be easily faked with `Object.create()`.
+function isArray(ar) {
+  return Array.isArray(ar);
+}
+exports.isArray = isArray;
+
+function isBoolean(arg) {
+  return typeof arg === 'boolean';
+}
+exports.isBoolean = isBoolean;
+
+function isNull(arg) {
+  return arg === null;
+}
+exports.isNull = isNull;
+
+function isNullOrUndefined(arg) {
+  return arg == null;
+}
+exports.isNullOrUndefined = isNullOrUndefined;
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+exports.isNumber = isNumber;
+
+function isString(arg) {
+  return typeof arg === 'string';
+}
+exports.isString = isString;
+
+function isSymbol(arg) {
+  return typeof arg === 'symbol';
+}
+exports.isSymbol = isSymbol;
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+exports.isUndefined = isUndefined;
+
+function isRegExp(re) {
+  return isObject(re) && objectToString(re) === '[object RegExp]';
+}
+exports.isRegExp = isRegExp;
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+exports.isObject = isObject;
+
+function isDate(d) {
+  return isObject(d) && objectToString(d) === '[object Date]';
+}
+exports.isDate = isDate;
+
+function isError(e) {
+  return isObject(e) &&
+      (objectToString(e) === '[object Error]' || e instanceof Error);
+}
+exports.isError = isError;
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+exports.isFunction = isFunction;
+
+function isPrimitive(arg) {
+  return arg === null ||
+         typeof arg === 'boolean' ||
+         typeof arg === 'number' ||
+         typeof arg === 'string' ||
+         typeof arg === 'symbol' ||  // ES6 symbol
+         typeof arg === 'undefined';
+}
+exports.isPrimitive = isPrimitive;
+
+exports.isBuffer = _dereq_('./support/isBuffer');
+
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
+
+function pad(n) {
+  return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
+
+
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+              'Oct', 'Nov', 'Dec'];
+
+// 26 Feb 16:19:34
+function timestamp() {
+  var d = new Date();
+  var time = [pad(d.getHours()),
+              pad(d.getMinutes()),
+              pad(d.getSeconds())].join(':');
+  return [d.getDate(), months[d.getMonth()], time].join(' ');
+}
+
+
+// log is just a thin wrapper to console.log that prepends a timestamp
+exports.log = function() {
+  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
+};
+
+
+/**
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * The Function.prototype.inherits from lang.js rewritten as a standalone
+ * function (not on Function.prototype). NOTE: If this file is to be loaded
+ * during bootstrapping this function needs to be rewritten using some native
+ * functions as prototype setup using normal JavaScript does not work as
+ * expected during bootstrapping (see mirror.js in r114903).
+ *
+ * @param {function} ctor Constructor function which needs to inherit the
+ *     prototype.
+ * @param {function} superCtor Constructor function to inherit prototype from.
+ */
+exports.inherits = _dereq_('inherits');
+
+exports._extend = function(origin, add) {
+  // Don't do anything if add isn't an object
+  if (!add || !isObject(add)) return origin;
+
+  var keys = Object.keys(add);
+  var i = keys.length;
+  while (i--) {
+    origin[keys[i]] = add[keys[i]];
+  }
+  return origin;
+};
+
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+}).call(this,_dereq_("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":14,"FWaASH":7,"inherits":13}],16:[function(_dereq_,module,exports){
 (function (global){
 ;__browserify_shim_require__=_dereq_;(function browserifyShim(module, exports, _dereq_, define, browserify_shim__define__module__export__) {
 /*
@@ -45650,9 +48305,9 @@ CryptoJS.lib.Cipher || (function (undefined) {
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],9:[function(_dereq_,module,exports){
+},{}],17:[function(_dereq_,module,exports){
 module.exports=_dereq_(2)
-},{}],10:[function(_dereq_,module,exports){
+},{}],18:[function(_dereq_,module,exports){
 var v1 = _dereq_('./v1');
 var v4 = _dereq_('./v4');
 
@@ -45662,7 +48317,7 @@ uuid.v4 = v4;
 
 module.exports = uuid;
 
-},{"./v1":13,"./v4":14}],11:[function(_dereq_,module,exports){
+},{"./v1":21,"./v4":22}],19:[function(_dereq_,module,exports){
 /**
  * Convert array of 16 byte values to UUID string format of the form:
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
@@ -45687,7 +48342,7 @@ function bytesToUuid(buf, offset) {
 
 module.exports = bytesToUuid;
 
-},{}],12:[function(_dereq_,module,exports){
+},{}],20:[function(_dereq_,module,exports){
 (function (global){
 // Unique ID creation requires a high quality random # generator.  In the
 // browser this is a little complicated due to unknown quality of Math.random()
@@ -45724,7 +48379,7 @@ if (!rng) {
 module.exports = rng;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],13:[function(_dereq_,module,exports){
+},{}],21:[function(_dereq_,module,exports){
 // Unique ID creation requires a high quality random # generator.  We feature
 // detect to determine the best RNG source, normalizing to a function that
 // returns 128-bits of randomness, since that's what's usually required
@@ -45829,7 +48484,7 @@ function v1(options, buf, offset) {
 
 module.exports = v1;
 
-},{"./lib/bytesToUuid":11,"./lib/rng":12}],14:[function(_dereq_,module,exports){
+},{"./lib/bytesToUuid":19,"./lib/rng":20}],22:[function(_dereq_,module,exports){
 var rng = _dereq_('./lib/rng');
 var bytesToUuid = _dereq_('./lib/bytesToUuid');
 
@@ -45860,7 +48515,7 @@ function v4(options, buf, offset) {
 
 module.exports = v4;
 
-},{"./lib/bytesToUuid":11,"./lib/rng":12}],15:[function(_dereq_,module,exports){
+},{"./lib/bytesToUuid":19,"./lib/rng":20}],23:[function(_dereq_,module,exports){
 var uuidGenerator = _dereq_('uuid').v1;
 var CLIENT_ID_TAG = "feedhenry_sync_client";
 
@@ -45889,10 +48544,9 @@ function getClientId() {
 module.exports = {
     getClientId: getClientId
 };
-},{"uuid":10}],16:[function(_dereq_,module,exports){
+},{"uuid":18}],24:[function(_dereq_,module,exports){
 var cloudURL;
 var cloudPath;
-var cidProvider = _dereq_('./clientIdProvider');
 
 /**
  * Default sync cloud handler responsible for making all sync requests to 
@@ -45905,9 +48559,6 @@ var handler = function (params, success, failure) {
     }
     var url = cloudURL + cloudPath + params.dataset_id;
     var payload = params.req;
-    payload.__fh = {
-        cuid: cidProvider.getClientId()
-    };
     var json = JSON.stringify(payload);
     var xhr = new XMLHttpRequest();
     xhr.open("POST", url, true);
@@ -45947,7 +48598,7 @@ module.exports = {
     handler: handler,
     init: init,
 };
-},{"./clientIdProvider":15}],17:[function(_dereq_,module,exports){
+},{}],25:[function(_dereq_,module,exports){
 var api_sync = _dereq_("./sync-client");
 
 // Mounting into global fh namespace
@@ -45955,10 +48606,13 @@ var fh = window.$fh = window.$fh || {};
 fh.sync = api_sync;
 
 module.exports = fh.sync;
-},{"./sync-client":18}],18:[function(_dereq_,module,exports){
+},{"./sync-client":26}],26:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../libs/generated/crypto");
 var Lawnchair = _dereq_('../libs/generated/lawnchair');
 var defaultCloudHandler = _dereq_('./cloudHandler');
+var cidProvider = _dereq_('./clientIdProvider');
+
+var MILLISECONDS_IN_MINUTE = 60*1000;
 
 var self = {
 
@@ -46002,7 +48656,11 @@ var self = {
     // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
     "file_system_quota" : 50 * 1024 * 1204,
     // Amount of space to request from the HTML5 filesystem API when running in browser
-    "icloud_backup" : false //ios only. If set to true, the file will be backed by icloud
+    "icloud_backup" : false, //ios only. If set to true, the file will be backed by icloud
+    // If set, the client will resend those inflight pending changes that have lived longer than this value.
+    // This is to prevent the situation where updates are lost for certain pending changes, those pending changes will be stuck on the client forever.
+    // Default value is 24 hours.
+    "resend_inflight_pendings_minutes": 60*24
   },
 
   notifications: {
@@ -46489,6 +49147,18 @@ var self = {
     return hash.toString();
   },
 
+  shouldResendInflightPending: function(dataSet, pendingRecord) {
+    if (dataSet.config && dataSet.config.resend_inflight_pendings_minutes > 0 && pendingRecord.inFlight && pendingRecord.inFlightDate && !pendingRecord.crashed) {
+      var now = new Date().getTime();
+      var elapsedSinceSubmission = now - pendingRecord.inFlightDate;
+      if ( elapsedSinceSubmission >= dataSet.config.resend_inflight_pendings_minutes * MILLISECONDS_IN_MINUTE) {
+        return true;
+      }
+    }
+
+    return false;
+  },
+
   addPendingObj: function(dataset_id, uid, data, action, success, failure) {
     self.isOnline(function (online) {
       if (!online) {
@@ -46577,6 +49247,9 @@ var self = {
               if( !pending[i].inFlight && !pending[i].crashed && !pending[i].delayed) {
                 pending[i].inFlight = true;
                 pending[i].inFlightDate = new Date().getTime();
+                pendingArray.push(pending[i]);
+              }
+              if( self.shouldResendInflightPending(dataSet, pending[i]) ) {
                 pendingArray.push(pending[i]);
               }
             }
@@ -46847,6 +49520,11 @@ var self = {
 
   doCloudCall: function(params, success, failure) {
     if(self.cloudHandler && typeof self.cloudHandler === "function" ){
+      if (params && params.req) {
+        params.req.__fh = {
+          cuid: cidProvider.getClientId()
+        };
+      }
       self.cloudHandler(params, success, failure);
     } else {
       console.log("Missing cloud handler for sync. Please refer to documentation");
@@ -47229,7 +49907,7 @@ module.exports = {
   setHashMethod: self.setHashMethod
 };
 
-},{"../libs/generated/crypto":8,"../libs/generated/lawnchair":9,"./cloudHandler":16}],19:[function(_dereq_,module,exports){
+},{"../libs/generated/crypto":16,"../libs/generated/lawnchair":17,"./clientIdProvider":23,"./cloudHandler":24}],27:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -47428,697 +50106,7 @@ module.exports = {
     }));
 })();
 
-},{}],20:[function(_dereq_,module,exports){
-(function (global){
-/*! http://mths.be/punycode v1.2.4 by @mathias */
-;(function(root) {
-
-	/** Detect free variables */
-	var freeExports = typeof exports == 'object' && exports;
-	var freeModule = typeof module == 'object' && module &&
-		module.exports == freeExports && module;
-	var freeGlobal = typeof global == 'object' && global;
-	if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal) {
-		root = freeGlobal;
-	}
-
-	/**
-	 * The `punycode` object.
-	 * @name punycode
-	 * @type Object
-	 */
-	var punycode,
-
-	/** Highest positive signed 32-bit float value */
-	maxInt = 2147483647, // aka. 0x7FFFFFFF or 2^31-1
-
-	/** Bootstring parameters */
-	base = 36,
-	tMin = 1,
-	tMax = 26,
-	skew = 38,
-	damp = 700,
-	initialBias = 72,
-	initialN = 128, // 0x80
-	delimiter = '-', // '\x2D'
-
-	/** Regular expressions */
-	regexPunycode = /^xn--/,
-	regexNonASCII = /[^ -~]/, // unprintable ASCII chars + non-ASCII chars
-	regexSeparators = /\x2E|\u3002|\uFF0E|\uFF61/g, // RFC 3490 separators
-
-	/** Error messages */
-	errors = {
-		'overflow': 'Overflow: input needs wider integers to process',
-		'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
-		'invalid-input': 'Invalid input'
-	},
-
-	/** Convenience shortcuts */
-	baseMinusTMin = base - tMin,
-	floor = Math.floor,
-	stringFromCharCode = String.fromCharCode,
-
-	/** Temporary variable */
-	key;
-
-	/*--------------------------------------------------------------------------*/
-
-	/**
-	 * A generic error utility function.
-	 * @private
-	 * @param {String} type The error type.
-	 * @returns {Error} Throws a `RangeError` with the applicable error message.
-	 */
-	function error(type) {
-		throw RangeError(errors[type]);
-	}
-
-	/**
-	 * A generic `Array#map` utility function.
-	 * @private
-	 * @param {Array} array The array to iterate over.
-	 * @param {Function} callback The function that gets called for every array
-	 * item.
-	 * @returns {Array} A new array of values returned by the callback function.
-	 */
-	function map(array, fn) {
-		var length = array.length;
-		while (length--) {
-			array[length] = fn(array[length]);
-		}
-		return array;
-	}
-
-	/**
-	 * A simple `Array#map`-like wrapper to work with domain name strings.
-	 * @private
-	 * @param {String} domain The domain name.
-	 * @param {Function} callback The function that gets called for every
-	 * character.
-	 * @returns {Array} A new string of characters returned by the callback
-	 * function.
-	 */
-	function mapDomain(string, fn) {
-		return map(string.split(regexSeparators), fn).join('.');
-	}
-
-	/**
-	 * Creates an array containing the numeric code points of each Unicode
-	 * character in the string. While JavaScript uses UCS-2 internally,
-	 * this function will convert a pair of surrogate halves (each of which
-	 * UCS-2 exposes as separate characters) into a single code point,
-	 * matching UTF-16.
-	 * @see `punycode.ucs2.encode`
-	 * @see <http://mathiasbynens.be/notes/javascript-encoding>
-	 * @memberOf punycode.ucs2
-	 * @name decode
-	 * @param {String} string The Unicode input string (UCS-2).
-	 * @returns {Array} The new array of code points.
-	 */
-	function ucs2decode(string) {
-		var output = [],
-		    counter = 0,
-		    length = string.length,
-		    value,
-		    extra;
-		while (counter < length) {
-			value = string.charCodeAt(counter++);
-			if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
-				// high surrogate, and there is a next character
-				extra = string.charCodeAt(counter++);
-				if ((extra & 0xFC00) == 0xDC00) { // low surrogate
-					output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
-				} else {
-					// unmatched surrogate; only append this code unit, in case the next
-					// code unit is the high surrogate of a surrogate pair
-					output.push(value);
-					counter--;
-				}
-			} else {
-				output.push(value);
-			}
-		}
-		return output;
-	}
-
-	/**
-	 * Creates a string based on an array of numeric code points.
-	 * @see `punycode.ucs2.decode`
-	 * @memberOf punycode.ucs2
-	 * @name encode
-	 * @param {Array} codePoints The array of numeric code points.
-	 * @returns {String} The new Unicode string (UCS-2).
-	 */
-	function ucs2encode(array) {
-		return map(array, function(value) {
-			var output = '';
-			if (value > 0xFFFF) {
-				value -= 0x10000;
-				output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
-				value = 0xDC00 | value & 0x3FF;
-			}
-			output += stringFromCharCode(value);
-			return output;
-		}).join('');
-	}
-
-	/**
-	 * Converts a basic code point into a digit/integer.
-	 * @see `digitToBasic()`
-	 * @private
-	 * @param {Number} codePoint The basic numeric code point value.
-	 * @returns {Number} The numeric value of a basic code point (for use in
-	 * representing integers) in the range `0` to `base - 1`, or `base` if
-	 * the code point does not represent a value.
-	 */
-	function basicToDigit(codePoint) {
-		if (codePoint - 48 < 10) {
-			return codePoint - 22;
-		}
-		if (codePoint - 65 < 26) {
-			return codePoint - 65;
-		}
-		if (codePoint - 97 < 26) {
-			return codePoint - 97;
-		}
-		return base;
-	}
-
-	/**
-	 * Converts a digit/integer into a basic code point.
-	 * @see `basicToDigit()`
-	 * @private
-	 * @param {Number} digit The numeric value of a basic code point.
-	 * @returns {Number} The basic code point whose value (when used for
-	 * representing integers) is `digit`, which needs to be in the range
-	 * `0` to `base - 1`. If `flag` is non-zero, the uppercase form is
-	 * used; else, the lowercase form is used. The behavior is undefined
-	 * if `flag` is non-zero and `digit` has no uppercase form.
-	 */
-	function digitToBasic(digit, flag) {
-		//  0..25 map to ASCII a..z or A..Z
-		// 26..35 map to ASCII 0..9
-		return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
-	}
-
-	/**
-	 * Bias adaptation function as per section 3.4 of RFC 3492.
-	 * http://tools.ietf.org/html/rfc3492#section-3.4
-	 * @private
-	 */
-	function adapt(delta, numPoints, firstTime) {
-		var k = 0;
-		delta = firstTime ? floor(delta / damp) : delta >> 1;
-		delta += floor(delta / numPoints);
-		for (/* no initialization */; delta > baseMinusTMin * tMax >> 1; k += base) {
-			delta = floor(delta / baseMinusTMin);
-		}
-		return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
-	}
-
-	/**
-	 * Converts a Punycode string of ASCII-only symbols to a string of Unicode
-	 * symbols.
-	 * @memberOf punycode
-	 * @param {String} input The Punycode string of ASCII-only symbols.
-	 * @returns {String} The resulting string of Unicode symbols.
-	 */
-	function decode(input) {
-		// Don't use UCS-2
-		var output = [],
-		    inputLength = input.length,
-		    out,
-		    i = 0,
-		    n = initialN,
-		    bias = initialBias,
-		    basic,
-		    j,
-		    index,
-		    oldi,
-		    w,
-		    k,
-		    digit,
-		    t,
-		    /** Cached calculation results */
-		    baseMinusT;
-
-		// Handle the basic code points: let `basic` be the number of input code
-		// points before the last delimiter, or `0` if there is none, then copy
-		// the first basic code points to the output.
-
-		basic = input.lastIndexOf(delimiter);
-		if (basic < 0) {
-			basic = 0;
-		}
-
-		for (j = 0; j < basic; ++j) {
-			// if it's not a basic code point
-			if (input.charCodeAt(j) >= 0x80) {
-				error('not-basic');
-			}
-			output.push(input.charCodeAt(j));
-		}
-
-		// Main decoding loop: start just after the last delimiter if any basic code
-		// points were copied; start at the beginning otherwise.
-
-		for (index = basic > 0 ? basic + 1 : 0; index < inputLength; /* no final expression */) {
-
-			// `index` is the index of the next character to be consumed.
-			// Decode a generalized variable-length integer into `delta`,
-			// which gets added to `i`. The overflow checking is easier
-			// if we increase `i` as we go, then subtract off its starting
-			// value at the end to obtain `delta`.
-			for (oldi = i, w = 1, k = base; /* no condition */; k += base) {
-
-				if (index >= inputLength) {
-					error('invalid-input');
-				}
-
-				digit = basicToDigit(input.charCodeAt(index++));
-
-				if (digit >= base || digit > floor((maxInt - i) / w)) {
-					error('overflow');
-				}
-
-				i += digit * w;
-				t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
-
-				if (digit < t) {
-					break;
-				}
-
-				baseMinusT = base - t;
-				if (w > floor(maxInt / baseMinusT)) {
-					error('overflow');
-				}
-
-				w *= baseMinusT;
-
-			}
-
-			out = output.length + 1;
-			bias = adapt(i - oldi, out, oldi == 0);
-
-			// `i` was supposed to wrap around from `out` to `0`,
-			// incrementing `n` each time, so we'll fix that now:
-			if (floor(i / out) > maxInt - n) {
-				error('overflow');
-			}
-
-			n += floor(i / out);
-			i %= out;
-
-			// Insert `n` at position `i` of the output
-			output.splice(i++, 0, n);
-
-		}
-
-		return ucs2encode(output);
-	}
-
-	/**
-	 * Converts a string of Unicode symbols to a Punycode string of ASCII-only
-	 * symbols.
-	 * @memberOf punycode
-	 * @param {String} input The string of Unicode symbols.
-	 * @returns {String} The resulting Punycode string of ASCII-only symbols.
-	 */
-	function encode(input) {
-		var n,
-		    delta,
-		    handledCPCount,
-		    basicLength,
-		    bias,
-		    j,
-		    m,
-		    q,
-		    k,
-		    t,
-		    currentValue,
-		    output = [],
-		    /** `inputLength` will hold the number of code points in `input`. */
-		    inputLength,
-		    /** Cached calculation results */
-		    handledCPCountPlusOne,
-		    baseMinusT,
-		    qMinusT;
-
-		// Convert the input in UCS-2 to Unicode
-		input = ucs2decode(input);
-
-		// Cache the length
-		inputLength = input.length;
-
-		// Initialize the state
-		n = initialN;
-		delta = 0;
-		bias = initialBias;
-
-		// Handle the basic code points
-		for (j = 0; j < inputLength; ++j) {
-			currentValue = input[j];
-			if (currentValue < 0x80) {
-				output.push(stringFromCharCode(currentValue));
-			}
-		}
-
-		handledCPCount = basicLength = output.length;
-
-		// `handledCPCount` is the number of code points that have been handled;
-		// `basicLength` is the number of basic code points.
-
-		// Finish the basic string - if it is not empty - with a delimiter
-		if (basicLength) {
-			output.push(delimiter);
-		}
-
-		// Main encoding loop:
-		while (handledCPCount < inputLength) {
-
-			// All non-basic code points < n have been handled already. Find the next
-			// larger one:
-			for (m = maxInt, j = 0; j < inputLength; ++j) {
-				currentValue = input[j];
-				if (currentValue >= n && currentValue < m) {
-					m = currentValue;
-				}
-			}
-
-			// Increase `delta` enough to advance the decoder's <n,i> state to <m,0>,
-			// but guard against overflow
-			handledCPCountPlusOne = handledCPCount + 1;
-			if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
-				error('overflow');
-			}
-
-			delta += (m - n) * handledCPCountPlusOne;
-			n = m;
-
-			for (j = 0; j < inputLength; ++j) {
-				currentValue = input[j];
-
-				if (currentValue < n && ++delta > maxInt) {
-					error('overflow');
-				}
-
-				if (currentValue == n) {
-					// Represent delta as a generalized variable-length integer
-					for (q = delta, k = base; /* no condition */; k += base) {
-						t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
-						if (q < t) {
-							break;
-						}
-						qMinusT = q - t;
-						baseMinusT = base - t;
-						output.push(
-							stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0))
-						);
-						q = floor(qMinusT / baseMinusT);
-					}
-
-					output.push(stringFromCharCode(digitToBasic(q, 0)));
-					bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
-					delta = 0;
-					++handledCPCount;
-				}
-			}
-
-			++delta;
-			++n;
-
-		}
-		return output.join('');
-	}
-
-	/**
-	 * Converts a Punycode string representing a domain name to Unicode. Only the
-	 * Punycoded parts of the domain name will be converted, i.e. it doesn't
-	 * matter if you call it on a string that has already been converted to
-	 * Unicode.
-	 * @memberOf punycode
-	 * @param {String} domain The Punycode domain name to convert to Unicode.
-	 * @returns {String} The Unicode representation of the given Punycode
-	 * string.
-	 */
-	function toUnicode(domain) {
-		return mapDomain(domain, function(string) {
-			return regexPunycode.test(string)
-				? decode(string.slice(4).toLowerCase())
-				: string;
-		});
-	}
-
-	/**
-	 * Converts a Unicode string representing a domain name to Punycode. Only the
-	 * non-ASCII parts of the domain name will be converted, i.e. it doesn't
-	 * matter if you call it with a domain that's already in ASCII.
-	 * @memberOf punycode
-	 * @param {String} domain The domain name to convert, as a Unicode string.
-	 * @returns {String} The Punycode representation of the given domain name.
-	 */
-	function toASCII(domain) {
-		return mapDomain(domain, function(string) {
-			return regexNonASCII.test(string)
-				? 'xn--' + encode(string)
-				: string;
-		});
-	}
-
-	/*--------------------------------------------------------------------------*/
-
-	/** Define the public API */
-	punycode = {
-		/**
-		 * A string representing the current Punycode.js version number.
-		 * @memberOf punycode
-		 * @type String
-		 */
-		'version': '1.2.4',
-		/**
-		 * An object of methods to convert from JavaScript's internal character
-		 * representation (UCS-2) to Unicode code points, and back.
-		 * @see <http://mathiasbynens.be/notes/javascript-encoding>
-		 * @memberOf punycode
-		 * @type Object
-		 */
-		'ucs2': {
-			'decode': ucs2decode,
-			'encode': ucs2encode
-		},
-		'decode': decode,
-		'encode': encode,
-		'toASCII': toASCII,
-		'toUnicode': toUnicode
-	};
-
-	/** Expose `punycode` */
-	// Some AMD build optimizers, like r.js, check for specific condition patterns
-	// like the following:
-	if (
-		typeof define == 'function' &&
-		typeof define.amd == 'object' &&
-		define.amd
-	) {
-		define('punycode', function() {
-			return punycode;
-		});
-	} else if (freeExports && !freeExports.nodeType) {
-		if (freeModule) { // in Node.js or RingoJS v0.8.0+
-			freeModule.exports = punycode;
-		} else { // in Narwhal or RingoJS v0.7.0-
-			for (key in punycode) {
-				punycode.hasOwnProperty(key) && (freeExports[key] = punycode[key]);
-			}
-		}
-	} else { // in Rhino or a web browser
-		root.punycode = punycode;
-	}
-
-}(this));
-
-}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],21:[function(_dereq_,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-'use strict';
-
-// If obj.hasOwnProperty has been overridden, then calling
-// obj.hasOwnProperty(prop) will break.
-// See: https://github.com/joyent/node/issues/1707
-function hasOwnProperty(obj, prop) {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
-}
-
-module.exports = function(qs, sep, eq, options) {
-  sep = sep || '&';
-  eq = eq || '=';
-  var obj = {};
-
-  if (typeof qs !== 'string' || qs.length === 0) {
-    return obj;
-  }
-
-  var regexp = /\+/g;
-  qs = qs.split(sep);
-
-  var maxKeys = 1000;
-  if (options && typeof options.maxKeys === 'number') {
-    maxKeys = options.maxKeys;
-  }
-
-  var len = qs.length;
-  // maxKeys <= 0 means that we should not limit keys count
-  if (maxKeys > 0 && len > maxKeys) {
-    len = maxKeys;
-  }
-
-  for (var i = 0; i < len; ++i) {
-    var x = qs[i].replace(regexp, '%20'),
-        idx = x.indexOf(eq),
-        kstr, vstr, k, v;
-
-    if (idx >= 0) {
-      kstr = x.substr(0, idx);
-      vstr = x.substr(idx + 1);
-    } else {
-      kstr = x;
-      vstr = '';
-    }
-
-    k = decodeURIComponent(kstr);
-    v = decodeURIComponent(vstr);
-
-    if (!hasOwnProperty(obj, k)) {
-      obj[k] = v;
-    } else if (isArray(obj[k])) {
-      obj[k].push(v);
-    } else {
-      obj[k] = [obj[k], v];
-    }
-  }
-
-  return obj;
-};
-
-var isArray = Array.isArray || function (xs) {
-  return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-},{}],22:[function(_dereq_,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-'use strict';
-
-var stringifyPrimitive = function(v) {
-  switch (typeof v) {
-    case 'string':
-      return v;
-
-    case 'boolean':
-      return v ? 'true' : 'false';
-
-    case 'number':
-      return isFinite(v) ? v : '';
-
-    default:
-      return '';
-  }
-};
-
-module.exports = function(obj, sep, eq, name) {
-  sep = sep || '&';
-  eq = eq || '=';
-  if (obj === null) {
-    obj = undefined;
-  }
-
-  if (typeof obj === 'object') {
-    return map(objectKeys(obj), function(k) {
-      var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
-      if (isArray(obj[k])) {
-        return obj[k].map(function(v) {
-          return ks + encodeURIComponent(stringifyPrimitive(v));
-        }).join(sep);
-      } else {
-        return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
-      }
-    }).join(sep);
-
-  }
-
-  if (!name) return '';
-  return encodeURIComponent(stringifyPrimitive(name)) + eq +
-         encodeURIComponent(stringifyPrimitive(obj));
-};
-
-var isArray = Array.isArray || function (xs) {
-  return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-function map (xs, f) {
-  if (xs.map) return xs.map(f);
-  var res = [];
-  for (var i = 0; i < xs.length; i++) {
-    res.push(f(xs[i], i));
-  }
-  return res;
-}
-
-var objectKeys = Object.keys || function (obj) {
-  var res = [];
-  for (var key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
-  }
-  return res;
-};
-
-},{}],23:[function(_dereq_,module,exports){
-'use strict';
-
-exports.decode = exports.parse = _dereq_('./decode');
-exports.encode = exports.stringify = _dereq_('./encode');
-
-},{"./decode":21,"./encode":22}],24:[function(_dereq_,module,exports){
+},{}],28:[function(_dereq_,module,exports){
 var toString = Object.prototype.toString
 
 module.exports = function(val){
@@ -48149,7 +50137,7 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],25:[function(_dereq_,module,exports){
+},{}],29:[function(_dereq_,module,exports){
 //     Underscore.js 1.6.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -49494,1338 +51482,7 @@ module.exports = function(val){
   }
 }).call(this);
 
-},{}],26:[function(_dereq_,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-var punycode = _dereq_('punycode');
-
-exports.parse = urlParse;
-exports.resolve = urlResolve;
-exports.resolveObject = urlResolveObject;
-exports.format = urlFormat;
-
-exports.Url = Url;
-
-function Url() {
-  this.protocol = null;
-  this.slashes = null;
-  this.auth = null;
-  this.host = null;
-  this.port = null;
-  this.hostname = null;
-  this.hash = null;
-  this.search = null;
-  this.query = null;
-  this.pathname = null;
-  this.path = null;
-  this.href = null;
-}
-
-// Reference: RFC 3986, RFC 1808, RFC 2396
-
-// define these here so at least they only have to be
-// compiled once on the first module load.
-var protocolPattern = /^([a-z0-9.+-]+:)/i,
-    portPattern = /:[0-9]*$/,
-
-    // RFC 2396: characters reserved for delimiting URLs.
-    // We actually just auto-escape these.
-    delims = ['<', '>', '"', '`', ' ', '\r', '\n', '\t'],
-
-    // RFC 2396: characters not allowed for various reasons.
-    unwise = ['{', '}', '|', '\\', '^', '`'].concat(delims),
-
-    // Allowed by RFCs, but cause of XSS attacks.  Always escape these.
-    autoEscape = ['\''].concat(unwise),
-    // Characters that are never ever allowed in a hostname.
-    // Note that any invalid chars are also handled, but these
-    // are the ones that are *expected* to be seen, so we fast-path
-    // them.
-    nonHostChars = ['%', '/', '?', ';', '#'].concat(autoEscape),
-    hostEndingChars = ['/', '?', '#'],
-    hostnameMaxLen = 255,
-    hostnamePartPattern = /^[a-z0-9A-Z_-]{0,63}$/,
-    hostnamePartStart = /^([a-z0-9A-Z_-]{0,63})(.*)$/,
-    // protocols that can allow "unsafe" and "unwise" chars.
-    unsafeProtocol = {
-      'javascript': true,
-      'javascript:': true
-    },
-    // protocols that never have a hostname.
-    hostlessProtocol = {
-      'javascript': true,
-      'javascript:': true
-    },
-    // protocols that always contain a // bit.
-    slashedProtocol = {
-      'http': true,
-      'https': true,
-      'ftp': true,
-      'gopher': true,
-      'file': true,
-      'http:': true,
-      'https:': true,
-      'ftp:': true,
-      'gopher:': true,
-      'file:': true
-    },
-    querystring = _dereq_('querystring');
-
-function urlParse(url, parseQueryString, slashesDenoteHost) {
-  if (url && isObject(url) && url instanceof Url) return url;
-
-  var u = new Url;
-  u.parse(url, parseQueryString, slashesDenoteHost);
-  return u;
-}
-
-Url.prototype.parse = function(url, parseQueryString, slashesDenoteHost) {
-  if (!isString(url)) {
-    throw new TypeError("Parameter 'url' must be a string, not " + typeof url);
-  }
-
-  var rest = url;
-
-  // trim before proceeding.
-  // This is to support parse stuff like "  http://foo.com  \n"
-  rest = rest.trim();
-
-  var proto = protocolPattern.exec(rest);
-  if (proto) {
-    proto = proto[0];
-    var lowerProto = proto.toLowerCase();
-    this.protocol = lowerProto;
-    rest = rest.substr(proto.length);
-  }
-
-  // figure out if it's got a host
-  // user@server is *always* interpreted as a hostname, and url
-  // resolution will treat //foo/bar as host=foo,path=bar because that's
-  // how the browser resolves relative URLs.
-  if (slashesDenoteHost || proto || rest.match(/^\/\/[^@\/]+@[^@\/]+/)) {
-    var slashes = rest.substr(0, 2) === '//';
-    if (slashes && !(proto && hostlessProtocol[proto])) {
-      rest = rest.substr(2);
-      this.slashes = true;
-    }
-  }
-
-  if (!hostlessProtocol[proto] &&
-      (slashes || (proto && !slashedProtocol[proto]))) {
-
-    // there's a hostname.
-    // the first instance of /, ?, ;, or # ends the host.
-    //
-    // If there is an @ in the hostname, then non-host chars *are* allowed
-    // to the left of the last @ sign, unless some host-ending character
-    // comes *before* the @-sign.
-    // URLs are obnoxious.
-    //
-    // ex:
-    // http://a@b@c/ => user:a@b host:c
-    // http://a@b?@c => user:a host:c path:/?@c
-
-    // v0.12 TODO(isaacs): This is not quite how Chrome does things.
-    // Review our test case against browsers more comprehensively.
-
-    // find the first instance of any hostEndingChars
-    var hostEnd = -1;
-    for (var i = 0; i < hostEndingChars.length; i++) {
-      var hec = rest.indexOf(hostEndingChars[i]);
-      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
-        hostEnd = hec;
-    }
-
-    // at this point, either we have an explicit point where the
-    // auth portion cannot go past, or the last @ char is the decider.
-    var auth, atSign;
-    if (hostEnd === -1) {
-      // atSign can be anywhere.
-      atSign = rest.lastIndexOf('@');
-    } else {
-      // atSign must be in auth portion.
-      // http://a@b/c@d => host:b auth:a path:/c@d
-      atSign = rest.lastIndexOf('@', hostEnd);
-    }
-
-    // Now we have a portion which is definitely the auth.
-    // Pull that off.
-    if (atSign !== -1) {
-      auth = rest.slice(0, atSign);
-      rest = rest.slice(atSign + 1);
-      this.auth = decodeURIComponent(auth);
-    }
-
-    // the host is the remaining to the left of the first non-host char
-    hostEnd = -1;
-    for (var i = 0; i < nonHostChars.length; i++) {
-      var hec = rest.indexOf(nonHostChars[i]);
-      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
-        hostEnd = hec;
-    }
-    // if we still have not hit it, then the entire thing is a host.
-    if (hostEnd === -1)
-      hostEnd = rest.length;
-
-    this.host = rest.slice(0, hostEnd);
-    rest = rest.slice(hostEnd);
-
-    // pull out port.
-    this.parseHost();
-
-    // we've indicated that there is a hostname,
-    // so even if it's empty, it has to be present.
-    this.hostname = this.hostname || '';
-
-    // if hostname begins with [ and ends with ]
-    // assume that it's an IPv6 address.
-    var ipv6Hostname = this.hostname[0] === '[' &&
-        this.hostname[this.hostname.length - 1] === ']';
-
-    // validate a little.
-    if (!ipv6Hostname) {
-      var hostparts = this.hostname.split(/\./);
-      for (var i = 0, l = hostparts.length; i < l; i++) {
-        var part = hostparts[i];
-        if (!part) continue;
-        if (!part.match(hostnamePartPattern)) {
-          var newpart = '';
-          for (var j = 0, k = part.length; j < k; j++) {
-            if (part.charCodeAt(j) > 127) {
-              // we replace non-ASCII char with a temporary placeholder
-              // we need this to make sure size of hostname is not
-              // broken by replacing non-ASCII by nothing
-              newpart += 'x';
-            } else {
-              newpart += part[j];
-            }
-          }
-          // we test again with ASCII char only
-          if (!newpart.match(hostnamePartPattern)) {
-            var validParts = hostparts.slice(0, i);
-            var notHost = hostparts.slice(i + 1);
-            var bit = part.match(hostnamePartStart);
-            if (bit) {
-              validParts.push(bit[1]);
-              notHost.unshift(bit[2]);
-            }
-            if (notHost.length) {
-              rest = '/' + notHost.join('.') + rest;
-            }
-            this.hostname = validParts.join('.');
-            break;
-          }
-        }
-      }
-    }
-
-    if (this.hostname.length > hostnameMaxLen) {
-      this.hostname = '';
-    } else {
-      // hostnames are always lower case.
-      this.hostname = this.hostname.toLowerCase();
-    }
-
-    if (!ipv6Hostname) {
-      // IDNA Support: Returns a puny coded representation of "domain".
-      // It only converts the part of the domain name that
-      // has non ASCII characters. I.e. it dosent matter if
-      // you call it with a domain that already is in ASCII.
-      var domainArray = this.hostname.split('.');
-      var newOut = [];
-      for (var i = 0; i < domainArray.length; ++i) {
-        var s = domainArray[i];
-        newOut.push(s.match(/[^A-Za-z0-9_-]/) ?
-            'xn--' + punycode.encode(s) : s);
-      }
-      this.hostname = newOut.join('.');
-    }
-
-    var p = this.port ? ':' + this.port : '';
-    var h = this.hostname || '';
-    this.host = h + p;
-    this.href += this.host;
-
-    // strip [ and ] from the hostname
-    // the host field still retains them, though
-    if (ipv6Hostname) {
-      this.hostname = this.hostname.substr(1, this.hostname.length - 2);
-      if (rest[0] !== '/') {
-        rest = '/' + rest;
-      }
-    }
-  }
-
-  // now rest is set to the post-host stuff.
-  // chop off any delim chars.
-  if (!unsafeProtocol[lowerProto]) {
-
-    // First, make 100% sure that any "autoEscape" chars get
-    // escaped, even if encodeURIComponent doesn't think they
-    // need to be.
-    for (var i = 0, l = autoEscape.length; i < l; i++) {
-      var ae = autoEscape[i];
-      var esc = encodeURIComponent(ae);
-      if (esc === ae) {
-        esc = escape(ae);
-      }
-      rest = rest.split(ae).join(esc);
-    }
-  }
-
-
-  // chop off from the tail first.
-  var hash = rest.indexOf('#');
-  if (hash !== -1) {
-    // got a fragment string.
-    this.hash = rest.substr(hash);
-    rest = rest.slice(0, hash);
-  }
-  var qm = rest.indexOf('?');
-  if (qm !== -1) {
-    this.search = rest.substr(qm);
-    this.query = rest.substr(qm + 1);
-    if (parseQueryString) {
-      this.query = querystring.parse(this.query);
-    }
-    rest = rest.slice(0, qm);
-  } else if (parseQueryString) {
-    // no query string, but parseQueryString still requested
-    this.search = '';
-    this.query = {};
-  }
-  if (rest) this.pathname = rest;
-  if (slashedProtocol[lowerProto] &&
-      this.hostname && !this.pathname) {
-    this.pathname = '/';
-  }
-
-  //to support http.request
-  if (this.pathname || this.search) {
-    var p = this.pathname || '';
-    var s = this.search || '';
-    this.path = p + s;
-  }
-
-  // finally, reconstruct the href based on what has been validated.
-  this.href = this.format();
-  return this;
-};
-
-// format a parsed object into a url string
-function urlFormat(obj) {
-  // ensure it's an object, and not a string url.
-  // If it's an obj, this is a no-op.
-  // this way, you can call url_format() on strings
-  // to clean up potentially wonky urls.
-  if (isString(obj)) obj = urlParse(obj);
-  if (!(obj instanceof Url)) return Url.prototype.format.call(obj);
-  return obj.format();
-}
-
-Url.prototype.format = function() {
-  var auth = this.auth || '';
-  if (auth) {
-    auth = encodeURIComponent(auth);
-    auth = auth.replace(/%3A/i, ':');
-    auth += '@';
-  }
-
-  var protocol = this.protocol || '',
-      pathname = this.pathname || '',
-      hash = this.hash || '',
-      host = false,
-      query = '';
-
-  if (this.host) {
-    host = auth + this.host;
-  } else if (this.hostname) {
-    host = auth + (this.hostname.indexOf(':') === -1 ?
-        this.hostname :
-        '[' + this.hostname + ']');
-    if (this.port) {
-      host += ':' + this.port;
-    }
-  }
-
-  if (this.query &&
-      isObject(this.query) &&
-      Object.keys(this.query).length) {
-    query = querystring.stringify(this.query);
-  }
-
-  var search = this.search || (query && ('?' + query)) || '';
-
-  if (protocol && protocol.substr(-1) !== ':') protocol += ':';
-
-  // only the slashedProtocols get the //.  Not mailto:, xmpp:, etc.
-  // unless they had them to begin with.
-  if (this.slashes ||
-      (!protocol || slashedProtocol[protocol]) && host !== false) {
-    host = '//' + (host || '');
-    if (pathname && pathname.charAt(0) !== '/') pathname = '/' + pathname;
-  } else if (!host) {
-    host = '';
-  }
-
-  if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
-  if (search && search.charAt(0) !== '?') search = '?' + search;
-
-  pathname = pathname.replace(/[?#]/g, function(match) {
-    return encodeURIComponent(match);
-  });
-  search = search.replace('#', '%23');
-
-  return protocol + host + pathname + search + hash;
-};
-
-function urlResolve(source, relative) {
-  return urlParse(source, false, true).resolve(relative);
-}
-
-Url.prototype.resolve = function(relative) {
-  return this.resolveObject(urlParse(relative, false, true)).format();
-};
-
-function urlResolveObject(source, relative) {
-  if (!source) return relative;
-  return urlParse(source, false, true).resolveObject(relative);
-}
-
-Url.prototype.resolveObject = function(relative) {
-  if (isString(relative)) {
-    var rel = new Url();
-    rel.parse(relative, false, true);
-    relative = rel;
-  }
-
-  var result = new Url();
-  Object.keys(this).forEach(function(k) {
-    result[k] = this[k];
-  }, this);
-
-  // hash is always overridden, no matter what.
-  // even href="" will remove it.
-  result.hash = relative.hash;
-
-  // if the relative url is empty, then there's nothing left to do here.
-  if (relative.href === '') {
-    result.href = result.format();
-    return result;
-  }
-
-  // hrefs like //foo/bar always cut to the protocol.
-  if (relative.slashes && !relative.protocol) {
-    // take everything except the protocol from relative
-    Object.keys(relative).forEach(function(k) {
-      if (k !== 'protocol')
-        result[k] = relative[k];
-    });
-
-    //urlParse appends trailing / to urls like http://www.example.com
-    if (slashedProtocol[result.protocol] &&
-        result.hostname && !result.pathname) {
-      result.path = result.pathname = '/';
-    }
-
-    result.href = result.format();
-    return result;
-  }
-
-  if (relative.protocol && relative.protocol !== result.protocol) {
-    // if it's a known url protocol, then changing
-    // the protocol does weird things
-    // first, if it's not file:, then we MUST have a host,
-    // and if there was a path
-    // to begin with, then we MUST have a path.
-    // if it is file:, then the host is dropped,
-    // because that's known to be hostless.
-    // anything else is assumed to be absolute.
-    if (!slashedProtocol[relative.protocol]) {
-      Object.keys(relative).forEach(function(k) {
-        result[k] = relative[k];
-      });
-      result.href = result.format();
-      return result;
-    }
-
-    result.protocol = relative.protocol;
-    if (!relative.host && !hostlessProtocol[relative.protocol]) {
-      var relPath = (relative.pathname || '').split('/');
-      while (relPath.length && !(relative.host = relPath.shift()));
-      if (!relative.host) relative.host = '';
-      if (!relative.hostname) relative.hostname = '';
-      if (relPath[0] !== '') relPath.unshift('');
-      if (relPath.length < 2) relPath.unshift('');
-      result.pathname = relPath.join('/');
-    } else {
-      result.pathname = relative.pathname;
-    }
-    result.search = relative.search;
-    result.query = relative.query;
-    result.host = relative.host || '';
-    result.auth = relative.auth;
-    result.hostname = relative.hostname || relative.host;
-    result.port = relative.port;
-    // to support http.request
-    if (result.pathname || result.search) {
-      var p = result.pathname || '';
-      var s = result.search || '';
-      result.path = p + s;
-    }
-    result.slashes = result.slashes || relative.slashes;
-    result.href = result.format();
-    return result;
-  }
-
-  var isSourceAbs = (result.pathname && result.pathname.charAt(0) === '/'),
-      isRelAbs = (
-          relative.host ||
-          relative.pathname && relative.pathname.charAt(0) === '/'
-      ),
-      mustEndAbs = (isRelAbs || isSourceAbs ||
-                    (result.host && relative.pathname)),
-      removeAllDots = mustEndAbs,
-      srcPath = result.pathname && result.pathname.split('/') || [],
-      relPath = relative.pathname && relative.pathname.split('/') || [],
-      psychotic = result.protocol && !slashedProtocol[result.protocol];
-
-  // if the url is a non-slashed url, then relative
-  // links like ../.. should be able
-  // to crawl up to the hostname, as well.  This is strange.
-  // result.protocol has already been set by now.
-  // Later on, put the first path part into the host field.
-  if (psychotic) {
-    result.hostname = '';
-    result.port = null;
-    if (result.host) {
-      if (srcPath[0] === '') srcPath[0] = result.host;
-      else srcPath.unshift(result.host);
-    }
-    result.host = '';
-    if (relative.protocol) {
-      relative.hostname = null;
-      relative.port = null;
-      if (relative.host) {
-        if (relPath[0] === '') relPath[0] = relative.host;
-        else relPath.unshift(relative.host);
-      }
-      relative.host = null;
-    }
-    mustEndAbs = mustEndAbs && (relPath[0] === '' || srcPath[0] === '');
-  }
-
-  if (isRelAbs) {
-    // it's absolute.
-    result.host = (relative.host || relative.host === '') ?
-                  relative.host : result.host;
-    result.hostname = (relative.hostname || relative.hostname === '') ?
-                      relative.hostname : result.hostname;
-    result.search = relative.search;
-    result.query = relative.query;
-    srcPath = relPath;
-    // fall through to the dot-handling below.
-  } else if (relPath.length) {
-    // it's relative
-    // throw away the existing file, and take the new path instead.
-    if (!srcPath) srcPath = [];
-    srcPath.pop();
-    srcPath = srcPath.concat(relPath);
-    result.search = relative.search;
-    result.query = relative.query;
-  } else if (!isNullOrUndefined(relative.search)) {
-    // just pull out the search.
-    // like href='?foo'.
-    // Put this after the other two cases because it simplifies the booleans
-    if (psychotic) {
-      result.hostname = result.host = srcPath.shift();
-      //occationaly the auth can get stuck only in host
-      //this especialy happens in cases like
-      //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
-      var authInHost = result.host && result.host.indexOf('@') > 0 ?
-                       result.host.split('@') : false;
-      if (authInHost) {
-        result.auth = authInHost.shift();
-        result.host = result.hostname = authInHost.shift();
-      }
-    }
-    result.search = relative.search;
-    result.query = relative.query;
-    //to support http.request
-    if (!isNull(result.pathname) || !isNull(result.search)) {
-      result.path = (result.pathname ? result.pathname : '') +
-                    (result.search ? result.search : '');
-    }
-    result.href = result.format();
-    return result;
-  }
-
-  if (!srcPath.length) {
-    // no path at all.  easy.
-    // we've already handled the other stuff above.
-    result.pathname = null;
-    //to support http.request
-    if (result.search) {
-      result.path = '/' + result.search;
-    } else {
-      result.path = null;
-    }
-    result.href = result.format();
-    return result;
-  }
-
-  // if a url ENDs in . or .., then it must get a trailing slash.
-  // however, if it ends in anything else non-slashy,
-  // then it must NOT get a trailing slash.
-  var last = srcPath.slice(-1)[0];
-  var hasTrailingSlash = (
-      (result.host || relative.host) && (last === '.' || last === '..') ||
-      last === '');
-
-  // strip single dots, resolve double dots to parent dir
-  // if the path tries to go above the root, `up` ends up > 0
-  var up = 0;
-  for (var i = srcPath.length; i >= 0; i--) {
-    last = srcPath[i];
-    if (last == '.') {
-      srcPath.splice(i, 1);
-    } else if (last === '..') {
-      srcPath.splice(i, 1);
-      up++;
-    } else if (up) {
-      srcPath.splice(i, 1);
-      up--;
-    }
-  }
-
-  // if the path is allowed to go above the root, restore leading ..s
-  if (!mustEndAbs && !removeAllDots) {
-    for (; up--; up) {
-      srcPath.unshift('..');
-    }
-  }
-
-  if (mustEndAbs && srcPath[0] !== '' &&
-      (!srcPath[0] || srcPath[0].charAt(0) !== '/')) {
-    srcPath.unshift('');
-  }
-
-  if (hasTrailingSlash && (srcPath.join('/').substr(-1) !== '/')) {
-    srcPath.push('');
-  }
-
-  var isAbsolute = srcPath[0] === '' ||
-      (srcPath[0] && srcPath[0].charAt(0) === '/');
-
-  // put the host back
-  if (psychotic) {
-    result.hostname = result.host = isAbsolute ? '' :
-                                    srcPath.length ? srcPath.shift() : '';
-    //occationaly the auth can get stuck only in host
-    //this especialy happens in cases like
-    //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
-    var authInHost = result.host && result.host.indexOf('@') > 0 ?
-                     result.host.split('@') : false;
-    if (authInHost) {
-      result.auth = authInHost.shift();
-      result.host = result.hostname = authInHost.shift();
-    }
-  }
-
-  mustEndAbs = mustEndAbs || (result.host && srcPath.length);
-
-  if (mustEndAbs && !isAbsolute) {
-    srcPath.unshift('');
-  }
-
-  if (!srcPath.length) {
-    result.pathname = null;
-    result.path = null;
-  } else {
-    result.pathname = srcPath.join('/');
-  }
-
-  //to support request.http
-  if (!isNull(result.pathname) || !isNull(result.search)) {
-    result.path = (result.pathname ? result.pathname : '') +
-                  (result.search ? result.search : '');
-  }
-  result.auth = relative.auth || result.auth;
-  result.slashes = result.slashes || relative.slashes;
-  result.href = result.format();
-  return result;
-};
-
-Url.prototype.parseHost = function() {
-  var host = this.host;
-  var port = portPattern.exec(host);
-  if (port) {
-    port = port[0];
-    if (port !== ':') {
-      this.port = port.substr(1);
-    }
-    host = host.substr(0, host.length - port.length);
-  }
-  if (host) this.hostname = host;
-};
-
-function isString(arg) {
-  return typeof arg === "string";
-}
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-
-function isNull(arg) {
-  return arg === null;
-}
-function isNullOrUndefined(arg) {
-  return  arg == null;
-}
-
-},{"punycode":20,"querystring":23}],27:[function(_dereq_,module,exports){
-if (typeof Object.create === 'function') {
-  // implementation from standard node.js 'util' module
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    ctor.prototype = Object.create(superCtor.prototype, {
-      constructor: {
-        value: ctor,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-  };
-} else {
-  // old school shim for old browsers
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    var TempCtor = function () {}
-    TempCtor.prototype = superCtor.prototype
-    ctor.prototype = new TempCtor()
-    ctor.prototype.constructor = ctor
-  }
-}
-
-},{}],28:[function(_dereq_,module,exports){
-module.exports = function isBuffer(arg) {
-  return arg && typeof arg === 'object'
-    && typeof arg.copy === 'function'
-    && typeof arg.fill === 'function'
-    && typeof arg.readUInt8 === 'function';
-}
-},{}],29:[function(_dereq_,module,exports){
-(function (process,global){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-var formatRegExp = /%[sdj%]/g;
-exports.format = function(f) {
-  if (!isString(f)) {
-    var objects = [];
-    for (var i = 0; i < arguments.length; i++) {
-      objects.push(inspect(arguments[i]));
-    }
-    return objects.join(' ');
-  }
-
-  var i = 1;
-  var args = arguments;
-  var len = args.length;
-  var str = String(f).replace(formatRegExp, function(x) {
-    if (x === '%%') return '%';
-    if (i >= len) return x;
-    switch (x) {
-      case '%s': return String(args[i++]);
-      case '%d': return Number(args[i++]);
-      case '%j':
-        try {
-          return JSON.stringify(args[i++]);
-        } catch (_) {
-          return '[Circular]';
-        }
-      default:
-        return x;
-    }
-  });
-  for (var x = args[i]; i < len; x = args[++i]) {
-    if (isNull(x) || !isObject(x)) {
-      str += ' ' + x;
-    } else {
-      str += ' ' + inspect(x);
-    }
-  }
-  return str;
-};
-
-
-// Mark that a method should not be used.
-// Returns a modified function which warns once by default.
-// If --no-deprecation is set, then it is a no-op.
-exports.deprecate = function(fn, msg) {
-  // Allow for deprecating things in the process of starting up.
-  if (isUndefined(global.process)) {
-    return function() {
-      return exports.deprecate(fn, msg).apply(this, arguments);
-    };
-  }
-
-  if (process.noDeprecation === true) {
-    return fn;
-  }
-
-  var warned = false;
-  function deprecated() {
-    if (!warned) {
-      if (process.throwDeprecation) {
-        throw new Error(msg);
-      } else if (process.traceDeprecation) {
-        console.trace(msg);
-      } else {
-        console.error(msg);
-      }
-      warned = true;
-    }
-    return fn.apply(this, arguments);
-  }
-
-  return deprecated;
-};
-
-
-var debugs = {};
-var debugEnviron;
-exports.debuglog = function(set) {
-  if (isUndefined(debugEnviron))
-    debugEnviron = process.env.NODE_DEBUG || '';
-  set = set.toUpperCase();
-  if (!debugs[set]) {
-    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
-      var pid = process.pid;
-      debugs[set] = function() {
-        var msg = exports.format.apply(exports, arguments);
-        console.error('%s %d: %s', set, pid, msg);
-      };
-    } else {
-      debugs[set] = function() {};
-    }
-  }
-  return debugs[set];
-};
-
-
-/**
- * Echos the value of a value. Trys to print the value out
- * in the best way possible given the different types.
- *
- * @param {Object} obj The object to print out.
- * @param {Object} opts Optional options object that alters the output.
- */
-/* legacy: obj, showHidden, depth, colors*/
-function inspect(obj, opts) {
-  // default options
-  var ctx = {
-    seen: [],
-    stylize: stylizeNoColor
-  };
-  // legacy...
-  if (arguments.length >= 3) ctx.depth = arguments[2];
-  if (arguments.length >= 4) ctx.colors = arguments[3];
-  if (isBoolean(opts)) {
-    // legacy...
-    ctx.showHidden = opts;
-  } else if (opts) {
-    // got an "options" object
-    exports._extend(ctx, opts);
-  }
-  // set default options
-  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
-  if (isUndefined(ctx.depth)) ctx.depth = 2;
-  if (isUndefined(ctx.colors)) ctx.colors = false;
-  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
-  if (ctx.colors) ctx.stylize = stylizeWithColor;
-  return formatValue(ctx, obj, ctx.depth);
-}
-exports.inspect = inspect;
-
-
-// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
-inspect.colors = {
-  'bold' : [1, 22],
-  'italic' : [3, 23],
-  'underline' : [4, 24],
-  'inverse' : [7, 27],
-  'white' : [37, 39],
-  'grey' : [90, 39],
-  'black' : [30, 39],
-  'blue' : [34, 39],
-  'cyan' : [36, 39],
-  'green' : [32, 39],
-  'magenta' : [35, 39],
-  'red' : [31, 39],
-  'yellow' : [33, 39]
-};
-
-// Don't use 'blue' not visible on cmd.exe
-inspect.styles = {
-  'special': 'cyan',
-  'number': 'yellow',
-  'boolean': 'yellow',
-  'undefined': 'grey',
-  'null': 'bold',
-  'string': 'green',
-  'date': 'magenta',
-  // "name": intentionally not styling
-  'regexp': 'red'
-};
-
-
-function stylizeWithColor(str, styleType) {
-  var style = inspect.styles[styleType];
-
-  if (style) {
-    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
-           '\u001b[' + inspect.colors[style][1] + 'm';
-  } else {
-    return str;
-  }
-}
-
-
-function stylizeNoColor(str, styleType) {
-  return str;
-}
-
-
-function arrayToHash(array) {
-  var hash = {};
-
-  array.forEach(function(val, idx) {
-    hash[val] = true;
-  });
-
-  return hash;
-}
-
-
-function formatValue(ctx, value, recurseTimes) {
-  // Provide a hook for user-specified inspect functions.
-  // Check that value is an object with an inspect function on it
-  if (ctx.customInspect &&
-      value &&
-      isFunction(value.inspect) &&
-      // Filter out the util module, it's inspect function is special
-      value.inspect !== exports.inspect &&
-      // Also filter out any prototype objects using the circular check.
-      !(value.constructor && value.constructor.prototype === value)) {
-    var ret = value.inspect(recurseTimes, ctx);
-    if (!isString(ret)) {
-      ret = formatValue(ctx, ret, recurseTimes);
-    }
-    return ret;
-  }
-
-  // Primitive types cannot have properties
-  var primitive = formatPrimitive(ctx, value);
-  if (primitive) {
-    return primitive;
-  }
-
-  // Look up the keys of the object.
-  var keys = Object.keys(value);
-  var visibleKeys = arrayToHash(keys);
-
-  if (ctx.showHidden) {
-    keys = Object.getOwnPropertyNames(value);
-  }
-
-  // IE doesn't make error fields non-enumerable
-  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
-  if (isError(value)
-      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
-    return formatError(value);
-  }
-
-  // Some type of object without properties can be shortcutted.
-  if (keys.length === 0) {
-    if (isFunction(value)) {
-      var name = value.name ? ': ' + value.name : '';
-      return ctx.stylize('[Function' + name + ']', 'special');
-    }
-    if (isRegExp(value)) {
-      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
-    }
-    if (isDate(value)) {
-      return ctx.stylize(Date.prototype.toString.call(value), 'date');
-    }
-    if (isError(value)) {
-      return formatError(value);
-    }
-  }
-
-  var base = '', array = false, braces = ['{', '}'];
-
-  // Make Array say that they are Array
-  if (isArray(value)) {
-    array = true;
-    braces = ['[', ']'];
-  }
-
-  // Make functions say that they are functions
-  if (isFunction(value)) {
-    var n = value.name ? ': ' + value.name : '';
-    base = ' [Function' + n + ']';
-  }
-
-  // Make RegExps say that they are RegExps
-  if (isRegExp(value)) {
-    base = ' ' + RegExp.prototype.toString.call(value);
-  }
-
-  // Make dates with properties first say the date
-  if (isDate(value)) {
-    base = ' ' + Date.prototype.toUTCString.call(value);
-  }
-
-  // Make error with message first say the error
-  if (isError(value)) {
-    base = ' ' + formatError(value);
-  }
-
-  if (keys.length === 0 && (!array || value.length == 0)) {
-    return braces[0] + base + braces[1];
-  }
-
-  if (recurseTimes < 0) {
-    if (isRegExp(value)) {
-      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
-    } else {
-      return ctx.stylize('[Object]', 'special');
-    }
-  }
-
-  ctx.seen.push(value);
-
-  var output;
-  if (array) {
-    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
-  } else {
-    output = keys.map(function(key) {
-      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
-    });
-  }
-
-  ctx.seen.pop();
-
-  return reduceToSingleString(output, base, braces);
-}
-
-
-function formatPrimitive(ctx, value) {
-  if (isUndefined(value))
-    return ctx.stylize('undefined', 'undefined');
-  if (isString(value)) {
-    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
-                                             .replace(/'/g, "\\'")
-                                             .replace(/\\"/g, '"') + '\'';
-    return ctx.stylize(simple, 'string');
-  }
-  if (isNumber(value))
-    return ctx.stylize('' + value, 'number');
-  if (isBoolean(value))
-    return ctx.stylize('' + value, 'boolean');
-  // For some reason typeof null is "object", so special case here.
-  if (isNull(value))
-    return ctx.stylize('null', 'null');
-}
-
-
-function formatError(value) {
-  return '[' + Error.prototype.toString.call(value) + ']';
-}
-
-
-function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
-  var output = [];
-  for (var i = 0, l = value.length; i < l; ++i) {
-    if (hasOwnProperty(value, String(i))) {
-      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
-          String(i), true));
-    } else {
-      output.push('');
-    }
-  }
-  keys.forEach(function(key) {
-    if (!key.match(/^\d+$/)) {
-      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
-          key, true));
-    }
-  });
-  return output;
-}
-
-
-function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
-  var name, str, desc;
-  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
-  if (desc.get) {
-    if (desc.set) {
-      str = ctx.stylize('[Getter/Setter]', 'special');
-    } else {
-      str = ctx.stylize('[Getter]', 'special');
-    }
-  } else {
-    if (desc.set) {
-      str = ctx.stylize('[Setter]', 'special');
-    }
-  }
-  if (!hasOwnProperty(visibleKeys, key)) {
-    name = '[' + key + ']';
-  }
-  if (!str) {
-    if (ctx.seen.indexOf(desc.value) < 0) {
-      if (isNull(recurseTimes)) {
-        str = formatValue(ctx, desc.value, null);
-      } else {
-        str = formatValue(ctx, desc.value, recurseTimes - 1);
-      }
-      if (str.indexOf('\n') > -1) {
-        if (array) {
-          str = str.split('\n').map(function(line) {
-            return '  ' + line;
-          }).join('\n').substr(2);
-        } else {
-          str = '\n' + str.split('\n').map(function(line) {
-            return '   ' + line;
-          }).join('\n');
-        }
-      }
-    } else {
-      str = ctx.stylize('[Circular]', 'special');
-    }
-  }
-  if (isUndefined(name)) {
-    if (array && key.match(/^\d+$/)) {
-      return str;
-    }
-    name = JSON.stringify('' + key);
-    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
-      name = name.substr(1, name.length - 2);
-      name = ctx.stylize(name, 'name');
-    } else {
-      name = name.replace(/'/g, "\\'")
-                 .replace(/\\"/g, '"')
-                 .replace(/(^"|"$)/g, "'");
-      name = ctx.stylize(name, 'string');
-    }
-  }
-
-  return name + ': ' + str;
-}
-
-
-function reduceToSingleString(output, base, braces) {
-  var numLinesEst = 0;
-  var length = output.reduce(function(prev, cur) {
-    numLinesEst++;
-    if (cur.indexOf('\n') >= 0) numLinesEst++;
-    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
-  }, 0);
-
-  if (length > 60) {
-    return braces[0] +
-           (base === '' ? '' : base + '\n ') +
-           ' ' +
-           output.join(',\n  ') +
-           ' ' +
-           braces[1];
-  }
-
-  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
-}
-
-
-// NOTE: These type checking functions intentionally don't use `instanceof`
-// because it is fragile and can be easily faked with `Object.create()`.
-function isArray(ar) {
-  return Array.isArray(ar);
-}
-exports.isArray = isArray;
-
-function isBoolean(arg) {
-  return typeof arg === 'boolean';
-}
-exports.isBoolean = isBoolean;
-
-function isNull(arg) {
-  return arg === null;
-}
-exports.isNull = isNull;
-
-function isNullOrUndefined(arg) {
-  return arg == null;
-}
-exports.isNullOrUndefined = isNullOrUndefined;
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-exports.isNumber = isNumber;
-
-function isString(arg) {
-  return typeof arg === 'string';
-}
-exports.isString = isString;
-
-function isSymbol(arg) {
-  return typeof arg === 'symbol';
-}
-exports.isSymbol = isSymbol;
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-exports.isUndefined = isUndefined;
-
-function isRegExp(re) {
-  return isObject(re) && objectToString(re) === '[object RegExp]';
-}
-exports.isRegExp = isRegExp;
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-exports.isObject = isObject;
-
-function isDate(d) {
-  return isObject(d) && objectToString(d) === '[object Date]';
-}
-exports.isDate = isDate;
-
-function isError(e) {
-  return isObject(e) &&
-      (objectToString(e) === '[object Error]' || e instanceof Error);
-}
-exports.isError = isError;
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-exports.isFunction = isFunction;
-
-function isPrimitive(arg) {
-  return arg === null ||
-         typeof arg === 'boolean' ||
-         typeof arg === 'number' ||
-         typeof arg === 'string' ||
-         typeof arg === 'symbol' ||  // ES6 symbol
-         typeof arg === 'undefined';
-}
-exports.isPrimitive = isPrimitive;
-
-exports.isBuffer = _dereq_('./support/isBuffer');
-
-function objectToString(o) {
-  return Object.prototype.toString.call(o);
-}
-
-
-function pad(n) {
-  return n < 10 ? '0' + n.toString(10) : n.toString(10);
-}
-
-
-var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-              'Oct', 'Nov', 'Dec'];
-
-// 26 Feb 16:19:34
-function timestamp() {
-  var d = new Date();
-  var time = [pad(d.getHours()),
-              pad(d.getMinutes()),
-              pad(d.getSeconds())].join(':');
-  return [d.getDate(), months[d.getMonth()], time].join(' ');
-}
-
-
-// log is just a thin wrapper to console.log that prepends a timestamp
-exports.log = function() {
-  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
-};
-
-
-/**
- * Inherit the prototype methods from one constructor into another.
- *
- * The Function.prototype.inherits from lang.js rewritten as a standalone
- * function (not on Function.prototype). NOTE: If this file is to be loaded
- * during bootstrapping this function needs to be rewritten using some native
- * functions as prototype setup using normal JavaScript does not work as
- * expected during bootstrapping (see mirror.js in r114903).
- *
- * @param {function} ctor Constructor function which needs to inherit the
- *     prototype.
- * @param {function} superCtor Constructor function to inherit prototype from.
- */
-exports.inherits = _dereq_('inherits');
-
-exports._extend = function(origin, add) {
-  // Don't do anything if add isn't an object
-  if (!add || !isObject(add)) return origin;
-
-  var keys = Object.keys(add);
-  var i = keys.length;
-  while (i--) {
-    origin[keys[i]] = add[keys[i]];
-  }
-  return origin;
-};
-
-function hasOwnProperty(obj, prop) {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
-}
-
-}).call(this,_dereq_("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":28,"FWaASH":5,"inherits":27}],30:[function(_dereq_,module,exports){
+},{}],30:[function(_dereq_,module,exports){
 var constants = _dereq_("./modules/constants");
 var events = _dereq_("./modules/events");
 var logger = _dereq_("./modules/logger");
@@ -50963,7 +51620,7 @@ fh.reset = cloud.reset;
 //So, we assign $fh to the window name space directly here. (otherwise, we have to fork the grunt browserify plugin, then fork browerify and the dependent umd module, really not worthing the effort).
 window.$fh = fh;
 module.exports = fh;
-},{"./modules/ajax":32,"./modules/api_act":33,"./modules/api_auth":34,"./modules/api_cloud":35,"./modules/api_hash":36,"./modules/api_mbaas":37,"./modules/api_push":38,"./modules/api_sec":39,"./modules/appProps":40,"./modules/constants":42,"./modules/device":45,"./modules/events":46,"./modules/fhparams":47,"./modules/logger":53,"./modules/sync_cloud_handler":61,"./modules/waitForCloud":63,"fh-sync-js":17}],31:[function(_dereq_,module,exports){
+},{"./modules/ajax":32,"./modules/api_act":33,"./modules/api_auth":34,"./modules/api_cloud":35,"./modules/api_hash":36,"./modules/api_mbaas":37,"./modules/api_push":38,"./modules/api_sec":39,"./modules/appProps":40,"./modules/constants":42,"./modules/device":45,"./modules/events":46,"./modules/fhparams":47,"./modules/logger":53,"./modules/sync_cloud_handler":61,"./modules/waitForCloud":63,"fh-sync-js":25}],31:[function(_dereq_,module,exports){
 var urlparser = _dereq_('url');
 
 var XDomainRequestWrapper = function(xdr){
@@ -51035,7 +51692,7 @@ XDomainRequestWrapper.prototype.getResponseHeader = function(n){
 
 module.exports = XDomainRequestWrapper;
 
-},{"url":26}],32:[function(_dereq_,module,exports){
+},{"url":12}],32:[function(_dereq_,module,exports){
 //a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js.
 //it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/
 //a few small changes are made for supporting IE 8 and other features:
@@ -51113,16 +51770,6 @@ var ajax = module.exports = function (options) {
   if (settings.contentType || (settings.data && !settings.formdata && settings.type.toUpperCase() != 'GET'))
     baseHeaders['Content-Type'] = (settings.contentType || 'application/x-www-form-urlencoded')
   settings.headers = extend(baseHeaders, settings.headers || {})
-
-  if (typeof Titanium !== 'undefined') {
-    xhr.onerror  = function(){
-      if (!abortTimeout){
-        return;
-      }
-      clearTimeout(abortTimeout);
-      ajaxError(null, 'error', xhr, settings);
-    };
-  }
 
   xhr.onreadystatechange = function () {
 
@@ -51317,14 +51964,6 @@ function getXhr(crossDomain){
   if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined" && typeof window.cordova === "undefined"){
     xhr = new XDomainRequestWrapper(new XDomainRequest());
   }
-  // For Titanium SDK
-  if (typeof Titanium !== 'undefined'){
-    var params = {};
-    if(ajax.settings && ajax.settings.timeout){
-      params.timeout = ajax.settings.timeout;
-    }
-    xhr = Titanium.Network.createHTTPClient(params);
-  }
 
   return xhr;
 }
@@ -51445,7 +52084,7 @@ function extend(target) {
   return target
 }
 
-},{"./XDomainRequestWrapper":31,"./events":46,"./fhparams":47,"./logger":53,"type-of":24}],33:[function(_dereq_,module,exports){
+},{"./XDomainRequestWrapper":31,"./events":46,"./fhparams":47,"./logger":53,"type-of":28}],33:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -51500,7 +52139,7 @@ module.exports = function(opts, success, fail){
   });
 };
 
-},{"./ajax":32,"./appProps":40,"./fhparams":47,"./handleError":48,"./logger":53,"./waitForCloud":63,"underscore":25}],34:[function(_dereq_,module,exports){
+},{"./ajax":32,"./appProps":40,"./fhparams":47,"./handleError":48,"./logger":53,"./waitForCloud":63,"underscore":29}],34:[function(_dereq_,module,exports){
 var logger = _dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -51687,7 +52326,7 @@ module.exports = function(opts, success, fail){
   });
 };
 
-},{"./ajax":32,"./appProps":40,"./fhparams":47,"./handleError":48,"./logger":53,"./waitForCloud":63,"underscore":25}],36:[function(_dereq_,module,exports){
+},{"./ajax":32,"./appProps":40,"./fhparams":47,"./handleError":48,"./logger":53,"./waitForCloud":63,"underscore":29}],36:[function(_dereq_,module,exports){
 var hashImpl = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
@@ -51906,7 +52545,7 @@ module.exports = {
   setAppProps: setAppProps
 };
 
-},{"./ajax":32,"./constants":42,"./logger":53,"./queryMap":55,"underscore":25}],41:[function(_dereq_,module,exports){
+},{"./ajax":32,"./constants":42,"./logger":53,"./queryMap":55,"underscore":29}],41:[function(_dereq_,module,exports){
 var logger = _dereq_("./logger");
 var queryMap = _dereq_("./queryMap");
 var fhparams = _dereq_("./fhparams");
@@ -52022,7 +52661,7 @@ module.exports = {
 },{"./data":44,"./fhparams":47,"./logger":53,"./queryMap":55}],42:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.19.0",
+  "sdk_version": "3.0.2",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -52066,7 +52705,7 @@ var data = {
   //dom adapter doens't work on windows phone, so don't specify the adapter if the dom one failed
   //we specify the order of lawnchair adapters to use, lawnchair will find the right one to use, to keep backward compatibility, keep the order
   //as dom, webkit-sqlite, localFileStorage, window-name
-  DEFAULT_ADAPTERS : ["dom", "webkit-sqlite", "window-name", "titanium"],
+  DEFAULT_ADAPTERS : ["dom", "webkit-sqlite", "window-name"],
   getStorage: function(name, adapters, fail){
     var adpts = data.DEFAULT_ADAPTERS;
     var errorHandler = fail || function(){};
@@ -52199,7 +52838,7 @@ var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":7}],47:[function(_dereq_,module,exports){
+},{"events":6}],47:[function(_dereq_,module,exports){
 var device = _dereq_("./device");
 var sdkversion = _dereq_("./sdkversion");
 var appProps = _dereq_("./appProps");
@@ -52494,7 +53133,7 @@ var loadCloudProps = function(app_props, callback) {
         }
         logger.error("App init returned error : " + errormsg);
         //use the cached host if we have a copy
-        if (savedHost && req.status !== 400) {
+        if (savedHost && (!req || req.status !== 400)) {
           logger.info("Using cached host: " + JSON.stringify(savedHost));
           if (callback) {
             callback(null, {
@@ -52502,7 +53141,7 @@ var loadCloudProps = function(app_props, callback) {
             });
           }
         } else {
-          if (req.status === 400) {
+          if (req && req.status === 400) {
             logger.error(req.responseText);
           } else {
             logger.error("No cached host found. Init failed.");
@@ -52523,7 +53162,7 @@ var loadCloudProps = function(app_props, callback) {
   var storage = null;
   var path = app_props.host + consts.boxprefix + "app/init";
   try {
-    storage = data.getStorage("fh_init_storage", typeof Titanium !== "undefined"?['titanium']:null);
+    storage = data.getStorage("fh_init_storage", null);
     storage.get('fh_init', function(storage_res) {
       var savedHost = null;
       if (storage_res && storage_res.value !== null && typeof(storage_res.value) !== "undefined" && storage_res !== "") {
@@ -52789,7 +53428,7 @@ log.setLevel('info');
  * Use either string or integer value
  */
 module.exports = log;
-},{"console":6,"loglevel":19}],54:[function(_dereq_,module,exports){
+},{"console":5,"loglevel":27}],54:[function(_dereq_,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
