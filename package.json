@@ -8,7 +8,7 @@
     "angular-route": "~1.6.2",
     "angular-sanitize": "~1.6.2",
     "bootstrap": "~3.3.7",
-    "fh-js-sdk": "~2.19.0",
+    "fh-js-sdk": "~3.0.2",
     "jquery": "~3.1.1",
     "browserify": "~13.3.0",
     "browserify-shim": "~3.8.13",
